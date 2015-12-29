@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.model;
+package org.ow2.proactive.iaas.connector.model;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThat;
 import java.util.Set;
 
 import org.junit.Test;
+import org.ow2.proactive.iaas.connector.model.Instance;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 

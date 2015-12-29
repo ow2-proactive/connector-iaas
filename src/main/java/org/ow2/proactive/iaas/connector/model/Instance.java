@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.model;
+package org.ow2.proactive.iaas.connector.model;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

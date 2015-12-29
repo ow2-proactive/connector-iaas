@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.rest;
+package org.ow2.proactive.iaas.connector.rest;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -13,8 +13,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.smart.connector.fixtures.InfrastructureFixtures;
-import org.ow2.proactive.smart.connector.service.InfrastructureService;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.rest.InfrastructureRest;
+import org.ow2.proactive.iaas.connector.service.InfrastructureService;
 
 import jersey.repackaged.com.google.common.collect.Maps;
 

@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.rest;
+package org.ow2.proactive.iaas.connector.rest;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -10,8 +10,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-import org.ow2.proactive.smart.connector.model.Infrastructure;
-import org.ow2.proactive.smart.connector.service.InfrastructureService;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.service.InfrastructureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

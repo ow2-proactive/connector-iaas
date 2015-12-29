@@ -1,10 +1,10 @@
-package org.ow2.proactive.smart.connector.service;
+package org.ow2.proactive.iaas.connector.service;
 
 import java.util.Map;
 
-import org.ow2.proactive.smart.connector.cache.ComputeServiceCache;
-import org.ow2.proactive.smart.connector.cache.InfrastructureCache;
-import org.ow2.proactive.smart.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
+import org.ow2.proactive.iaas.connector.cache.InfrastructureCache;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

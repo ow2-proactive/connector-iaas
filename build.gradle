@@ -25,7 +25,7 @@ buildscript {
   }
 }
 
-mainClassName = 'org.ow2.proactive.smart.watch.app.SmartConnectorApp'
+mainClassName = 'org.ow2.proactive.iaas.watch.app.IaaSConnectorApp'
 
 jar {
     manifest {

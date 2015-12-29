@@ -1,6 +1,6 @@
-package org.ow2.proactive.smart.connector.fixtures;
+package org.ow2.proactive.iaas.connector.fixtures;
 
-import org.ow2.proactive.smart.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
 public class InfrastructureFixtures {
 

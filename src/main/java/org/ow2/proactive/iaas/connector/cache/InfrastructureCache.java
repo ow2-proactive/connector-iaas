@@ -1,9 +1,9 @@
-package org.ow2.proactive.smart.connector.cache;
+package org.ow2.proactive.iaas.connector.cache;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.ow2.proactive.smart.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 import jersey.repackaged.com.google.common.collect.ImmutableMap;

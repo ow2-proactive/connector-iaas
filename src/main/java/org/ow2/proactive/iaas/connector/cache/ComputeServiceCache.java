@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.cache;
+package org.ow2.proactive.iaas.connector.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -7,7 +7,7 @@ import java.util.function.Function;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
-import org.ow2.proactive.smart.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 @Component

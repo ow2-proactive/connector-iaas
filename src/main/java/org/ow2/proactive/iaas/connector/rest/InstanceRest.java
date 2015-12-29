@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.rest;
+package org.ow2.proactive.iaas.connector.rest;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -11,8 +11,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
-import org.ow2.proactive.smart.connector.model.Instance;
-import org.ow2.proactive.smart.connector.service.InstanceService;
+import org.ow2.proactive.iaas.connector.model.Instance;
+import org.ow2.proactive.iaas.connector.service.InstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

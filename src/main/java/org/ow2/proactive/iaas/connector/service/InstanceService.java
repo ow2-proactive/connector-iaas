@@ -1,4 +1,4 @@
-package org.ow2.proactive.smart.connector.service;
+package org.ow2.proactive.iaas.connector.service;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -7,9 +7,9 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.TemplateBuilder;
-import org.ow2.proactive.smart.connector.cache.ComputeServiceCache;
-import org.ow2.proactive.smart.connector.model.Infrastructure;
-import org.ow2.proactive.smart.connector.model.Instance;
+import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
