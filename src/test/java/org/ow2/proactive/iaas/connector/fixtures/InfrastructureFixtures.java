@@ -1,23 +1,17 @@
 package org.ow2.proactive.iaas.connector.fixtures;
 
+import org.json.JSONObject;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
 public class InfrastructureFixtures {
 
 	public static String getInfrastructureAsaString(String name, String endPoint, String userName, String credential) {
-		StringBuilder infrastructure = new StringBuilder();
-		infrastructure.append("{");
-		infrastructure.append("\"name\": \"" + name + "\",");
-		infrastructure.append("\"endPoint\": \"" + endPoint + "\",");
-		infrastructure.append("\"userName\": \"" + userName + "\",");
-		infrastructure.append("\"credential\": \"" + credential + "\"");
-		infrastructure.append("}");
-		return infrastructure.toString();
+		JSONObject jsonObject = new JSONObject(getInfrastructure(name, endPoint, userName, credential));
+		return jsonObject.toString();
 	}
 
-	public static Infrastructure getInfrastructure(String name, String endPoint, String username, String credential) {
-		Infrastructure infrastructure = new Infrastructure(name, endPoint, username, credential);
-		return infrastructure;
+	public static Infrastructure getInfrastructure(String name, String endPoint, String userName, String credential) {
+		return new Infrastructure(name, endPoint, userName, credential);
 	}
 
 }

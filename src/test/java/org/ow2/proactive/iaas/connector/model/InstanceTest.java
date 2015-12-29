@@ -7,7 +7,6 @@ import static org.junit.Assert.assertThat;
 import java.util.Set;
 
 import org.junit.Test;
-import org.ow2.proactive.iaas.connector.model.Instance;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -21,7 +20,7 @@ public class InstanceTest {
 	@Test
 	public void testConstructor() {
 		Instance instance = new Instance("openstack", "vm", "ubuntu", "1", "1", "512");
-		assertThat(instance.getName(), is("openstack"));
+		assertThat(instance.getName(), is("vm"));
 	}
 
 	@Test

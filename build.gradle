@@ -62,7 +62,7 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile group: 'com.aol.microservices', name:'micro-grizzly-with-jersey', version:'0.62'
     compile 'com.jayway.jsonpath:json-path:2.0.0'
-    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile 'org.json:json:20151123'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.1'
     testCompile ('junit:junit:4.12') {
             exclude module : 'hamcrest'
