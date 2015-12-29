@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.ow2.proactive.iaas.connector.service.InfrastructureService;
 
@@ -33,9 +33,9 @@ public class InfrastructureRestTest {
 	@Before
 	public void init() {
 		MockitoAnnotations.initMocks(this);
-		infrastructureStringFixture = InfrastructureFixtures.getInfrastructureAsaString("openstack", "endPoint",
+		infrastructureStringFixture = InfrastructureFixture.getInfrastructureAsaString("openstack", "endPoint",
 				"userName", "credential");
-		infrastructureFixture = InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName",
+		infrastructureFixture = InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName",
 				"credential");
 	}
 
@@ -74,6 +74,7 @@ public class InfrastructureRestTest {
 	public void testUpdateInfrastructureByName() {
 		assertThat(infrastructureRest.updateInfrastructure(infrastructureStringFixture, "openstack").getStatus(),
 				is(Response.Status.OK.getStatusCode()));
+
 		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
 		verify(infrastructureService, times(1)).updateInfrastructure("openstack", infrastructureFixture);
 	}
