@@ -1,14 +1,12 @@
 package org.ow2.proactive.iaas.connector.service;
 
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.ComputeMetadata;
-import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.domain.Template;
 import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
-import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.ow2.proactive.iaas.connector.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,37 +21,30 @@ public class InstanceService {
 	private ComputeServiceCache computeServiceCache;
 
 	public void createInstance(Instance instance) {
-		Infrastructure infrastructure = infrastructureService.getInfrastructurebyName(instance.getInfrastructure());
-		ComputeService computeService = computeServiceCache.getComputeService(infrastructure);
+		ComputeService computeService = getComputeServiceFromInfastructureName(instance.getInfrastructure());
 
-		TemplateBuilder tb = computeService.templateBuilder();
-		tb.minRam(Integer.parseInt(instance.getRam()));
-		tb.imageId(instance.getImage());
+		Template template = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
+				.imageId(instance.getImage()).build();
 
 		try {
-			computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), tb.build());
+			computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template);
 		} catch (RunNodesException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 
 	}
 
 	public void deleteInstance(String infrastructureName, String instanceID) {
-		ComputeService computeService = computeServiceCache
-				.getComputeService(infrastructureService.getInfrastructurebyName(infrastructureName));
-		computeService.destroyNode(instanceID);
+		getComputeServiceFromInfastructureName(infrastructureName).destroyNode(instanceID);
 	}
 
-	public LinkedList<String> getAllInstances(String infrastructureName) {
-		ComputeService computeService = computeServiceCache
-				.getComputeService(infrastructureService.getInfrastructurebyName(infrastructureName));
-		Iterator<? extends ComputeMetadata> it = computeService.listNodes().iterator();
+	public Set<String> getAllInstances(String infrastructureName) {
+		return getComputeServiceFromInfastructureName(infrastructureName).listNodes().stream().map(it -> it.getId())
+				.collect(Collectors.toSet());
+	}
 
-		LinkedList<String> allRunningInstances = new LinkedList<String>();
-		while (it.hasNext()) {
-			allRunningInstances.add(it.next().getId());
-		}
-		return allRunningInstances;
+	private ComputeService getComputeServiceFromInfastructureName(String infrastructureName) {
+		return computeServiceCache.getComputeService(infrastructureService.getInfrastructurebyName(infrastructureName));
 	}
 
 }

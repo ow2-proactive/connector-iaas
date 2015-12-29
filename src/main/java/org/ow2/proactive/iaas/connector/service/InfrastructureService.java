@@ -28,6 +28,7 @@ public class InfrastructureService {
 	public void deleteInfrastructure(String infrastructure) {
 		infrastructureCache.deleteInfrastructure(getInfrastructurebyName(infrastructure));
 		computeServiceCache.removeComputeService(getInfrastructurebyName(infrastructure));
+
 	}
 
 	public Infrastructure getInfrastructurebyName(String infrastructureName) {
