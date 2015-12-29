@@ -1,0 +1,125 @@
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "org.sonarqube"
+apply plugin: 'net.researchgate.release'
+
+repositories {
+	mavenCentral()
+    jcenter()
+}
+
+buildscript {
+  repositories { 
+  	maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  	jcenter() 
+  	}
+  dependencies {
+  	classpath "org.sonarqube.gradle:gradle-sonarqube-plugin:1.0"
+    classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+    classpath 'org.postgresql:postgresql:9.3-1102-jdbc41'  
+    classpath 'org.ajoberstar:gradle-jacoco:0.3.0'
+    classpath 'net.researchgate:gradle-release:2.2.1'
+  }
+}
+
+mainClassName = 'org.ow2.proactive.smart.watch.app.SmartConnectorApp'
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+        attributes 'Class-Path': "."
+    }
+}
+
+shadowJar {
+  mergeServiceFiles()
+}
+
+def jdkHome = System.getenv("JAVA_HOME")
+
+release {
+    preTagCommitMessage = '[ci skip][Gradle Release Plugin] - pre tag commit: '
+    tagCommitMessage = '[ci skip][Gradle Release Plugin] - creating tag: '
+    newVersionCommitMessage = '[ci skip][Gradle Release Plugin] - new version commit: '      
+}
+
+dependencies {
+	compile ('org.apache.stratos:jclouds-compute:1.9.1'){
+            exclude module : 'jsr311-api'
+             }
+    compile ('org.apache.jclouds.api:openstack-nova:1.9.1'){
+            exclude module : 'jsr311-api'
+             }
+             
+    compile ('org.apache.jclouds.provider:aws-ec2:1.9.1'){
+            exclude module : 'jsr311-api'
+             }
+    
+	compile files("$jdkHome/lib/tools.jar")
+    compile 'org.slf4j:slf4j-api:1.7.12'
+    compile group: 'com.aol.microservices', name:'micro-grizzly-with-jersey', version:'0.62'
+    compile 'com.jayway.jsonpath:json-path:2.0.0'
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.1'
+    testCompile ('junit:junit:4.12') {
+            exclude module : 'hamcrest'
+            exclude module : 'hamcrest-core'
+        }
+    testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
+    testCompile 'org.powermock:powermock-mockito-release-full:1.6.2'
+	testCompile 'org.springframework:spring-test:2.5'
+}
+
+
+sourceSets {
+	test {
+        java.srcDir file('src/test/java')
+        resources.srcDir file('src/test/resources')
+    }
+    integTest {
+        java.srcDir file('src/integTest/java')
+        resources.srcDir file('src/integTest/resources')
+    }
+}
+
+task integTest(type: Test) {
+    testClassesDir = sourceSets.integTest.output.classesDir
+    classpath = sourceSets.integTest.runtimeClasspath
+}
+
+
+dependencies {
+    integTestCompile sourceSets.main.output
+    integTestCompile configurations.testCompile
+    integTestCompile sourceSets.test.output
+    integTestRuntime configurations.testRuntime
+}
+
+task local {
+    run { systemProperty "spring.profiles.active", "local" }
+}
+
+
+allprojects {
+    apply plugin: 'jacoco'  
+    
+	jacoco {
+	    toolVersion = '0.7.1.201405082137'
+	}
+	
+	jacocoTestReport {
+	    additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
+	    sourceDirectories = files(sourceSets.main.allSource.srcDirs)
+	    classDirectories =  files(sourceSets.main.output)
+	    reports {
+	        html.enabled = true
+	        xml.enabled = true
+	        csv.enabled = false
+	    }
+	}
+	
+	
+}
