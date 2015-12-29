@@ -22,6 +22,7 @@ import com.aol.micro.server.rest.jackson.JacksonUtil;
 @Component
 @Rest(isSingleton = true)
 public class InfrastructureRest {
+
 	@Autowired
 	private InfrastructureService infrastructureService;
 
