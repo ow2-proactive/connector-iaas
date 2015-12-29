@@ -56,11 +56,13 @@ public class InfrastructureRest {
 	}
 
 	@PUT
+	@Path("/{infrastructureName}")
 	@Consumes("application/json")
 	@Produces("application/json")
-	public Response updateInfrastructure(final String infrastructureJson) {
+	public Response updateInfrastructure(final String infrastructureJson,
+			@PathParam("infrastructureName") String infrastructureName) {
 		Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-		infrastructureService.updateInfrastructure(infrastructure);
+		infrastructureService.updateInfrastructure(infrastructureName, infrastructure);
 		return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
 	}
 

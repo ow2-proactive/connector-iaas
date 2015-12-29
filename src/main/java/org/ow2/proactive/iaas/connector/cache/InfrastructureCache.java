@@ -25,17 +25,10 @@ public class InfrastructureCache {
 		supportedInfrastructures = ImmutableMap.copyOf(tempInfrastructures);
 	}
 
-	public void deleteInfrastructure(String infrastructureName) {
+	public void deleteInfrastructure(Infrastructure infrastructure) {
 		Map<String, Infrastructure> tempInfrastructures = cloneSupportedInfrastructures();
 
-		tempInfrastructures.remove(infrastructureName);
-		supportedInfrastructures = ImmutableMap.copyOf(tempInfrastructures);
-	}
-
-	public void updateInfrastructure(Infrastructure infrastructure) {
-		Map<String, Infrastructure> tempInfrastructures = cloneSupportedInfrastructures();
-
-		tempInfrastructures.replace(infrastructure.getName(), infrastructure);
+		tempInfrastructures.remove(infrastructure.getName());
 		supportedInfrastructures = ImmutableMap.copyOf(tempInfrastructures);
 	}
 

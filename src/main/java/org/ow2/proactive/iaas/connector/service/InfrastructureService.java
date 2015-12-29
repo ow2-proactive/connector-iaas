@@ -26,7 +26,7 @@ public class InfrastructureService {
 	}
 
 	public void deleteInfrastructure(String infrastructure) {
-		infrastructureCache.deleteInfrastructure(infrastructure);
+		infrastructureCache.deleteInfrastructure(getInfrastructurebyName(infrastructure));
 		computeServiceCache.removeComputeService(getInfrastructurebyName(infrastructure));
 	}
 
@@ -34,8 +34,9 @@ public class InfrastructureService {
 		return infrastructureCache.getSupportedInfrastructures().get(infrastructureName);
 	}
 
-	public void updateInfrastructure(Infrastructure infrastructure) {
-		infrastructureCache.updateInfrastructure(infrastructure);
+	public void updateInfrastructure(String infrastructureName, Infrastructure infrastructure) {
+		deleteInfrastructure(infrastructureName);
+		registerInfrastructure(infrastructure);
 	}
 
 }

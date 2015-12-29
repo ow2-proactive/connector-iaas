@@ -16,7 +16,7 @@ public class InfrastructureFixtures {
 	}
 
 	public static Infrastructure getInfrastructure(String name, String endPoint, String username, String credential) {
-		Infrastructure infrastructure = new Infrastructure();
+		Infrastructure infrastructure = new Infrastructure(name, endPoint, username, credential);
 		return infrastructure;
 	}
 
