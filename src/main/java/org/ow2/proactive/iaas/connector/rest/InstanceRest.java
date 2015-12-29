@@ -7,8 +7,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.iaas.connector.model.Instance;
@@ -30,30 +28,23 @@ public class InstanceRest {
 	@POST
 	@Consumes("application/json")
 	@Produces("application/json")
-	public Response createServer(final String instanceJson) {
+	public Response createInstance(final String instanceJson) {
 		Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
 		instanceService.createInstance(instance);
 		return Response.ok(instanceJson).build();
 	}
 
 	@GET
-	@Produces("application/json")
-	public Response listAllServer(@Context HttpHeaders headers) {
-		String infrastructureName = headers.getRequestHeader("name").get(0);
-		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
-	}
-
-	@GET
 	@Path("/{infrastructureName}/")
 	@Produces("application/json")
-	public Response listAllServer(@PathParam("infrastructureName") String infrastructureName) {
+	public Response listAllInstance(@PathParam("infrastructureName") String infrastructureName) {
 		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
 	}
 
 	@DELETE
 	@Path("/{infrastructureName}/{instanceID}")
 	@Produces("application/json")
-	public Response deleteServer(@PathParam("infrastructureName") String infrastructureName,
+	public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName,
 			@PathParam("instanceID") String instanceID) {
 		instanceService.deleteInstance(infrastructureName, instanceID);
 		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();

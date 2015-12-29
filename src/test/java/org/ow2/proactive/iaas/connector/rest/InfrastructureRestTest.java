@@ -14,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
-import org.ow2.proactive.iaas.connector.rest.InfrastructureRest;
+import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.ow2.proactive.iaas.connector.service.InfrastructureService;
 
 import jersey.repackaged.com.google.common.collect.Maps;
@@ -26,9 +26,17 @@ public class InfrastructureRestTest {
 	@Mock
 	private InfrastructureService infrastructureService;
 
+	private String infrastructureStringFixture;
+
+	private Infrastructure infrastructureFixture;
+
 	@Before
 	public void init() {
 		MockitoAnnotations.initMocks(this);
+		infrastructureStringFixture = InfrastructureFixtures.getInfrastructureAsaString("openstack", "endPoint",
+				"userName", "credential");
+		infrastructureFixture = InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName",
+				"credential");
 	}
 
 	@Test
@@ -41,13 +49,33 @@ public class InfrastructureRestTest {
 
 	@Test
 	public void testRegisterInfrastructure() {
-		when(infrastructureService.getAllSupportedInfrastructure()).thenReturn(Maps.newHashMap());
-		assertThat(infrastructureRest.registerInfrastructure(
-				InfrastructureFixtures.getInfrastructureAsaString("openstack", "endPoint", "userName", "credential"))
-				.getStatus(), is(Response.Status.OK.getStatusCode()));
-		verify(infrastructureService, times(1)).registerInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+		assertThat(infrastructureRest.registerInfrastructure(infrastructureStringFixture).getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(infrastructureService, times(1)).registerInfrastructure(infrastructureFixture);
 		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
+	}
+
+	@Test
+	public void testDeleteInfrastructureByName() {
+		assertThat(infrastructureRest.deleteInfrastructureByName("openstack").getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(infrastructureService, times(1)).deleteInfrastructure(("openstack"));
+		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
+	}
+
+	@Test
+	public void testGetInfrastructureByName() {
+		assertThat(infrastructureRest.getInfrastructureByName("openstack").getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(infrastructureService, times(1)).getInfrastructurebyName(("openstack"));
+	}
+
+	@Test
+	public void testUpdateInfrastructureByName() {
+		assertThat(infrastructureRest.updateInfrastructure(infrastructureStringFixture, "openstack").getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
+		verify(infrastructureService, times(1)).updateInfrastructure("openstack", infrastructureFixture);
 	}
 
 }
