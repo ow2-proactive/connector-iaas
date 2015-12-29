@@ -9,7 +9,7 @@ import org.jclouds.aws.ec2.compute.AWSEC2ComputeService;
 import org.jclouds.compute.ComputeService;
 import org.junit.Before;
 import org.junit.Test;
-import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 
 public class ComputeServiceBuilderTest {
 
@@ -23,7 +23,7 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWS() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixtures.getInfrastructure(ComputeServiceBuilder.AWS_INFASTRUCTURE_NAME, "endPoint",
+				InfrastructureFixture.getInfrastructure(ComputeServiceBuilder.AWS_INFASTRUCTURE_NAME, "endPoint",
 						"userName", "credential"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
@@ -32,7 +32,7 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureOpenstack() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack-nova", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack-nova", "endPoint", "userName", "credential"));
 
 		assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
 	}

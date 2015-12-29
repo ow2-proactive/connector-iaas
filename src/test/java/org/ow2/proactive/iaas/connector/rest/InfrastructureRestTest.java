@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.rest.InfrastructureRest;
 import org.ow2.proactive.iaas.connector.service.InfrastructureService;
 
@@ -43,10 +43,10 @@ public class InfrastructureRestTest {
 	public void testRegisterInfrastructure() {
 		when(infrastructureService.getAllSupportedInfrastructure()).thenReturn(Maps.newHashMap());
 		assertThat(infrastructureRest.registerInfrastructure(
-				InfrastructureFixtures.getInfrastructureAsaString("openstack", "endPoint", "userName", "credential"))
+				InfrastructureFixture.getInfrastructureAsaString("openstack", "endPoint", "userName", "credential"))
 				.getStatus(), is(Response.Status.OK.getStatusCode()));
 		verify(infrastructureService, times(1)).registerInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
 	}
 

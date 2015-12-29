@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
 public class InfrastructureCacheTest {
@@ -29,25 +29,25 @@ public class InfrastructureCacheTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void testImmutability() {
 		((Map<String, Infrastructure>) infrastructureCache.getSupportedInfrastructures()).put("openstack",
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 	}
 
 	@Test
 	public void testRegisterInfrastructure() {
 		infrastructureCache.registerInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 		assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
 		assertThat(infrastructureCache.getSupportedInfrastructures().get("openstack"),
-				is(InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential")));
+				is(InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential")));
 	}
 
 	@Test
 	public void testDeleteInfrastructure() {
 		infrastructureCache.registerInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 
 		infrastructureCache.deleteInfrastructure(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 
 		assertThat(infrastructureCache.getSupportedInfrastructures(), is(not(nullValue())));
 		assertThat(infrastructureCache.getSupportedInfrastructures().isEmpty(), is(true));

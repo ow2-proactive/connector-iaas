@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
 public class ComputeServiceCacheTest {
@@ -39,35 +39,35 @@ public class ComputeServiceCacheTest {
 	@Test
 	public void testGetComputeServiceFirstTime() {
 		ComputeService computeService = computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		assertThat(computeService, is(not(nullValue())));
 		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 	}
 
 	@Test
 	public void testGetComputeServiceManyTimeSameInfrastructure() {
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 
 		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 	}
 
 	@Test
 	public void testGetComputeServiceDifferentInfrastructure() {
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("openstack", "endPoint", "userName", "credential"));
 
 		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(any(Infrastructure.class));
 	}
@@ -75,16 +75,16 @@ public class ComputeServiceCacheTest {
 	@Test
 	public void testRemoveComputeService() {
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 
 		computeServiceCache.removeComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 
 		computeServiceCache.getComputeService(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 
 		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixtures.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "endPoint", "userName", "credential"));
 	}
 
 }
