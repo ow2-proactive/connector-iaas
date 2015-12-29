@@ -2,11 +2,11 @@ package org.ow2.proactive.iaas.connector.cache;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 import org.jclouds.aws.ec2.compute.AWSEC2ComputeService;
 import org.jclouds.compute.ComputeService;
-import org.jclouds.openstack.nova.v2_0.compute.NovaComputeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixtures;
@@ -34,7 +34,7 @@ public class ComputeServiceBuilderTest {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
 				InfrastructureFixtures.getInfrastructure("openstack-nova", "endPoint", "userName", "credential"));
 
-		assertThat(computerService, is(instanceOf(NovaComputeService.class)));
+		assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
 	}
 
 }
