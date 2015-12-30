@@ -23,8 +23,15 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWS() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure(ComputeServiceBuilder.AWS_INFASTRUCTURE_NAME, "endPoint",
-						"userName", "credential"));
+				InfrastructureFixture.getInfrastructure("aws-ec2", "", "userName", "credential"));
+
+		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
+	}
+	
+	@Test
+	public void testBuildComputeServiceFromInfrastructureAWSNullEndPoint() {
+		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
+				InfrastructureFixture.getInfrastructure("aws-ec2", null, "userName", "credential"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
