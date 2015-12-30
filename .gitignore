@@ -3,7 +3,7 @@
 .project
 .settings/
 .gradle
-.DS_Store/
+/.DS_Store/
 /build
 .idea/
 smart-watch.iml
