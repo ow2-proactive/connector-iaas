@@ -57,7 +57,9 @@ dependencies {
     compile ('org.apache.jclouds.provider:aws-ec2:1.9.1'){
             exclude module : 'jsr311-api'
              }
-    
+    compile ('org.apache.jclouds.labs:docker:1.9.1'){
+            exclude module : 'jsr311-api'
+             }
 	compile files("$jdkHome/lib/tools.jar")
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile group: 'com.aol.microservices', name:'micro-grizzly-with-jersey', version:'0.62'

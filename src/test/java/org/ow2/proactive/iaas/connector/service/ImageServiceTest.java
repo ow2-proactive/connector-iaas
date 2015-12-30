@@ -41,11 +41,11 @@ public class ImageServiceTest {
 
 	@Test
 	public void testGetAllImages() {
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
 				"credential");
-		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
+		when(infrastructureService.getInfrastructurebyName(infrastructure.getName())).thenReturn(infrastructure);
 
-		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
 		Set images = Sets.newHashSet();
 		ImageImpl image = mock(ImageImpl.class);
@@ -53,7 +53,7 @@ public class ImageServiceTest {
 		images.add(image);
 		when(computeService.listImages()).thenReturn(images);
 
-		Set<String> allImages = imageService.getAllImages(infratructure.getName());
+		Set<String> allImages = imageService.getAllImages(infrastructure.getName());
 
 		assertThat(allImages.iterator().next(), is("someId"));
 
