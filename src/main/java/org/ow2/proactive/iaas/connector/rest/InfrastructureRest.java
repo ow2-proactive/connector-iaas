@@ -52,8 +52,7 @@ public class InfrastructureRest {
 	@Produces("application/json")
 	public Response registerInfrastructure(final String infrastructureJson) {
 		Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-		infrastructureService.registerInfrastructure(infrastructure);
-		return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+		return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
 	}
 
 	@PUT

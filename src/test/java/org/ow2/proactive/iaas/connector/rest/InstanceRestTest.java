@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.fixtures.InstanceFixtures;
+import org.ow2.proactive.iaas.connector.fixtures.InstanceFixture;
 import org.ow2.proactive.iaas.connector.model.Instance;
 import org.ow2.proactive.iaas.connector.service.InstanceService;
 
@@ -32,9 +32,10 @@ public class InstanceRestTest {
 	@Before
 	public void init() {
 		MockitoAnnotations.initMocks(this);
-		instanceStringFixture = InstanceFixtures.getInstanceAsaString("infrastructure", "name", "image", "number",
-				"cpu", "ram");
-		instanceFixture = InstanceFixtures.getInstance("infrastructure", "name", "image", "number", "cpu", "ram");
+		instanceStringFixture = InstanceFixture.getInstanceAsaString("instance-id", "name", "image", "number",
+				"cpu", "ram", "running", "infrastructure-id");
+		instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number",
+				"cpu", "ram", "running", "infrastructure-id");
 	}
 
 	@Test

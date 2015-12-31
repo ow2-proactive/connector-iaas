@@ -7,6 +7,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.iaas.connector.model.Instance;
@@ -30,24 +31,22 @@ public class InstanceRest {
 	@Produces("application/json")
 	public Response createInstance(final String instanceJson) {
 		Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-		instanceService.createInstance(instance);
-		return Response.ok(instanceJson).build();
+		return Response.ok(instanceService.createInstance(instance)).build();
 	}
 
 	@GET
-	@Path("/{infrastructureName}/")
+	@Path("of/{infrastructureName}/")
 	@Produces("application/json")
 	public Response listAllInstance(@PathParam("infrastructureName") String infrastructureName) {
 		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
 	}
 
 	@DELETE
-	@Path("/{infrastructureName}/{instanceID}")
+	@Path("of/{infrastructureName}/")
 	@Produces("application/json")
-	public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName,
-			@PathParam("instanceID") String instanceID) {
-		instanceService.deleteInstance(infrastructureName, instanceID);
-		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
+	public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName, @QueryParam("instanceId") String instanceId) {
+		instanceService.deleteInstance(infrastructureName, instanceId);
+		return Response.ok().build();
 	}
 
 }

@@ -5,11 +5,19 @@ import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.ComputeMetadataIncludingStatus;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadata.Status;
 import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.internal.ComputeMetadataImpl;
+import org.jclouds.compute.domain.internal.NodeMetadataImpl;
+import org.json.JSONObject;
 import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
 import org.ow2.proactive.iaas.connector.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.testng.internal.annotations.Sets;
 
 @Service
 public class InstanceService {
@@ -20,26 +28,42 @@ public class InstanceService {
 	@Autowired
 	private ComputeServiceCache computeServiceCache;
 
-	public void createInstance(Instance instance) {
-		ComputeService computeService = getComputeServiceFromInfastructureName(instance.getInfrastructure());
+	public Instance createInstance(Instance instance) {
+		ComputeService computeService = getComputeServiceFromInfastructureName(instance.getInfrastructureName());
 
 		Template template = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
 				.imageId(instance.getImage()).build();
 
+		Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
+		
 		try {
-			computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template);
+			 createdNodeMetaData = computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template);
 		} catch (RunNodesException e) {
 			throw new RuntimeException(e);
 		}
+		
+		return createdNodeMetaData.stream().findFirst().map(nodeMetaData -> instance.withId(nodeMetaData.getId())).get();
 
 	}
 
-	public void deleteInstance(String infrastructureName, String instanceID) {
-		getComputeServiceFromInfastructureName(infrastructureName).destroyNode(instanceID);
+	public void deleteInstance(String infrastructureName, String instanceId) {
+		getComputeServiceFromInfastructureName(infrastructureName).destroyNode(instanceId);
 	}
 
-	public Set<String> getAllInstances(String infrastructureName) {
-		return getComputeServiceFromInfastructureName(infrastructureName).listNodes().stream().map(it -> it.getId())
+	public Set<Instance> getAllInstances(String infrastructureName) {
+	
+		return getComputeServiceFromInfastructureName(infrastructureName).listNodes().stream()
+				.map(computeMetadata -> (NodeMetadataImpl)computeMetadata)
+				.map(nodeMetadataImpl -> Instance.builder()
+						.id(nodeMetadataImpl.getId())
+						.name(nodeMetadataImpl.getName())
+						.image(nodeMetadataImpl.getImageId())
+						.number("1")
+						.ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
+						.cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
+						.status(nodeMetadataImpl.getStatus().name())
+						.infrastructureName(infrastructureName)
+						.build())
 				.collect(Collectors.toSet());
 	}
 

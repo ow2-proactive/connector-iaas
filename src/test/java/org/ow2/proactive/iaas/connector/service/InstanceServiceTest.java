@@ -11,9 +11,12 @@ import java.util.Set;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ComputeMetadataImpl;
+import org.jclouds.compute.domain.internal.ImageImpl;
+import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -56,7 +59,7 @@ public class InstanceServiceTest {
 	@Test
 	public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
 
@@ -64,16 +67,27 @@ public class InstanceServiceTest {
 
 		when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-		Instance instance = InstanceFixture.getInstance(infratructure.getName(), "instance-name", "image", "2", "512",
-				"cpu");
+		Instance instance = InstanceFixture.getInstance( "instance-id", "instance-name", "image", "2", "512",
+				"cpu","running", infratructure.getName());
 
 		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 
 		when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
 		when(templateBuilder.build()).thenReturn(template);
+		
+		
+		Set nodesMetaData = Sets.newHashSet();
+		NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
+		when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
+		nodesMetaData.add(nodeMetadataImpl);
+		
+		
+		when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template)).thenReturn(nodesMetaData);
 
-		instanceService.createInstance(instance);
+		Instance created = instanceService.createInstance(instance);
+		
+		assertThat(created.getId(), is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
 
 		verify(computeService, times(1)).createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
 				template);
@@ -83,7 +97,7 @@ public class InstanceServiceTest {
 	@Test
 	public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
 
@@ -98,21 +112,21 @@ public class InstanceServiceTest {
 	@Test
 	public void testGetAllInstances() throws NumberFormatException, RunNodesException {
 
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
 		Set nodes = Sets.newHashSet();
-		ComputeMetadataImpl node = mock(ComputeMetadataImpl.class);
+		NodeMetadataImpl node = mock(NodeMetadataImpl.class);
 		when(node.getId()).thenReturn("someId");
 		nodes.add(node);
 		when(computeService.listNodes()).thenReturn(nodes);
 
-		Set<String> allNodes = instanceService.getAllInstances(infratructure.getName());
+		Set<Instance> allNodes = instanceService.getAllInstances(infratructure.getName());
 
-		assertThat(allNodes.iterator().next(), is("someId"));
+		assertThat(allNodes.iterator().next().getId(), is("someId"));
 
 	}
 }

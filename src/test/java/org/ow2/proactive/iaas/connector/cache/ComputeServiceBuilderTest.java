@@ -23,7 +23,7 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWS() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("aws-ec2", "", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2", "", "userName", "credential"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
@@ -31,7 +31,7 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWSNullEndPoint() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("aws-ec2", null, "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", null, "userName", "credential"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
@@ -39,7 +39,7 @@ public class ComputeServiceBuilderTest {
 	@Test
 	public void testBuildComputeServiceFromInfrastructureOpenstack() {
 		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("openstack-nova", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("id-openstack-nova","openstack-nova", "endPoint", "userName", "credential"));
 
 		assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
 	}

@@ -5,15 +5,15 @@ import org.ow2.proactive.iaas.connector.model.Instance;
 
 public class InstanceFixture {
 
-	public static String getInstanceAsaString(String infrastructure, String name, String image, String number,
-			String ram, String cpu) {
-		JSONObject jsonObject = new JSONObject(getInstanceAsaString(infrastructure, name, image, number, ram, cpu));
+	public static String getInstanceAsaString(String id, String name, String image, String number,
+			String ram, String cpu,String status, String infrastructureId) {
+		JSONObject jsonObject = new JSONObject(getInstance(id, name, image, number, ram, cpu, status, infrastructureId));
 		return jsonObject.toString();
 	}
 
-	public static Instance getInstance(String infrastructure, String name, String image, String number, String ram,
-			String cpu) {
-		return new Instance(infrastructure, name, image, number, ram, cpu);
+	public static Instance getInstance( String id, String name, String image, String number, String ram,
+			String cpu,String status, String infrastructureId) {
+		return new Instance(id, name, image, number, ram, cpu, status, infrastructureId);
 	}
 
 }

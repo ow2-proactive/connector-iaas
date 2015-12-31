@@ -44,7 +44,7 @@ public class InfrastructureServiceTest {
 
 	@Test
 	public void testRegisterInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
 				"credential");
 		infrastructureService.registerInfrastructure(infrastructure);
 		verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
@@ -52,7 +52,7 @@ public class InfrastructureServiceTest {
 
 	@Test
 	public void testGetInfrastructureByName() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
@@ -62,20 +62,20 @@ public class InfrastructureServiceTest {
 
 	@Test
 	public void testDeleteInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
 		infrastructureService.deleteInfrastructure("aws");
 
-		InOrder inOrder = inOrder(infrastructureCache, computeServiceCache);
-		inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
+		InOrder inOrder = inOrder(computeServiceCache,infrastructureCache);
 		inOrder.verify(computeServiceCache, times(1)).removeComputeService(infrastructure);
+		inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
 	}
 
 	@Test
 	public void testUpdateInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
 				"credential");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);

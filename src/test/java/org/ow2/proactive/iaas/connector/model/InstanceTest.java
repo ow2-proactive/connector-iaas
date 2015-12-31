@@ -19,14 +19,14 @@ public class InstanceTest {
 
 	@Test
 	public void testConstructor() {
-		Instance instance = new Instance("openstack", "vm", "ubuntu", "1", "1", "512");
-		assertThat(instance.getName(), is("vm"));
+		Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running", "id-openstack");
+		assertThat(instance.getName(), is("new-vm"));
 	}
 
 	@Test
 	public void testEqualsAndHashcode() {
-		Instance instance1 = new Instance("openstack", "vm", "ubuntu", "1", "1", "512");
-		Instance instance2 = new Instance("openstack", "vm", "ubuntu", "1", "1", "512");
+		Instance instance1 = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running", "id-openstack");
+		Instance instance2 = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running", "id-openstack");
 
 		Set<Instance> instances = Sets.newHashSet(instance1, instance2);
 

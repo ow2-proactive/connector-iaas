@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ComputeServiceBuilder {
 
 	public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
-		ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getName())
+		ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
 				.credentials(infrastructure.getUserName(), infrastructure.getCredential());
 
 		Optional.ofNullable(infrastructure.getEndPoint()).filter(endPoint -> !endPoint.isEmpty()).ifPresent(endPoint -> contextBuilder.endpoint(endPoint));

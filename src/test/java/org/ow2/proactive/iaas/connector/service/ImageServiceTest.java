@@ -41,7 +41,7 @@ public class ImageServiceTest {
 
 	@Test
 	public void testGetAllImages() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
 				"credential");
 		when(infrastructureService.getInfrastructurebyName(infrastructure.getName())).thenReturn(infrastructure);
 
@@ -61,7 +61,7 @@ public class ImageServiceTest {
 
 	@Test
 	public void testGetAllImagesEmptySet() {
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("aws", "endPoint", "userName",
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
 				"credential");
 		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
 

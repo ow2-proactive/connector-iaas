@@ -21,13 +21,15 @@ public class InfrastructureService {
 		return infrastructureCache.getSupportedInfrastructures();
 	}
 
-	public void registerInfrastructure(Infrastructure infrastructure) {
+	public Infrastructure registerInfrastructure(Infrastructure infrastructure) {
 		infrastructureCache.registerInfrastructure(infrastructure);
+		computeServiceCache.getComputeService(infrastructure);
+		return infrastructure;
 	}
 
-	public void deleteInfrastructure(String infrastructure) {
-		infrastructureCache.deleteInfrastructure(getInfrastructurebyName(infrastructure));
-		computeServiceCache.removeComputeService(getInfrastructurebyName(infrastructure));
+	public void deleteInfrastructure(String infrastructureName) {
+		computeServiceCache.removeComputeService(getInfrastructurebyName(infrastructureName));
+		infrastructureCache.deleteInfrastructure(getInfrastructurebyName(infrastructureName));
 	}
 
 	public Infrastructure getInfrastructurebyName(String infrastructureName) {
