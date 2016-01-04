@@ -52,7 +52,6 @@ public class InfrastructureRestTest {
 		assertThat(infrastructureRest.registerInfrastructure(infrastructureStringFixture).getStatus(),
 				is(Response.Status.OK.getStatusCode()));
 		verify(infrastructureService, times(1)).registerInfrastructure(infrastructureFixture);
-		verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
 	}
 
 	@Test

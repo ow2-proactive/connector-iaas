@@ -21,7 +21,7 @@ public class ImageRest {
 	private ImageService imageService;
 
 	@GET
-	@Path("/{infrastructureName}")
+	@Path("/of/{infrastructureName}")
 	@Produces("application/json")
 	public Response listAllImage(@PathParam("infrastructureName") String infrastructureName) {
 		return Response.ok(imageService.getAllImages(infrastructureName)).build();

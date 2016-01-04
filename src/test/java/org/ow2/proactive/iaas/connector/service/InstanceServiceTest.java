@@ -11,7 +11,9 @@ import java.util.Set;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadata.Status;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ComputeMetadataImpl;
@@ -27,6 +29,8 @@ import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.fixtures.InstanceFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.ow2.proactive.iaas.connector.model.Instance;
+
+import com.beust.jcommander.internal.Lists;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -121,6 +125,11 @@ public class InstanceServiceTest {
 		Set nodes = Sets.newHashSet();
 		NodeMetadataImpl node = mock(NodeMetadataImpl.class);
 		when(node.getId()).thenReturn("someId");
+		when(node.getName()).thenReturn("someName");
+		Hardware hardware = mock(Hardware.class);
+		when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
+		when(node.getHardware()).thenReturn(hardware);
+		when(node.getStatus()).thenReturn(Status.RUNNING);
 		nodes.add(node);
 		when(computeService.listNodes()).thenReturn(nodes);
 
