@@ -38,7 +38,7 @@ public class InstanceService {
 		
 		try {
 			 createdNodeMetaData = computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template);
-		} catch (RunNodesException e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		

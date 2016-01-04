@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
@@ -95,6 +96,38 @@ public class InstanceServiceTest {
 
 		verify(computeService, times(1)).createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
 				template);
+
+	}
+	
+	
+	@Test(expected=RuntimeException.class)
+	public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
+
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws","aws", "endPoint", "userName",
+				"credential");
+		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
+
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+
+		when(computeService.templateBuilder()).thenReturn(templateBuilder);
+
+		Instance instance = InstanceFixture.getInstance( "instance-id", "instance-name", "image", "2", "512",
+				"cpu","running", infratructure.getName());
+
+		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
+
+		when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
+
+		when(templateBuilder.build()).thenReturn(template);
+		
+		Set nodesMetaData = Sets.newHashSet();
+		NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
+		when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
+		nodesMetaData.add(nodeMetadataImpl);
+		
+		when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()), template)).thenThrow(new RuntimeException());
+		
+		instanceService.createInstance(instance);
 
 	}
 
