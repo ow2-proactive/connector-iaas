@@ -1,6 +1,7 @@
 package org.ow2.proactive.iaas.connector.service;
 
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
@@ -24,7 +25,7 @@ public class InstanceService {
     @Autowired
     private ComputeServiceCache computeServiceCache;
 
-    public Instance createInstance(Instance instance) {
+    public Set<Instance> createInstance(Instance instance) {
         ComputeService computeService = getComputeServiceFromInfastructureName(
                 instance.getInfrastructureName());
 
@@ -40,8 +41,10 @@ public class InstanceService {
             throw new RuntimeException(e);
         }
 
-        return createdNodeMetaData.stream().findFirst()
-                .map(nodeMetaData -> instance.withId(nodeMetaData.getId())).get();
+        return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
+                        instance.getInfrastructureName()))
+                .collect(Collectors.toSet());
 
     }
 
@@ -51,15 +54,10 @@ public class InstanceService {
 
     public Set<Instance> getAllInstances(String infrastructureName) {
 
-        return getComputeServiceFromInfastructureName(infrastructureName).listNodes()
-                .stream().map(
-                        computeMetadata -> (NodeMetadataImpl) computeMetadata)
-                .map(nodeMetadataImpl -> Instance.builder().id(nodeMetadataImpl.getId())
-                        .name(nodeMetadataImpl.getName()).image(nodeMetadataImpl.getImageId()).number("1")
-                        .ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
-                        .cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
-                        .status(nodeMetadataImpl.getStatus().name()).infrastructureName(infrastructureName)
-                        .build())
+        return getComputeServiceFromInfastructureName(infrastructureName).listNodes().stream()
+                .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
+                        infrastructureName))
                 .collect(Collectors.toSet());
     }
 
@@ -67,5 +65,14 @@ public class InstanceService {
         return computeServiceCache
                 .getComputeService(infrastructureService.getInfrastructurebyName(infrastructureName));
     }
+
+    private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
+            nodeMetadataImpl, infrastructureName) -> {
+        return Instance.builder().id(nodeMetadataImpl.getId()).name(nodeMetadataImpl.getName())
+                .image(nodeMetadataImpl.getImageId()).number("1")
+                .ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
+                .cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
+                .status(nodeMetadataImpl.getStatus().name()).infrastructureName(infrastructureName).build();
+    };
 
 }
