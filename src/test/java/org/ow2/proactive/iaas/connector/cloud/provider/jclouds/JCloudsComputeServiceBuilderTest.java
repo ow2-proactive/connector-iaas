@@ -1,4 +1,4 @@
-package org.ow2.proactive.iaas.connector.cache;
+package org.ow2.proactive.iaas.connector.cloud.provider.jclouds;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -9,16 +9,16 @@ import org.jclouds.aws.ec2.compute.AWSEC2ComputeService;
 import org.jclouds.compute.ComputeService;
 import org.junit.Before;
 import org.junit.Test;
-import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceBuilder;
+import org.ow2.proactive.iaas.connector.cloud.provider.jclouds.JCloudsComputeServiceBuilder;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 
-public class ComputeServiceBuilderTest {
+public class JCloudsComputeServiceBuilderTest {
 
-	private JCloudComputeServiceBuilder computeServiceBuilder;
+	private JCloudsComputeServiceBuilder computeServiceBuilder;
 
 	@Before
 	public void init() {
-		this.computeServiceBuilder = new JCloudComputeServiceBuilder();
+		this.computeServiceBuilder = new JCloudsComputeServiceBuilder();
 	}
 
 	@Test

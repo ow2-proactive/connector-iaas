@@ -1,4 +1,4 @@
-package org.ow2.proactive.iaas.connector.cloud.provider.jcloud;
+package org.ow2.proactive.iaas.connector.cloud.provider.jclouds;
 
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_PORT_OPEN;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE;
@@ -19,7 +19,7 @@ import com.google.inject.Module;
 
 
 @Component
-public class JCloudComputeServiceBuilder {
+public class JCloudsComputeServiceBuilder {
 
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());

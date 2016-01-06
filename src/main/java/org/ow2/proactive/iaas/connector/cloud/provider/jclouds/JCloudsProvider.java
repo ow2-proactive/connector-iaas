@@ -1,4 +1,4 @@
-package org.ow2.proactive.iaas.connector.cloud.provider.jcloud;
+package org.ow2.proactive.iaas.connector.cloud.provider.jclouds;
 
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
@@ -27,10 +27,10 @@ import com.google.common.collect.Sets;
 
 
 @Component("defaultCloudProvider")
-public class JCloudProvider implements CloudProvider {
+public class JCloudsProvider implements CloudProvider {
 
     @Autowired
-    private JCloudComputeServiceCache jCloudComputeServiceCache;
+    private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -102,12 +102,12 @@ public class JCloudProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        jCloudComputeServiceCache.removeComputeService(infrastructure);
+        jCloudsComputeServiceCache.removeComputeService(infrastructure);
 
     }
 
     private ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
-        return jCloudComputeServiceCache.getComputeService(infrastructure);
+        return jCloudsComputeServiceCache.getComputeService(infrastructure);
     }
 
     private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (

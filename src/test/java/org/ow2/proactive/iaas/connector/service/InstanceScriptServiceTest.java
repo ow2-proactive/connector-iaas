@@ -6,8 +6,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Set;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -15,16 +13,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.iaas.connector.cloud.CloudManager;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
-import org.ow2.proactive.iaas.connector.model.Image;
+import org.ow2.proactive.iaas.connector.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
+import org.ow2.proactive.iaas.connector.model.InstanceScript;
+import org.ow2.proactive.iaas.connector.model.ScriptResult;
 
-import jersey.repackaged.com.google.common.collect.Sets;
 
-
-public class ImageServiceTest {
+public class InstanceScriptServiceTest {
 
     @InjectMocks
-    private ImageService imageService;
+    private InstanceScriptService instanceScriptService;
 
     @Mock
     private InfrastructureService infrastructureService;
@@ -38,24 +36,24 @@ public class ImageServiceTest {
     }
 
     @Test
-    public void testGetAllImages() {
+    public void testExecuteScriptOnInstance() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
         when(infrastructureService.getInfrastructurebyName(infrastructure.getName()))
                 .thenReturn(infrastructure);
 
-        Set<Image> images = Sets.newHashSet();
+        InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts("id");
 
-        images.add(new Image("id", "name"));
+        when(cloudManager.executeScript(infrastructure, instanceScript))
+                .thenReturn(new ScriptResult("output", "error"));
 
-        when(cloudManager.getAllImages(infrastructure)).thenReturn(images);
+        ScriptResult scriptResult = instanceScriptService.executeScriptOnInstance(infrastructure.getName(),
+                instanceScript);
 
-        Set<Image> allImages = imageService.getAllImages(infrastructure.getName());
+        assertThat(scriptResult.getOutput(), is(scriptResult.getOutput()));
+        assertThat(scriptResult.getError(), is(scriptResult.getError()));
 
-        assertThat(allImages.iterator().next().getId(), is("id"));
-        assertThat(allImages.iterator().next().getName(), is("name"));
-
-        verify(cloudManager, times(1)).getAllImages(infrastructure);
+        verify(cloudManager, times(1)).executeScript(infrastructure, instanceScript);
 
     }
 

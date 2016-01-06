@@ -16,7 +16,7 @@ public class InstanceScriptService {
     @Autowired
     private CloudManager cloudManager;
 
-    public ScriptResult runScriptOnInstance(String infrastructureName, InstanceScript instanceScript) {
+    public ScriptResult executeScriptOnInstance(String infrastructureName, InstanceScript instanceScript) {
         return cloudManager.executeScript(infrastructureService.getInfrastructurebyName(infrastructureName),
                 instanceScript);
 

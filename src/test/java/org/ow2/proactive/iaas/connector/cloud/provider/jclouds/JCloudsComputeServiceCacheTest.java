@@ -1,4 +1,4 @@
-package org.ow2.proactive.iaas.connector.cache;
+package org.ow2.proactive.iaas.connector.cloud.provider.jclouds;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -15,18 +15,18 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceBuilder;
-import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceCache;
+import org.ow2.proactive.iaas.connector.cloud.provider.jclouds.JCloudsComputeServiceBuilder;
+import org.ow2.proactive.iaas.connector.cloud.provider.jclouds.JCloudsComputeServiceCache;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
-public class ComputeServiceCacheTest {
+public class JCloudsComputeServiceCacheTest {
 
 	@InjectMocks
-	private JCloudComputeServiceCache computeServiceCache;
+	private JCloudsComputeServiceCache computeServiceCache;
 
 	@Mock
-	private JCloudComputeServiceBuilder computeServiceBuilder;
+	private JCloudsComputeServiceBuilder computeServiceBuilder;
 
 	@Mock
 	private ComputeService computeService;

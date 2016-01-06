@@ -28,10 +28,10 @@ public class InstanceScriptRest {
     @Path("{infrastructureName}/scripts")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response createInstance(@PathParam("infrastructureName") String infrastructureName,
+    public Response executeScript(@PathParam("infrastructureName") String infrastructureName,
             final String instanceScriptJson) {
         InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
-        return Response.ok(instanceScriptService.runScriptOnInstance(infrastructureName, instanceScript))
+        return Response.ok(instanceScriptService.executeScriptOnInstance(infrastructureName, instanceScript))
                 .build();
     }
 

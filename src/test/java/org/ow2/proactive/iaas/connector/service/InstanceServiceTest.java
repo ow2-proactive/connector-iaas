@@ -2,32 +2,23 @@ package org.ow2.proactive.iaas.connector.service;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
-import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.NodeMetadata.Status;
-import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceCache;
+import org.ow2.proactive.iaas.connector.cloud.CloudManager;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.fixtures.InstanceFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 import org.ow2.proactive.iaas.connector.model.Instance;
-
-import com.beust.jcommander.internal.Lists;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -41,16 +32,7 @@ public class InstanceServiceTest {
     private InfrastructureService infrastructureService;
 
     @Mock
-    private JCloudComputeServiceCache computeServiceCache;
-
-    @Mock
-    private ComputeService computeService;
-
-    @Mock
-    private TemplateBuilder templateBuilder;
-
-    @Mock
-    private Template template;
+    private CloudManager cloudManager;
 
     @Before
     public void init() {
@@ -66,75 +48,17 @@ public class InstanceServiceTest {
         when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
                 .thenReturn(infratructure);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
-
-        when(computeService.templateBuilder()).thenReturn(templateBuilder);
-
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
                 "cpu", "running", infratructure.getName());
 
-        when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
-
-        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
-
-        when(templateBuilder.build()).thenReturn(template);
-
-        Set nodes = Sets.newHashSet();
-        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-        when(node.getName()).thenReturn("someName");
-        Hardware hardware = mock(Hardware.class);
-        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
-        nodes.add(node);
-        when(computeService.listNodes()).thenReturn(nodes);
-
-        when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
-                template)).thenReturn(nodes);
+        when(cloudManager.createInstance(infratructure, instance))
+                .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
 
         Set<Instance> created = instanceService.createInstance(instance);
 
         assertThat(created.size(), is(1));
 
-        assertThat(created.stream().findAny().get().getId(),
-                is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
-
-        verify(computeService, times(1)).createNodesInGroup(instance.getName(),
-                Integer.parseInt(instance.getNumber()), template);
-
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
-
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
-                .thenReturn(infratructure);
-
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
-
-        when(computeService.templateBuilder()).thenReturn(templateBuilder);
-
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getName());
-
-        when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
-
-        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
-
-        when(templateBuilder.build()).thenReturn(template);
-
-        Set nodesMetaData = Sets.newHashSet();
-        NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
-        when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-        nodesMetaData.add(nodeMetadataImpl);
-
-        when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
-                template)).thenThrow(new RuntimeException());
-
-        instanceService.createInstance(instance);
+        verify(cloudManager, times(1)).createInstance(infratructure, instance);
 
     }
 
@@ -146,11 +70,9 @@ public class InstanceServiceTest {
         when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
                 .thenReturn(infratructure);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
-
         instanceService.deleteInstance(infratructure.getName(), "instanceID");
 
-        verify(computeService, times(1)).destroyNode("instanceID");
+        verify(cloudManager, times(1)).deleteInstance(infratructure, "instanceID");
 
     }
 
@@ -162,22 +84,17 @@ public class InstanceServiceTest {
         when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
                 .thenReturn(infratructure);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
+                "cpu", "running", infratructure.getName());
 
-        Set nodes = Sets.newHashSet();
-        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("someId");
-        when(node.getName()).thenReturn("someName");
-        Hardware hardware = mock(Hardware.class);
-        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
-        nodes.add(node);
-        when(computeService.listNodes()).thenReturn(nodes);
+        when(cloudManager.getAllInfrastructureInstances(infratructure))
+                .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
 
-        Set<Instance> allNodes = instanceService.getAllInstances(infratructure.getName());
+        Set<Instance> created = instanceService.getAllInstances(infratructure.getName());
 
-        assertThat(allNodes.iterator().next().getId(), is("someId"));
+        assertThat(created.size(), is(1));
+
+        verify(cloudManager, times(1)).getAllInfrastructureInstances(infratructure);
 
     }
 }
