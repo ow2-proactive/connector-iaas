@@ -82,4 +82,14 @@ public class InfrastructureServiceTest {
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
         inOrder.verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
     }
+
+    @Test
+    public void testGetAllSupportedInfrastructure() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+        mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        assertThat(infrastructureService.getAllSupportedInfrastructure().get("aws"), is(infrastructure));
+        assertThat(infrastructureService.getAllSupportedInfrastructure().size(), is(1));
+    }
 }
