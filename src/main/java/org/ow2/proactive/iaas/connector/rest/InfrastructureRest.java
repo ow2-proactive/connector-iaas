@@ -18,52 +18,53 @@ import org.springframework.stereotype.Component;
 import com.aol.micro.server.auto.discovery.Rest;
 import com.aol.micro.server.rest.jackson.JacksonUtil;
 
-@Path("/infrastructure")
+
+@Path("/infrastructures")
 @Component
 @Rest(isSingleton = true)
 public class InfrastructureRest {
 
-	@Autowired
-	private InfrastructureService infrastructureService;
+    @Autowired
+    private InfrastructureService infrastructureService;
 
-	@GET
-	@Produces("application/json")
-	public Response getAllSupportedInfrastructure() {
-		return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
-	}
+    @GET
+    @Produces("application/json")
+    public Response getAllSupportedInfrastructure() {
+        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+    }
 
-	@GET
-	@Path("/{infrastructureName}")
-	@Produces("application/json")
-	public Response getInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
-		return Response.ok(infrastructureService.getInfrastructurebyName(infrastructureName)).build();
-	}
+    @GET
+    @Path("/{infrastructureName}")
+    @Produces("application/json")
+    public Response getInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
+        return Response.ok(infrastructureService.getInfrastructurebyName(infrastructureName)).build();
+    }
 
-	@DELETE
-	@Path("/{infrastructureName}")
-	@Produces("application/json")
-	public Response deleteInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
-		infrastructureService.deleteInfrastructure(infrastructureName);
-		return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
-	}
+    @DELETE
+    @Path("/{infrastructureName}")
+    @Produces("application/json")
+    public Response deleteInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
+        infrastructureService.deleteInfrastructure(infrastructureName);
+        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+    }
 
-	@POST
-	@Consumes("application/json")
-	@Produces("application/json")
-	public Response registerInfrastructure(final String infrastructureJson) {
-		Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-		return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
-	}
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response registerInfrastructure(final String infrastructureJson) {
+        Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
+        return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
+    }
 
-	@PUT
-	@Path("/{infrastructureName}")
-	@Consumes("application/json")
-	@Produces("application/json")
-	public Response updateInfrastructure(final String infrastructureJson,
-			@PathParam("infrastructureName") String infrastructureName) {
-		Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-		infrastructureService.updateInfrastructure(infrastructureName, infrastructure);
-		return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
-	}
+    @PUT
+    @Path("/{infrastructureName}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response updateInfrastructure(final String infrastructureJson,
+            @PathParam("infrastructureName") String infrastructureName) {
+        Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
+        infrastructureService.updateInfrastructure(infrastructureName, infrastructure);
+        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+    }
 
 }

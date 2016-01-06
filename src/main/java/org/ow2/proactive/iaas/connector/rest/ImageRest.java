@@ -12,19 +12,20 @@ import org.springframework.stereotype.Component;
 
 import com.aol.micro.server.auto.discovery.Rest;
 
-@Path("/image")
+
+@Path("/infrastructures")
 @Component
 @Rest(isSingleton = true)
 public class ImageRest {
 
-	@Autowired
-	private ImageService imageService;
+    @Autowired
+    private ImageService imageService;
 
-	@GET
-	@Path("/of/{infrastructureName}")
-	@Produces("application/json")
-	public Response listAllImage(@PathParam("infrastructureName") String infrastructureName) {
-		return Response.ok(imageService.getAllImages(infrastructureName)).build();
-	}
+    @GET
+    @Path("{infrastructureName}/images")
+    @Produces("application/json")
+    public Response listAllImage(@PathParam("infrastructureName") String infrastructureName) {
+        return Response.ok(imageService.getAllImages(infrastructureName)).build();
+    }
 
 }

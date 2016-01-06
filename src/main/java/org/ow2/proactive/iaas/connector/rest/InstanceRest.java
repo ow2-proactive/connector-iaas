@@ -18,35 +18,38 @@ import org.springframework.stereotype.Component;
 import com.aol.micro.server.auto.discovery.Rest;
 import com.aol.micro.server.rest.jackson.JacksonUtil;
 
-@Path("/instance")
+
+@Path("/infrastructures")
 @Component
 @Rest(isSingleton = true)
 public class InstanceRest {
 
-	@Autowired
-	private InstanceService instanceService;
+    @Autowired
+    private InstanceService instanceService;
 
-	@POST
-	@Consumes("application/json")
-	@Produces("application/json")
-	public Response createInstance(final String instanceJson) {
-		Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-		return Response.ok(instanceService.createInstance(instance)).build();
-	}
+    @POST
+    @Consumes("application/json")
+    @Produces("application/json")
+    @Path("{infrastructureName}/instances")
+    public Response createInstance(final String instanceJson) {
+        Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+        return Response.ok(instanceService.createInstance(instance)).build();
+    }
 
-	@GET
-	@Path("of/{infrastructureName}/")
-	@Produces("application/json")
-	public Response listAllInstance(@PathParam("infrastructureName") String infrastructureName) {
-		return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
-	}
+    @GET
+    @Path("{infrastructureName}/instances")
+    @Produces("application/json")
+    public Response listAllInstance(@PathParam("infrastructureName") String infrastructureName) {
+        return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
+    }
 
-	@DELETE
-	@Path("of/{infrastructureName}/")
-	@Produces("application/json")
-	public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName, @QueryParam("instanceId") String instanceId) {
-		instanceService.deleteInstance(infrastructureName, instanceId);
-		return Response.ok().build();
-	}
+    @DELETE
+    @Path("{infrastructureName}/instances")
+    @Produces("application/json")
+    public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName,
+            @QueryParam("instanceId") String instanceId) {
+        instanceService.deleteInstance(infrastructureName, instanceId);
+        return Response.ok().build();
+    }
 
 }
