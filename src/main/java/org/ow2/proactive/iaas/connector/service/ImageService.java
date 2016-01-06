@@ -1,29 +1,24 @@
 package org.ow2.proactive.iaas.connector.service;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.jclouds.compute.ComputeService;
-import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
+import org.ow2.proactive.iaas.connector.cloud.CloudManager;
+import org.ow2.proactive.iaas.connector.model.Image;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class ImageService {
 
-	@Autowired
-	private InfrastructureService infrastructureService;
+    @Autowired
+    private InfrastructureService infrastructureService;
 
-	@Autowired
-	private ComputeServiceCache computeServiceCache;
+    @Autowired
+    private CloudManager cloudManager;
 
-	public Set<String> getAllImages(String infrastructureName) {
-
-		ComputeService computeService = computeServiceCache
-				.getComputeService(infrastructureService.getInfrastructurebyName(infrastructureName));
-
-		return computeService.listImages().stream().map(it -> it.getId()).collect(Collectors.toSet());
-
-	}
+    public Set<Image> getAllImages(String infrastructureName) {
+        return cloudManager.getAllImages(infrastructureService.getInfrastructurebyName(infrastructureName));
+    }
 
 }

@@ -14,8 +14,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
 import org.ow2.proactive.iaas.connector.cache.InfrastructureCache;
+import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceCache;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
@@ -30,7 +30,7 @@ public class InfrastructureServiceTest {
 	private InfrastructureCache infrastructureCache;
 
 	@Mock
-	private ComputeServiceCache computeServiceCache;
+	private JCloudComputeServiceCache computeServiceCache;
 
 	@Mock
 	private ComputeService infrastructure;

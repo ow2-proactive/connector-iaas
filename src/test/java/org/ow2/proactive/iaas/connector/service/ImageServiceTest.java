@@ -14,66 +14,70 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.iaas.connector.cache.ComputeServiceCache;
+import org.ow2.proactive.iaas.connector.cloud.provider.jcloud.JCloudComputeServiceCache;
 import org.ow2.proactive.iaas.connector.fixtures.InfrastructureFixture;
+import org.ow2.proactive.iaas.connector.model.Image;
 import org.ow2.proactive.iaas.connector.model.Infrastructure;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
+
 public class ImageServiceTest {
 
-	@InjectMocks
-	private ImageService imageService;
+    @InjectMocks
+    private ImageService imageService;
 
-	@Mock
-	private InfrastructureService infrastructureService;
+    @Mock
+    private InfrastructureService infrastructureService;
 
-	@Mock
-	private ComputeServiceCache computeServiceCache;
+    @Mock
+    private JCloudComputeServiceCache computeServiceCache;
 
-	@Mock
-	private ComputeService computeService;
+    @Mock
+    private ComputeService computeService;
 
-	@Before
-	public void init() {
-		MockitoAnnotations.initMocks(this);
-	}
+    @Before
+    public void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
-	@Test
-	public void testGetAllImages() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
-		when(infrastructureService.getInfrastructurebyName(infrastructure.getName())).thenReturn(infrastructure);
+    @Test
+    public void testGetAllImages() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+        when(infrastructureService.getInfrastructurebyName(infrastructure.getName()))
+                .thenReturn(infrastructure);
 
-		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-		Set images = Sets.newHashSet();
-		ImageImpl image = mock(ImageImpl.class);
-		when(image.getId()).thenReturn("someId");
-		images.add(image);
-		when(computeService.listImages()).thenReturn(images);
+        Set images = Sets.newHashSet();
+        ImageImpl image = mock(ImageImpl.class);
+        when(image.getId()).thenReturn("someId");
+        images.add(image);
+        when(computeService.listImages()).thenReturn(images);
 
-		Set<String> allImages = imageService.getAllImages(infrastructure.getName());
+        Set<Image> allImages = imageService.getAllImages(infrastructure.getName());
 
-		assertThat(allImages.iterator().next(), is("someId"));
+        assertThat(allImages.iterator().next(), is("someId"));
 
-	}
+    }
 
-	@Test
-	public void testGetAllImagesEmptySet() {
-		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
-		when(infrastructureService.getInfrastructurebyName(infratructure.getName())).thenReturn(infratructure);
+    @Test
+    public void testGetAllImagesEmptySet() {
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+        when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
+                .thenReturn(infratructure);
 
-		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-		Set images = Sets.newHashSet();
-		when(computeService.listImages()).thenReturn(images);
+        Set images = Sets.newHashSet();
+        when(computeService.listImages()).thenReturn(images);
 
-		Set<String> allImages = imageService.getAllImages(infratructure.getName());
+        Set<Image> allImages = imageService.getAllImages(infratructure.getName());
 
-		assertThat(allImages.isEmpty(), is(true));
+        assertThat(allImages.isEmpty(), is(true));
 
-	}
+    }
 
 }

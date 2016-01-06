@@ -1,4 +1,4 @@
-package org.ow2.proactive.iaas.connector.cache;
+package org.ow2.proactive.iaas.connector.cloud.provider.jcloud;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,14 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ComputeServiceCache {
+public class JCloudComputeServiceCache {
 
 	@Autowired
-	private ComputeServiceBuilder computeServiceBuilder;
+	private JCloudComputeServiceBuilder computeServiceBuilder;
 
 	private Map<Infrastructure, ComputeService> computeServiceCache;
 
-	public ComputeServiceCache() {
+	public JCloudComputeServiceCache() {
 		computeServiceCache = new ConcurrentHashMap<Infrastructure, ComputeService>();
 	}
 
