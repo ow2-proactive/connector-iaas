@@ -17,8 +17,6 @@ import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.service.InfrastructureService;
-import org.ow2.proactive.connector.iaas.service.InstanceScriptService;
 
 
 public class InstanceScriptServiceTest {
@@ -41,7 +39,7 @@ public class InstanceScriptServiceTest {
     public void testExecuteScriptOnInstance() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infrastructure.getName()))
+        when(infrastructureService.getInfrastructurebyName(infrastructure.getId()))
                 .thenReturn(infrastructure);
 
         InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts("id");
@@ -49,7 +47,7 @@ public class InstanceScriptServiceTest {
         when(cloudManager.executeScript(infrastructure, instanceScript))
                 .thenReturn(new ScriptResult("output", "error"));
 
-        ScriptResult scriptResult = instanceScriptService.executeScriptOnInstance(infrastructure.getName(),
+        ScriptResult scriptResult = instanceScriptService.executeScriptOnInstance(infrastructure.getId(),
                 instanceScript);
 
         assertThat(scriptResult.getOutput(), is(scriptResult.getOutput()));

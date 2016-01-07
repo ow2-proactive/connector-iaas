@@ -19,8 +19,6 @@ import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.service.InfrastructureService;
-import org.ow2.proactive.connector.iaas.service.InstanceService;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -47,11 +45,10 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
-                .thenReturn(infratructure);
+        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getName());
+                "cpu", "running", infratructure.getId());
 
         when(cloudManager.createInstance(infratructure, instance))
                 .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
@@ -69,10 +66,9 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
-                .thenReturn(infratructure);
+        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
 
-        instanceService.deleteInstance(infratructure.getName(), "instanceID");
+        instanceService.deleteInstance(infratructure.getId(), "instanceID");
 
         verify(cloudManager, times(1)).deleteInstance(infratructure, "instanceID");
 
@@ -83,16 +79,15 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getName()))
-                .thenReturn(infratructure);
+        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getName());
+                "cpu", "running", infratructure.getId());
 
         when(cloudManager.getAllInfrastructureInstances(infratructure))
                 .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
 
-        Set<Instance> created = instanceService.getAllInstances(infratructure.getName());
+        Set<Instance> created = instanceService.getAllInstances(infratructure.getId());
 
         assertThat(created.size(), is(1));
 

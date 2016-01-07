@@ -65,7 +65,7 @@ public class JCloudsProvider implements CloudProvider {
         return getComputeServiceFromInfastructure(infrastructure).listNodes().stream()
                 .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
                 .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                        infrastructure.getName()))
+                        infrastructure.getId()))
                 .collect(Collectors.toSet());
     }
 

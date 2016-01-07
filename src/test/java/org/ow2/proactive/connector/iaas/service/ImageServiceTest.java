@@ -17,8 +17,6 @@ import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.service.ImageService;
-import org.ow2.proactive.connector.iaas.service.InfrastructureService;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -43,7 +41,7 @@ public class ImageServiceTest {
     public void testGetAllImages() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infrastructure.getName()))
+        when(infrastructureService.getInfrastructurebyName(infrastructure.getId()))
                 .thenReturn(infrastructure);
 
         Set<Image> images = Sets.newHashSet();
@@ -52,7 +50,7 @@ public class ImageServiceTest {
 
         when(cloudManager.getAllImages(infrastructure)).thenReturn(images);
 
-        Set<Image> allImages = imageService.getAllImages(infrastructure.getName());
+        Set<Image> allImages = imageService.getAllImages(infrastructure.getId());
 
         assertThat(allImages.iterator().next().getId(), is("id"));
         assertThat(allImages.iterator().next().getName(), is("name"));
