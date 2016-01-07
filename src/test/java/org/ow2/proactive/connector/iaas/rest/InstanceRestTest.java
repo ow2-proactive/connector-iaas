@@ -48,17 +48,17 @@ public class InstanceRestTest {
 
 	@Test
 	public void testListAllInstance() {
-		when(instanceService.getAllInstances("infrastructureName")).thenReturn(Sets.newHashSet());
-		assertThat(instanceRest.listAllInstance("infrastructureName").getStatus(),
+		when(instanceService.getAllInstances("infrastructureId")).thenReturn(Sets.newHashSet());
+		assertThat(instanceRest.listAllInstance("infrastructureId").getStatus(),
 				is(Response.Status.OK.getStatusCode()));
-		verify(instanceService, times(1)).getAllInstances("infrastructureName");
+		verify(instanceService, times(1)).getAllInstances("infrastructureId");
 	}
 
 	@Test
 	public void testDeleteInstance() {
-		assertThat(instanceRest.deleteInstance("infrastructureName", "instanceID").getStatus(),
+		assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID").getStatus(),
 				is(Response.Status.OK.getStatusCode()));
-		verify(instanceService, times(1)).deleteInstance("infrastructureName", "instanceID");
+		verify(instanceService, times(1)).deleteInstance("infrastructureId", "instanceID");
 	}
 
 }

@@ -4,7 +4,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -34,17 +33,17 @@ public class InfrastructureRest {
     }
 
     @GET
-    @Path("/{infrastructureName}")
+    @Path("/{infrastructureId}")
     @Produces("application/json")
-    public Response getInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
-        return Response.ok(infrastructureService.getInfrastructurebyName(infrastructureName)).build();
+    public Response getInfrastructure(@PathParam("infrastructureId") String infrastructureId) {
+        return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
     }
 
     @DELETE
-    @Path("/{infrastructureName}")
+    @Path("/{infrastructureId}")
     @Produces("application/json")
-    public Response deleteInfrastructureByName(@PathParam("infrastructureName") String infrastructureName) {
-        infrastructureService.deleteInfrastructure(infrastructureName);
+    public Response deleteInfrastructureByName(@PathParam("infrastructureId") String infrastructureId) {
+        infrastructureService.deleteInfrastructure(infrastructureService.getInfrastructure(infrastructureId));
         return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 
@@ -54,17 +53,6 @@ public class InfrastructureRest {
     public Response registerInfrastructure(final String infrastructureJson) {
         Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
         return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
-    }
-
-    @PUT
-    @Path("/{infrastructureName}")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public Response updateInfrastructure(final String infrastructureJson,
-            @PathParam("infrastructureName") String infrastructureName) {
-        Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-        infrastructureService.updateInfrastructure(infrastructureName, infrastructure);
-        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 
 }

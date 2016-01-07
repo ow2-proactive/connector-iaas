@@ -40,7 +40,7 @@ public class InstanceScriptRestTest {
                 Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
         assertThat(
                 instanceScriptRest
-                        .executeScript("infrastructureName",
+                        .executeScript("infrastructureId",
                                 InstanceScriptFixture.getInstanceScriptAsaString("id", new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));

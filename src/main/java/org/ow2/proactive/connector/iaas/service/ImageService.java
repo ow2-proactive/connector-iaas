@@ -17,8 +17,8 @@ public class ImageService {
     @Autowired
     private CloudManager cloudManager;
 
-    public Set<Image> getAllImages(String infrastructureName) {
-        return cloudManager.getAllImages(infrastructureService.getInfrastructurebyName(infrastructureName));
+    public Set<Image> getAllImages(String infrastructureId) {
+        return cloudManager.getAllImages(infrastructureService.getInfrastructure(infrastructureId));
     }
 
 }

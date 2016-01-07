@@ -30,25 +30,25 @@ public class InstanceRest {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    @Path("{infrastructureName}/instances")
+    @Path("{infrastructureId}/instances")
     public Response createInstance(final String instanceJson) {
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
         return Response.ok(instanceService.createInstance(instance)).build();
     }
 
     @GET
-    @Path("{infrastructureName}/instances")
+    @Path("{infrastructureId}/instances")
     @Produces("application/json")
-    public Response listAllInstance(@PathParam("infrastructureName") String infrastructureName) {
-        return Response.ok(instanceService.getAllInstances(infrastructureName)).build();
+    public Response listAllInstance(@PathParam("infrastructureId") String infrastructureId) {
+        return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
     }
 
     @DELETE
-    @Path("{infrastructureName}/instances")
+    @Path("{infrastructureId}/instances")
     @Produces("application/json")
-    public Response deleteInstance(@PathParam("infrastructureName") String infrastructureName,
+    public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId) {
-        instanceService.deleteInstance(infrastructureName, instanceId);
+        instanceService.deleteInstance(infrastructureId, instanceId);
         return Response.ok().build();
     }
 

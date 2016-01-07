@@ -19,17 +19,16 @@ public class InstanceService {
 
     public Set<Instance> createInstance(Instance instance) {
         return cloudManager.createInstance(
-                infrastructureService.getInfrastructurebyName(instance.getInfrastructureName()), instance);
+                infrastructureService.getInfrastructure(instance.getInfrastructureId()), instance);
     }
 
-    public void deleteInstance(String infrastructureName, String instanceId) {
-        cloudManager.deleteInstance(infrastructureService.getInfrastructurebyName(infrastructureName),
-                instanceId);
+    public void deleteInstance(String infrastructureId, String instanceId) {
+        cloudManager.deleteInstance(infrastructureService.getInfrastructure(infrastructureId), instanceId);
     }
 
-    public Set<Instance> getAllInstances(String infrastructureName) {
-        return cloudManager.getAllInfrastructureInstances(
-                infrastructureService.getInfrastructurebyName(infrastructureName));
+    public Set<Instance> getAllInstances(String infrastructureId) {
+        return cloudManager
+                .getAllInfrastructureInstances(infrastructureService.getInfrastructure(infrastructureId));
     }
 
 }

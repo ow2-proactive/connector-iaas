@@ -49,7 +49,7 @@ public class JCloudsProvider implements CloudProvider {
 
         return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
                 .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                        instance.getInfrastructureName()))
+                        instance.getInfrastructureId()))
                 .collect(Collectors.toSet());
 
     }
@@ -111,12 +111,12 @@ public class JCloudsProvider implements CloudProvider {
     }
 
     private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
-            nodeMetadataImpl, infrastructureName) -> {
+            nodeMetadataImpl, infrastructureId) -> {
         return Instance.builder().id(nodeMetadataImpl.getId()).name(nodeMetadataImpl.getName())
                 .image(nodeMetadataImpl.getImageId()).number("1")
                 .ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
                 .cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
-                .status(nodeMetadataImpl.getStatus().name()).infrastructureName(infrastructureName).build();
+                .status(nodeMetadataImpl.getStatus().name()).infrastructureId(infrastructureId).build();
     };
 
 }

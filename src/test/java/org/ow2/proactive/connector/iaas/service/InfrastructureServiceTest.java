@@ -17,7 +17,6 @@ import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.service.InfrastructureService;
 
 import jersey.repackaged.com.google.common.collect.ImmutableMap;
 
@@ -64,24 +63,11 @@ public class InfrastructureServiceTest {
                 "userName", "credential");
         mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.deleteInfrastructure("aws");
+        infrastructureService.deleteInfrastructure(infrastructure);
 
         InOrder inOrder = inOrder(cloudManager, infrastructureCache);
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
         inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
-    }
-
-    @Test
-    public void testUpdateInfrastructure() {
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
-        mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
-        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.updateInfrastructure("aws", infrastructure);
-
-        InOrder inOrder = inOrder(infrastructureCache, cloudManager);
-        inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
-        inOrder.verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
     }
 
     @Test

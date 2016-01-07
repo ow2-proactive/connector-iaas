@@ -27,18 +27,13 @@ public class InfrastructureService {
         return infrastructure;
     }
 
-    public void deleteInfrastructure(String infrastructureName) {
-        cloudManager.deleteInfrastructure(getInfrastructurebyName(infrastructureName));
-        infrastructureCache.deleteInfrastructure(getInfrastructurebyName(infrastructureName));
+    public void deleteInfrastructure(Infrastructure infrastructure) {
+        cloudManager.deleteInfrastructure(infrastructure);
+        infrastructureCache.deleteInfrastructure(infrastructure);
     }
 
-    public Infrastructure getInfrastructurebyName(String infrastructureName) {
-        return infrastructureCache.getSupportedInfrastructures().get(infrastructureName);
-    }
-
-    public void updateInfrastructure(String infrastructureName, Infrastructure infrastructure) {
-        deleteInfrastructure(infrastructureName);
-        registerInfrastructure(infrastructure);
+    public Infrastructure getInfrastructure(String infrastructureId) {
+        return infrastructureCache.getSupportedInfrastructures().get(infrastructureId);
     }
 
 }

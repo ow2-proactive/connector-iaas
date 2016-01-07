@@ -41,8 +41,7 @@ public class ImageServiceTest {
     public void testGetAllImages() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infrastructure.getId()))
-                .thenReturn(infrastructure);
+        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Set<Image> images = Sets.newHashSet();
 

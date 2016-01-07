@@ -45,7 +45,7 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
                 "cpu", "running", infratructure.getId());
@@ -66,7 +66,7 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
         instanceService.deleteInstance(infratructure.getId(), "instanceID");
 
@@ -79,10 +79,7 @@ public class InstanceServiceTest {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructurebyName(infratructure.getId())).thenReturn(infratructure);
-
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getId());
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
         when(cloudManager.getAllInfrastructureInstances(infratructure))
                 .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));

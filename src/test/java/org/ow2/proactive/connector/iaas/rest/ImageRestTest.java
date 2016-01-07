@@ -32,8 +32,8 @@ public class ImageRestTest {
 
 	@Test
 	public void testListAllImage() {
-		when(imageService.getAllImages("infrastructureName")).thenReturn(Sets.newHashSet());
-		assertThat(imageRest.listAllImage("infrastructureName").getStatus(), is(Response.Status.OK.getStatusCode()));
-		verify(imageService, times(1)).getAllImages("infrastructureName");
+		when(imageService.getAllImages("infrastructureId")).thenReturn(Sets.newHashSet());
+		assertThat(imageRest.listAllImage("infrastructureId").getStatus(), is(Response.Status.OK.getStatusCode()));
+		verify(imageService, times(1)).getAllImages("infrastructureId");
 	}
 }

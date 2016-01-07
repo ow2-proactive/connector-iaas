@@ -22,10 +22,10 @@ public class ImageRest {
     private ImageService imageService;
 
     @GET
-    @Path("{infrastructureName}/images")
+    @Path("{infrastructureId}/images")
     @Produces("application/json")
-    public Response listAllImage(@PathParam("infrastructureName") String infrastructureName) {
-        return Response.ok(imageService.getAllImages(infrastructureName)).build();
+    public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
+        return Response.ok(imageService.getAllImages(infrastructureId)).build();
     }
 
 }
