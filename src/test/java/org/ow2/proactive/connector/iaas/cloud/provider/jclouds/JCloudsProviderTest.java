@@ -144,6 +144,31 @@ public class JCloudsProviderTest {
     }
 
     @Test
+    public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
+
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+
+        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+
+        Set nodes = Sets.newHashSet();
+        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
+        when(node.getId()).thenReturn("someId");
+        when(node.getName()).thenReturn("someName");
+        Hardware hardware = mock(Hardware.class);
+        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
+        when(node.getHardware()).thenReturn(hardware);
+        when(node.getStatus()).thenReturn(Status.RUNNING);
+        nodes.add(node);
+        when(computeService.listNodes()).thenReturn(nodes);
+
+        jcloudsProvider.deleteInfrastructure(infratructure);
+
+        verify(computeServiceCache, times(1)).removeComputeService(infratructure);
+
+    }
+
+    @Test
     public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",

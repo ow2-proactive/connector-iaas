@@ -131,6 +131,9 @@ public class JCloudsProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
+        getAllInfrastructureInstances(infrastructure).stream().forEach(instance -> {
+            deleteInstance(infrastructure, instance.getId());
+        });
         jCloudsComputeServiceCache.removeComputeService(infrastructure);
 
     }
