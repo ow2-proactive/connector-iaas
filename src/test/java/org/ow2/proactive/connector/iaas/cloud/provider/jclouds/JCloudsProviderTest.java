@@ -67,7 +67,7 @@ public class JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getId());
+                "cpu", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 
@@ -112,7 +112,7 @@ public class JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getId());
+                "cpu", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 

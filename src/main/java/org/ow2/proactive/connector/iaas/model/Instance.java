@@ -25,6 +25,5 @@ public class Instance {
     private String ram;
     private String cpu;
     private String status;
-    private String infrastructureId;
 
 }

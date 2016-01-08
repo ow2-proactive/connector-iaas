@@ -49,7 +49,7 @@ public class JCloudsProvider implements CloudProvider {
 
         return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
                 .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                        instance.getInfrastructureId()))
+                        infrastructure.getId()))
                 .collect(Collectors.toSet());
 
     }
@@ -116,7 +116,7 @@ public class JCloudsProvider implements CloudProvider {
                 .image(nodeMetadataImpl.getImageId()).number("1")
                 .ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
                 .cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
-                .status(nodeMetadataImpl.getStatus().name()).infrastructureId(infrastructureId).build();
+                .status(nodeMetadataImpl.getStatus().name()).build();
     };
 
 }

@@ -17,9 +17,9 @@ public class InstanceService {
     @Autowired
     private CloudManager cloudManager;
 
-    public Set<Instance> createInstance(Instance instance) {
-        return cloudManager.createInstance(
-                infrastructureService.getInfrastructure(instance.getInfrastructureId()), instance);
+    public Set<Instance> createInstance(String infrastructureId, Instance instance) {
+        return cloudManager.createInstance(infrastructureService.getInfrastructure(infrastructureId),
+                instance);
     }
 
     public void deleteInstance(String infrastructureId, String instanceId) {

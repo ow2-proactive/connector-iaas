@@ -39,7 +39,8 @@ public class InstanceScriptServiceTest {
     public void testExecuteScriptOnInstance() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
-        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
+        when(infrastructureService.getInfrastructure(infrastructure.getId()))
+                .thenReturn(infrastructure);
 
         InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts("id");
 

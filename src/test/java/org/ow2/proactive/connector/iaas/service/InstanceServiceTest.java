@@ -48,12 +48,12 @@ public class InstanceServiceTest {
         when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running", infratructure.getId());
+                "cpu", "running");
 
         when(cloudManager.createInstance(infratructure, instance))
                 .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
 
-        Set<Instance> created = instanceService.createInstance(instance);
+        Set<Instance> created = instanceService.createInstance("id-aws", instance);
 
         assertThat(created.size(), is(1));
 

@@ -31,9 +31,10 @@ public class InstanceRest {
     @Consumes("application/json")
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
-    public Response createInstance(final String instanceJson) {
+    public Response createInstance(@PathParam("infrastructureId") String infrastructureId,
+            final String instanceJson) {
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        return Response.ok(instanceService.createInstance(instance)).build();
+        return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
     }
 
     @GET
