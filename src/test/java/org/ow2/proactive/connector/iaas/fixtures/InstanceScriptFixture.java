@@ -6,18 +6,18 @@ import org.ow2.proactive.connector.iaas.model.InstanceScript;
 
 public class InstanceScriptFixture {
 
-    public static InstanceScript simpleInstanceScriptNoscripts(String id) {
+    public static InstanceScript simpleInstanceScriptNoscripts() {
 
-        return getInstanceScript(id, new String[] {});
+        return getInstanceScript(new String[] {});
     }
 
-    public static String getInstanceScriptAsaString(String id, String[] scripts) {
-        JSONObject jsonObject = new JSONObject(getInstanceScript(id, scripts));
+    public static String getInstanceScriptAsaString(String[] scripts) {
+        JSONObject jsonObject = new JSONObject(getInstanceScript(scripts));
         return jsonObject.toString();
     }
 
-    public static InstanceScript getInstanceScript(String id, String[] scripts) {
-        return new InstanceScript(id, scripts);
+    public static InstanceScript getInstanceScript(String[] scripts) {
+        return new InstanceScript(scripts);
     }
 
 }

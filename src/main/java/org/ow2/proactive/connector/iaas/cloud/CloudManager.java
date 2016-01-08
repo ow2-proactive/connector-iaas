@@ -34,8 +34,9 @@ public class CloudManager {
         return defaultCloudProvider.getAllInfrastructureInstances(infrastructure);
     }
 
-    public ScriptResult executeScript(Infrastructure infrastructure, InstanceScript instanceScript) {
-        return defaultCloudProvider.executeScript(infrastructure, instanceScript);
+    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript) {
+        return defaultCloudProvider.executeScript(infrastructure, instanceId, instanceScript);
     }
 
     public Set<Image> getAllImages(Infrastructure infrastructure) {

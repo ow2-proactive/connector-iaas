@@ -17,7 +17,8 @@ public interface CloudProvider {
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
-    public ScriptResult executeScript(Infrastructure infrastructure, InstanceScript instanceScript);
+    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript);
 
     public Set<Image> getAllImages(Infrastructure infrastructure);
 

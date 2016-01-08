@@ -17,7 +17,6 @@ import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.rest.InstanceScriptRest;
 import org.ow2.proactive.connector.iaas.service.InstanceScriptService;
 
 
@@ -36,15 +35,15 @@ public class InstanceScriptRestTest {
     @Test
     public void testExecuteScript() {
         ScriptResult scriptResult = new ScriptResult("output", "error");
-        when(instanceScriptService.executeScriptOnInstance(Mockito.anyString(),
+        when(instanceScriptService.executeScriptOnInstance(Mockito.anyString(), Mockito.anyString(),
                 Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
         assertThat(
                 instanceScriptRest
-                        .executeScript("infrastructureId",
-                                InstanceScriptFixture.getInstanceScriptAsaString("id", new String[] {}))
+                        .executeScript("infrastructureId", "instanceId",
+                                InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));
         verify(instanceScriptService, times(1)).executeScriptOnInstance(Mockito.anyString(),
-                Mockito.any(InstanceScript.class));
+                Mockito.anyString(), Mockito.any(InstanceScript.class));
     }
 }

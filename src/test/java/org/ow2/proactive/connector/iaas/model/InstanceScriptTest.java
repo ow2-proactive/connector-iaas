@@ -7,7 +7,6 @@ import static org.junit.Assert.assertThat;
 import java.util.Set;
 
 import org.junit.Test;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -16,15 +15,13 @@ public class InstanceScriptTest {
     @Test
     public void testEmptyConstructor() {
         InstanceScript instanceScript = new InstanceScript();
-        assertThat(instanceScript.getInstanceId(), is(nullValue()));
         assertThat(instanceScript.getScripts(), is(nullValue()));
     }
 
     @Test
     public void testConstructor() {
         String[] scripts = new String[] { "script 1", "script 2" };
-        InstanceScript instanceScript = new InstanceScript("instance-id", scripts);
-        assertThat(instanceScript.getInstanceId(), is("instance-id"));
+        InstanceScript instanceScript = new InstanceScript(scripts);
         assertThat(instanceScript.getScripts(), is(scripts));
     }
 
@@ -32,8 +29,8 @@ public class InstanceScriptTest {
     public void testEqualsAndHashcode() {
         String[] scripts = new String[] { "script 1", "script 2" };
 
-        InstanceScript instanceScript1 = new InstanceScript("instance-id", scripts);
-        InstanceScript instanceScript2 = new InstanceScript("instance-id", scripts);
+        InstanceScript instanceScript1 = new InstanceScript(scripts);
+        InstanceScript instanceScript2 = new InstanceScript(scripts);
 
         Set<InstanceScript> instanceScripts = Sets.newHashSet(instanceScript1, instanceScript2);
 

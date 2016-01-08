@@ -70,7 +70,8 @@ public class JCloudsProvider implements CloudProvider {
     }
 
     @Override
-    public ScriptResult executeScript(Infrastructure infrastructure, InstanceScript instanceScript) {
+    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
         ScriptBuilder scriptBuilder = new ScriptBuilder();
@@ -83,8 +84,7 @@ public class JCloudsProvider implements CloudProvider {
         ExecResponse execResponse;
 
         try {
-            execResponse = computeService.runScriptOnNode(instanceScript.getInstanceId(),
-                    allScriptsToExecute);
+            execResponse = computeService.runScriptOnNode(instanceId, allScriptsToExecute);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

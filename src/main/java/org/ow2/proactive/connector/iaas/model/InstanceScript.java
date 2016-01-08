@@ -12,6 +12,5 @@ import lombok.ToString;
 @NoArgsConstructor
 public class InstanceScript {
 
-    private String instanceId;
     private String[] scripts;
 }

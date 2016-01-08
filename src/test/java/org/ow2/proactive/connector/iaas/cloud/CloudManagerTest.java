@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
@@ -62,9 +61,9 @@ public class CloudManagerTest {
     @Test
     public void testExecuteScript() {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
-        InstanceScript instanceScript = new InstanceScript("instanceId", new String[] { "", "" });
-        cloudManager.executeScript(infrastructure, instanceScript);
-        verify(defaultCloudProvider, times(1)).executeScript(infrastructure, instanceScript);
+        InstanceScript instanceScript = new InstanceScript(new String[] { "", "" });
+        cloudManager.executeScript(infrastructure, "instanceId", instanceScript);
+        verify(defaultCloudProvider, times(1)).executeScript(infrastructure, "instanceId", instanceScript);
     }
 
     @Test
