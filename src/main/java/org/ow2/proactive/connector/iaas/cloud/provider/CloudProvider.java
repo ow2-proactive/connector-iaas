@@ -13,11 +13,12 @@ public interface CloudProvider {
 
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance);
 
-    public void deleteInstance(Infrastructure infrastructure, String instanceId);
+    public void deleteInstance(Infrastructure infrastructure, Instance instance);
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
-    public ScriptResult executeScript(Infrastructure infrastructure, InstanceScript instanceScript);
+    public ScriptResult executeScript(Infrastructure infrastructure, Instance instance,
+            InstanceScript instanceScript);
 
     public Set<Image> getAllImages(Infrastructure infrastructure);
 

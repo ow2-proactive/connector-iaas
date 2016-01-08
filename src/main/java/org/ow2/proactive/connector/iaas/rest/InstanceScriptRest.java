@@ -5,6 +5,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
@@ -29,9 +30,10 @@ public class InstanceScriptRest {
     @Consumes("application/json")
     @Produces("application/json")
     public Response executeScript(@PathParam("infrastructureId") String infrastructureId,
-            final String instanceScriptJson) {
+            @QueryParam("instanceId") String instanceId, final String instanceScriptJson) {
         InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
-        return Response.ok(instanceScriptService.executeScriptOnInstance(infrastructureId, instanceScript))
+        return Response.ok(
+                instanceScriptService.executeScriptOnInstance(infrastructureId, instanceId, instanceScript))
                 .build();
     }
 

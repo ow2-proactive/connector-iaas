@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
+import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -28,6 +29,9 @@ public class InfrastructureServiceTest {
 
     @Mock
     private InfrastructureCache infrastructureCache;
+
+    @Mock
+    private InstanceCache instanceCache;
 
     @Mock
     private CloudManager cloudManager;
@@ -65,8 +69,9 @@ public class InfrastructureServiceTest {
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
         infrastructureService.deleteInfrastructure(infrastructure);
 
-        InOrder inOrder = inOrder(cloudManager, infrastructureCache);
+        InOrder inOrder = inOrder(cloudManager, instanceCache, infrastructureCache);
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
+        inOrder.verify(instanceCache, times(1)).deleteInstancesByInfrastructure(infrastructure);
         inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
     }
 

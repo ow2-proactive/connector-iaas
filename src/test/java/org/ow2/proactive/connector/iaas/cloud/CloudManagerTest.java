@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
@@ -41,8 +40,9 @@ public class CloudManagerTest {
     @Test
     public void testDeleteInstance() {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
-        cloudManager.deleteInstance(infrastructure, "instanceID");
-        verify(defaultCloudProvider, times(1)).deleteInstance(infrastructure, "instanceID");
+        Instance instance = InstanceFixture.simpleInstance("id");
+        cloudManager.deleteInstance(infrastructure, instance);
+        verify(defaultCloudProvider, times(1)).deleteInstance(infrastructure, instance);
     }
 
     @Test
@@ -62,9 +62,10 @@ public class CloudManagerTest {
     @Test
     public void testExecuteScript() {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
-        InstanceScript instanceScript = new InstanceScript("instanceId", new String[] { "", "" });
-        cloudManager.executeScript(infrastructure, instanceScript);
-        verify(defaultCloudProvider, times(1)).executeScript(infrastructure, instanceScript);
+        Instance instance = InstanceFixture.simpleInstance("id");
+        InstanceScript instanceScript = new InstanceScript(new String[] { "", "" });
+        cloudManager.executeScript(infrastructure, instance, instanceScript);
+        verify(defaultCloudProvider, times(1)).executeScript(infrastructure, instance, instanceScript);
     }
 
     @Test

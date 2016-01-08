@@ -138,9 +138,11 @@ public class JCloudsProviderTest {
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "credential");
 
+        Instance instance = InstanceFixture.simpleInstance("instanceID");
+
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        jcloudsProvider.deleteInstance(infratructure, "instanceID");
+        jcloudsProvider.deleteInstance(infratructure, instance);
 
         verify(computeService, times(1)).destroyNode("instanceID");
 

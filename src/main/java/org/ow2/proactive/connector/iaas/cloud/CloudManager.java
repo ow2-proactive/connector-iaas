@@ -22,8 +22,8 @@ public class CloudManager {
         return defaultCloudProvider.createInstance(infrastructure, instance);
     }
 
-    public void deleteInstance(Infrastructure infrastructure, String instanceId) {
-        defaultCloudProvider.deleteInstance(infrastructure, instanceId);
+    public void deleteInstance(Infrastructure infrastructure, Instance instance) {
+        defaultCloudProvider.deleteInstance(infrastructure, instance);
     }
 
     public void deleteInfrastructure(Infrastructure infrastructure) {
@@ -34,8 +34,9 @@ public class CloudManager {
         return defaultCloudProvider.getAllInfrastructureInstances(infrastructure);
     }
 
-    public ScriptResult executeScript(Infrastructure infrastructure, InstanceScript instanceScript) {
-        return defaultCloudProvider.executeScript(infrastructure, instanceScript);
+    public ScriptResult executeScript(Infrastructure infrastructure, Instance instance,
+            InstanceScript instanceScript) {
+        return defaultCloudProvider.executeScript(infrastructure, instance, instanceScript);
     }
 
     public Set<Image> getAllImages(Infrastructure infrastructure) {
