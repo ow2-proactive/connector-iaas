@@ -41,7 +41,7 @@ public class JCloudsProvider implements CloudProvider {
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
         try {
-            createdNodeMetaData = computeService.createNodesInGroup(instance.getName(),
+            createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
                     Integer.parseInt(instance.getNumber()), template);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -112,7 +112,7 @@ public class JCloudsProvider implements CloudProvider {
 
     private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
             nodeMetadataImpl, infrastructureId) -> {
-        return Instance.builder().id(nodeMetadataImpl.getId()).name(nodeMetadataImpl.getName())
+        return Instance.builder().id(nodeMetadataImpl.getId()).tag(nodeMetadataImpl.getName())
                 .image(nodeMetadataImpl.getImageId()).number("1")
                 .ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
                 .cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))

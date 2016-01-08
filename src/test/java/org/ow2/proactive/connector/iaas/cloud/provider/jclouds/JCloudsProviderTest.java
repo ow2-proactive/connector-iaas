@@ -86,7 +86,7 @@ public class JCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
+        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
                 template)).thenReturn(nodes);
 
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
@@ -96,7 +96,7 @@ public class JCloudsProviderTest {
         assertThat(created.stream().findAny().get().getId(),
                 is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
 
-        verify(computeService, times(1)).createNodesInGroup(instance.getName(),
+        verify(computeService, times(1)).createNodesInGroup(instance.getTag(),
                 Integer.parseInt(instance.getNumber()), template);
 
     }
@@ -125,7 +125,7 @@ public class JCloudsProviderTest {
         when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
         nodesMetaData.add(nodeMetadataImpl);
 
-        when(computeService.createNodesInGroup(instance.getName(), Integer.parseInt(instance.getNumber()),
+        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
                 template)).thenThrow(new RuntimeException());
 
         jcloudsProvider.createInstance(infratructure, instance);

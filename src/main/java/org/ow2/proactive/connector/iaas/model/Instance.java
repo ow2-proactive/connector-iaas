@@ -9,7 +9,7 @@ import lombok.ToString;
 import lombok.experimental.Wither;
 
 
-@EqualsAndHashCode(exclude = { "name", "image", "number", "ram", "cpu", "status" })
+@EqualsAndHashCode(exclude = { "image", "number", "ram", "cpu", "status" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -19,7 +19,7 @@ import lombok.experimental.Wither;
 public class Instance {
 
     private String id;
-    private String name;
+    private String tag;
     private String image;
     private String number;
     private String ram;

@@ -15,13 +15,13 @@ public class InstanceTest {
     @Test
     public void testEmptyConstructor() {
         Instance instance = new Instance();
-        assertThat(instance.getName(), is(nullValue()));
+        assertThat(instance.getTag(), is(nullValue()));
     }
 
     @Test
     public void testConstructor() {
         Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running");
-        assertThat(instance.getName(), is("new-vm"));
+        assertThat(instance.getTag(), is("new-vm"));
     }
 
     @Test

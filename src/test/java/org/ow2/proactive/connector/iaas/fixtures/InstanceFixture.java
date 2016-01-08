@@ -11,15 +11,15 @@ public class InstanceFixture {
         return getInstance(id, id, id, "1", "512", "1", "RUNNING");
     }
 
-    public static String getInstanceAsaString(String id, String name, String image, String number, String ram,
+    public static String getInstanceAsaString(String id, String tag, String image, String number, String ram,
             String cpu, String status) {
-        JSONObject jsonObject = new JSONObject(getInstance(id, name, image, number, ram, cpu, status));
+        JSONObject jsonObject = new JSONObject(getInstance(id, tag, image, number, ram, cpu, status));
         return jsonObject.toString();
     }
 
-    public static Instance getInstance(String id, String name, String image, String number, String ram,
+    public static Instance getInstance(String id, String tag, String image, String number, String ram,
             String cpu, String status) {
-        return new Instance(id, name, image, number, ram, cpu, status);
+        return new Instance(id, tag, image, number, ram, cpu, status);
     }
 
 }
