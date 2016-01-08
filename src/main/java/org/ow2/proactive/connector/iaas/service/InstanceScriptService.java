@@ -1,5 +1,7 @@
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.List;
+
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
@@ -18,8 +20,15 @@ public class InstanceScriptService {
 
     public ScriptResult executeScriptOnInstance(String infrastructureId, String instanceId,
             InstanceScript instanceScript) {
-        return cloudManager.executeScript(infrastructureService.getInfrastructure(infrastructureId),
+        return cloudManager.executeScriptOnInstanceId(infrastructureService.getInfrastructure(infrastructureId),
                 instanceId, instanceScript);
+
+    }
+
+    public List<ScriptResult> executeScriptOnInstanceTag(String infrastructureId, String instanceTag,
+            InstanceScript instanceScript) {
+        return cloudManager.executeScriptOnInstanceTag(
+                infrastructureService.getInfrastructure(infrastructureId), instanceTag, instanceScript);
 
     }
 

@@ -1,5 +1,6 @@
 package org.ow2.proactive.connector.iaas.cloud.provider;
 
+import java.util.List;
 import java.util.Set;
 
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -17,7 +18,10 @@ public interface CloudProvider {
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
-    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript);
+
+    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
             InstanceScript instanceScript);
 
     public Set<Image> getAllImages(Infrastructure infrastructure);

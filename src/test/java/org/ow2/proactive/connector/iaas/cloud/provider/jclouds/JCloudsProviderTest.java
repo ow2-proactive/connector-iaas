@@ -1,32 +1,43 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
 import static org.hamcrest.Matchers.is;
+import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
+import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Set;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.RunScriptOnNodesException;
+import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata.Status;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
+import org.jclouds.scriptbuilder.ScriptBuilder;
+import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
+import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.testng.collections.Maps;
 
 import com.beust.jcommander.internal.Lists;
 
@@ -205,6 +216,59 @@ public class JCloudsProviderTest {
         Set<Image> allImages = jcloudsProvider.getAllImages(infratructure);
 
         assertThat(allImages.isEmpty(), is(true));
+
+    }
+
+    @Test
+    public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+
+        ExecResponse execResponse = mock(ExecResponse.class);
+
+        when(execResponse.getOutput()).thenReturn("output");
+
+        when(execResponse.getError()).thenReturn("error");
+
+        when(computeService.runScriptOnNode(Mockito.anyString(), Mockito.anyString()))
+                .thenReturn(execResponse);
+
+        ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure, "instanceId",
+                InstanceScriptFixture.simpleInstanceScriptNoscripts());
+
+        assertThat(scriptResult.getInstanceId(), is("instanceId"));
+        assertThat(scriptResult.getOutput(), is("output"));
+        assertThat(scriptResult.getError(), is("error"));
+
+    }
+
+    @Test
+    public void testExecuteScriptOnInstanceTag()
+            throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+
+        ExecResponse execResponse = mock(ExecResponse.class);
+
+        when(execResponse.getOutput()).thenReturn("output");
+
+        when(execResponse.getError()).thenReturn("error");
+
+        String allScriptsToExecute = new ScriptBuilder().addStatement(exec("ls -lrt")).render(OsFamily.UNIX);
+
+        when(computeService.runScriptOnNodesMatching(runningInGroup("instanceTag"), allScriptsToExecute))
+                .thenReturn(Maps.newHashMap());
+
+        List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceTag(infrastructure,
+                "instanceTag", InstanceScriptFixture.simpleInstanceScriptNoscripts());
+
+        assertThat(scriptResults.size(), is(0));
 
     }
 }

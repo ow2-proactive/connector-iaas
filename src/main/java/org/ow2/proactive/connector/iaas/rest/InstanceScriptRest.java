@@ -26,15 +26,26 @@ public class InstanceScriptRest {
     private InstanceScriptService instanceScriptService;
 
     @POST
-    @Path("{infrastructureId}/scripts")
+    @Path("{infrastructureId}/instance/scripts")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response executeScript(@PathParam("infrastructureId") String infrastructureId,
+    public Response executeScriptByInstanceId(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, final String instanceScriptJson) {
         InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
         return Response.ok(
                 instanceScriptService.executeScriptOnInstance(infrastructureId, instanceId, instanceScript))
                 .build();
+    }
+
+    @POST
+    @Path("{infrastructureId}/tag/scripts")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response executeScriptByInstanceTag(@PathParam("infrastructureId") String infrastructureId,
+            @QueryParam("instanceTag") String instanceTag, final String instanceScriptJson) {
+        InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
+        return Response.ok(instanceScriptService.executeScriptOnInstanceTag(infrastructureId, instanceTag,
+                instanceScript)).build();
     }
 
 }

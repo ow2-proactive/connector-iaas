@@ -12,6 +12,7 @@ import lombok.ToString;
 @NoArgsConstructor
 public class ScriptResult {
 
+    private String instanceId;
     private String output;
     private String error;
 }

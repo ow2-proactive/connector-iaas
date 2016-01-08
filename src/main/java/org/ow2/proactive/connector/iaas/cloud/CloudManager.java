@@ -1,5 +1,6 @@
 package org.ow2.proactive.connector.iaas.cloud;
 
+import java.util.List;
 import java.util.Set;
 
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
@@ -34,9 +35,14 @@ public class CloudManager {
         return defaultCloudProvider.getAllInfrastructureInstances(infrastructure);
     }
 
-    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
-        return defaultCloudProvider.executeScript(infrastructure, instanceId, instanceScript);
+        return defaultCloudProvider.executeScriptOnInstanceId(infrastructure, instanceId, instanceScript);
+    }
+
+    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
+            InstanceScript instanceScript) {
+        return defaultCloudProvider.executeScriptOnInstanceTag(infrastructure, instanceTag, instanceScript);
     }
 
     public Set<Image> getAllImages(Infrastructure infrastructure) {

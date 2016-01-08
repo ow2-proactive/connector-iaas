@@ -62,8 +62,17 @@ public class CloudManagerTest {
     public void testExecuteScript() {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
         InstanceScript instanceScript = new InstanceScript(new String[] { "", "" });
-        cloudManager.executeScript(infrastructure, "instanceId", instanceScript);
-        verify(defaultCloudProvider, times(1)).executeScript(infrastructure, "instanceId", instanceScript);
+        cloudManager.executeScriptOnInstanceId(infrastructure, "instanceId", instanceScript);
+        verify(defaultCloudProvider, times(1)).executeScriptOnInstanceId(infrastructure, "instanceId", instanceScript);
+    }
+
+    @Test
+    public void testExecuteScriptOnInstanceTag() {
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
+        InstanceScript instanceScript = new InstanceScript(new String[] { "", "" });
+        cloudManager.executeScriptOnInstanceTag(infrastructure, "instanceTag", instanceScript);
+        verify(defaultCloudProvider, times(1)).executeScriptOnInstanceTag(infrastructure, "instanceTag",
+                instanceScript);
     }
 
     @Test

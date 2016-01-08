@@ -19,6 +19,8 @@ import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.service.InstanceScriptService;
 
+import com.google.common.collect.Lists;
+
 
 public class InstanceScriptRestTest {
     @InjectMocks
@@ -33,17 +35,32 @@ public class InstanceScriptRestTest {
     }
 
     @Test
-    public void testExecuteScript() {
-        ScriptResult scriptResult = new ScriptResult("output", "error");
+    public void testExecuteScriptByInstanceId() {
+        ScriptResult scriptResult = new ScriptResult("instanceId", "output", "error");
         when(instanceScriptService.executeScriptOnInstance(Mockito.anyString(), Mockito.anyString(),
                 Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
         assertThat(
                 instanceScriptRest
-                        .executeScript("infrastructureId", "instanceId",
+                        .executeScriptByInstanceId("infrastructureId", "instanceId",
                                 InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));
         verify(instanceScriptService, times(1)).executeScriptOnInstance(Mockito.anyString(),
+                Mockito.anyString(), Mockito.any(InstanceScript.class));
+    }
+
+    @Test
+    public void testExecuteScriptByInstanceTag() {
+        ScriptResult scriptResult = new ScriptResult("instanceId", "output", "error");
+        when(instanceScriptService.executeScriptOnInstanceTag(Mockito.anyString(), Mockito.anyString(),
+                Mockito.any(InstanceScript.class))).thenReturn(Lists.newArrayList(scriptResult));
+        assertThat(
+                instanceScriptRest
+                        .executeScriptByInstanceTag("infrastructureId", "instanceTag",
+                                InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
+                        .getStatus(),
+                is(Response.Status.OK.getStatusCode()));
+        verify(instanceScriptService, times(1)).executeScriptOnInstanceTag(Mockito.anyString(),
                 Mockito.anyString(), Mockito.any(InstanceScript.class));
     }
 }

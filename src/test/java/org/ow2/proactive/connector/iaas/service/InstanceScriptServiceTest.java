@@ -6,6 +6,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -17,6 +19,8 @@ import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+
+import com.google.common.collect.Lists;
 
 
 public class InstanceScriptServiceTest {
@@ -43,8 +47,8 @@ public class InstanceScriptServiceTest {
 
         InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();
 
-        when(cloudManager.executeScript(infrastructure, "instanceId", instanceScript))
-                .thenReturn(new ScriptResult("output", "error"));
+        when(cloudManager.executeScriptOnInstanceId(infrastructure, "instanceId", instanceScript))
+                .thenReturn(new ScriptResult("instanceId", "output", "error"));
 
         ScriptResult scriptResult = instanceScriptService.executeScriptOnInstance(infrastructure.getId(),
                 "instanceId", instanceScript);
@@ -52,7 +56,31 @@ public class InstanceScriptServiceTest {
         assertThat(scriptResult.getOutput(), is(scriptResult.getOutput()));
         assertThat(scriptResult.getError(), is(scriptResult.getError()));
 
-        verify(cloudManager, times(1)).executeScript(infrastructure, "instanceId", instanceScript);
+        verify(cloudManager, times(1)).executeScriptOnInstanceId(infrastructure, "instanceId",
+                instanceScript);
+
+    }
+
+    @Test
+    public void testExecuteScriptOnInstanceTag() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "credential");
+        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
+
+        InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();
+
+        when(cloudManager.executeScriptOnInstanceTag(infrastructure, "instanceTag", instanceScript))
+                .thenReturn(Lists.newArrayList(new ScriptResult("instanceId", "output", "error")));
+
+        List<ScriptResult> scriptResults = instanceScriptService
+                .executeScriptOnInstanceTag(infrastructure.getId(), "instanceTag", instanceScript);
+
+        assertThat(scriptResults.get(0).getInstanceId(), is("instanceId"));
+        assertThat(scriptResults.get(0).getOutput(), is("output"));
+        assertThat(scriptResults.get(0).getError(), is("error"));
+
+        verify(cloudManager, times(1)).executeScriptOnInstanceTag(infrastructure, "instanceTag",
+                instanceScript);
 
     }
 

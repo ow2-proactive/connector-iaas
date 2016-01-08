@@ -1,8 +1,11 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
+import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -70,7 +73,7 @@ public class JCloudsProvider implements CloudProvider {
     }
 
     @Override
-    public ScriptResult executeScript(Infrastructure infrastructure, String instanceId,
+    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -89,7 +92,33 @@ public class JCloudsProvider implements CloudProvider {
             throw new RuntimeException(e);
         }
 
-        return new ScriptResult(execResponse.getOutput(), execResponse.getError());
+        return new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError());
+    }
+
+    @Override
+    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
+            InstanceScript instanceScript) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+
+        Arrays.stream(instanceScript.getScripts())
+                .forEachOrdered(script -> scriptBuilder.addStatement(exec(script)));
+
+        String allScriptsToExecute = scriptBuilder.render(OsFamily.UNIX);
+
+        Map<? extends NodeMetadata, ExecResponse> execResponses;
+
+        try {
+            execResponses = computeService.runScriptOnNodesMatching(runningInGroup(instanceTag),
+                    allScriptsToExecute);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return execResponses.entrySet().stream().map(entry -> new ScriptResult(entry.getKey().getId(),
+            entry.getValue().getOutput(), entry.getValue().getError())).collect(Collectors.toList());
+
     }
 
     @Override
