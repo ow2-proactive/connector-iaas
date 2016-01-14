@@ -22,6 +22,7 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
+import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
@@ -43,257 +44,255 @@ import com.beust.jcommander.internal.Lists;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
-
 public class JCloudsProviderTest {
 
-    @InjectMocks
-    private JCloudsProvider jcloudsProvider;
+	@InjectMocks
+	private JCloudsProvider jcloudsProvider;
 
-    @Mock
-    private JCloudsComputeServiceCache computeServiceCache;
+	@Mock
+	private JCloudsComputeServiceCache computeServiceCache;
 
-    @Mock
-    private ComputeService computeService;
+	@Mock
+	private ComputeService computeService;
 
-    @Mock
-    private TemplateBuilder templateBuilder;
+	@Mock
+	private TemplateBuilder templateBuilder;
 
-    @Mock
-    private Template template;
+	@Mock
+	private Template template;
 
-    @Before
-    public void init() {
-        MockitoAnnotations.initMocks(this);
+	@Before
+	public void init() {
+		MockitoAnnotations.initMocks(this);
 
-    }
+	}
 
-    @Test
-    public void testCreateInstance() throws NumberFormatException, RunNodesException {
+	@Test
+	public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        when(computeService.templateBuilder()).thenReturn(templateBuilder);
+		when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running");
+		Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512", "cpu",
+				"running");
 
-        when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
+		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 
-        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
+		when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
-        when(templateBuilder.build()).thenReturn(template);
+		when(templateBuilder.build()).thenReturn(template);
 
-        Set nodes = Sets.newHashSet();
-        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-        when(node.getName()).thenReturn("someName");
-        Hardware hardware = mock(Hardware.class);
-        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
-        nodes.add(node);
-        when(computeService.listNodes()).thenReturn(nodes);
+		Set nodes = Sets.newHashSet();
+		NodeMetadataImpl node = mock(NodeMetadataImpl.class);
+		when(node.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
+		when(node.getName()).thenReturn("someName");
+		Hardware hardware = mock(Hardware.class);
+		when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
+		when(node.getHardware()).thenReturn(hardware);
+		when(node.getStatus()).thenReturn(Status.RUNNING);
+		nodes.add(node);
+		when(computeService.listNodes()).thenReturn(nodes);
 
-        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
-                template)).thenReturn(nodes);
+		when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()), template))
+				.thenReturn(nodes);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+		Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
-        assertThat(created.size(), is(1));
+		assertThat(created.size(), is(1));
 
-        assertThat(created.stream().findAny().get().getId(),
-                is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
+		assertThat(created.stream().findAny().get().getId(), is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
 
-        verify(computeService, times(1)).createNodesInGroup(instance.getTag(),
-                Integer.parseInt(instance.getNumber()), template);
+		verify(computeService, times(1)).createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
+				template);
 
-    }
+	}
 
-    @Test(expected = RuntimeException.class)
-    public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
+	@Test(expected = RuntimeException.class)
+	public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        when(computeService.templateBuilder()).thenReturn(templateBuilder);
+		when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running");
+		Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512", "cpu",
+				"running");
 
-        when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
+		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 
-        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
+		when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
-        when(templateBuilder.build()).thenReturn(template);
+		when(templateBuilder.build()).thenReturn(template);
 
-        Set nodesMetaData = Sets.newHashSet();
-        NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
-        when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-        nodesMetaData.add(nodeMetadataImpl);
+		Set nodesMetaData = Sets.newHashSet();
+		NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
+		when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
+		nodesMetaData.add(nodeMetadataImpl);
 
-        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
-                template)).thenThrow(new RuntimeException());
+		when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()), template))
+				.thenThrow(new RuntimeException());
 
-        jcloudsProvider.createInstance(infratructure, instance);
+		jcloudsProvider.createInstance(infratructure, instance);
 
-    }
+	}
 
-    @Test
-    public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
+	@Test
+	public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        Set nodes = Sets.newHashSet();
-        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("someId");
-        when(node.getName()).thenReturn("someName");
-        Hardware hardware = mock(Hardware.class);
-        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
-        nodes.add(node);
-        when(computeService.listNodes()).thenReturn(nodes);
+		Set nodes = Sets.newHashSet();
+		NodeMetadataImpl node = mock(NodeMetadataImpl.class);
+		when(node.getId()).thenReturn("someId");
+		when(node.getName()).thenReturn("someName");
+		Hardware hardware = mock(Hardware.class);
+		when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
+		when(node.getHardware()).thenReturn(hardware);
+		when(node.getStatus()).thenReturn(Status.RUNNING);
+		nodes.add(node);
+		when(computeService.listNodes()).thenReturn(nodes);
 
-        jcloudsProvider.deleteInfrastructure(infratructure);
+		jcloudsProvider.deleteInfrastructure(infratructure);
 
-        verify(computeServiceCache, times(1)).removeComputeService(infratructure);
+		verify(computeServiceCache, times(1)).removeComputeService(infratructure);
 
-    }
+	}
 
-    @Test
-    public void testDeleteInstance() throws NumberFormatException, RunNodesException {
+	@Test
+	public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        jcloudsProvider.deleteInstance(infratructure, "instanceID");
+		jcloudsProvider.deleteInstance(infratructure, "instanceID");
 
-        verify(computeService, times(1)).destroyNode("instanceID");
+		verify(computeService, times(1)).destroyNode("instanceID");
 
-    }
+	}
 
-    @Test
-    public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
+	@Test
+	public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        Set nodes = Sets.newHashSet();
-        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("someId");
-        when(node.getName()).thenReturn("someName");
-        Hardware hardware = mock(Hardware.class);
-        when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
-        nodes.add(node);
-        when(computeService.listNodes()).thenReturn(nodes);
+		Set nodes = Sets.newHashSet();
+		NodeMetadataImpl node = mock(NodeMetadataImpl.class);
+		when(node.getId()).thenReturn("someId");
+		when(node.getName()).thenReturn("someName");
+		Hardware hardware = mock(Hardware.class);
+		when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
+		when(node.getHardware()).thenReturn(hardware);
+		when(node.getStatus()).thenReturn(Status.RUNNING);
+		nodes.add(node);
+		when(computeService.listNodes()).thenReturn(nodes);
 
-        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
+		Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
 
-        assertThat(allNodes.iterator().next().getId(), is("someId"));
+		assertThat(allNodes.iterator().next().getId(), is("someId"));
 
-    }
+	}
 
-    @Test
-    public void testGetAllImages() {
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+	@Test
+	public void testGetAllImages() {
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-        Set images = Sets.newHashSet();
-        ImageImpl image = mock(ImageImpl.class);
-        when(image.getId()).thenReturn("someId");
-        when(image.getName()).thenReturn("someName");
-        images.add(image);
-        when(computeService.listImages()).thenReturn(images);
+		Set images = Sets.newHashSet();
+		ImageImpl image = mock(ImageImpl.class);
+		when(image.getId()).thenReturn("someId");
+		when(image.getName()).thenReturn("someName");
+		images.add(image);
+		when(computeService.listImages()).thenReturn(images);
 
-        Set<Image> allImages = jcloudsProvider.getAllImages(infrastructure);
+		Set<Image> allImages = jcloudsProvider.getAllImages(infrastructure);
 
-        assertThat(allImages.iterator().next().getId(), is("someId"));
-        assertThat(allImages.iterator().next().getName(), is("someName"));
+		assertThat(allImages.iterator().next().getId(), is("someId"));
+		assertThat(allImages.iterator().next().getName(), is("someName"));
 
-    }
+	}
 
-    @Test
-    public void testGetAllImagesEmptySet() {
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+	@Test
+	public void testGetAllImagesEmptySet() {
+		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        Set images = Sets.newHashSet();
-        when(computeService.listImages()).thenReturn(images);
+		Set images = Sets.newHashSet();
+		when(computeService.listImages()).thenReturn(images);
 
-        Set<Image> allImages = jcloudsProvider.getAllImages(infratructure);
+		Set<Image> allImages = jcloudsProvider.getAllImages(infratructure);
 
-        assertThat(allImages.isEmpty(), is(true));
+		assertThat(allImages.isEmpty(), is(true));
 
-    }
+	}
 
-    @Test
-    public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
+	@Test
+	public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-        ExecResponse execResponse = mock(ExecResponse.class);
+		ExecResponse execResponse = mock(ExecResponse.class);
 
-        when(execResponse.getOutput()).thenReturn("output");
+		when(execResponse.getOutput()).thenReturn("output");
 
-        when(execResponse.getError()).thenReturn("error");
+		when(execResponse.getError()).thenReturn("error");
 
-        when(computeService.runScriptOnNode(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(execResponse);
+		when(computeService.runScriptOnNode(Mockito.anyString(), Mockito.anyString(),
+				Mockito.any(RunScriptOptions.class))).thenReturn(execResponse);
 
-        ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure, "instanceId",
-                InstanceScriptFixture.simpleInstanceScriptNoscripts());
+		ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure, "instanceId",
+				InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
-        assertThat(scriptResult.getInstanceId(), is("instanceId"));
-        assertThat(scriptResult.getOutput(), is("output"));
-        assertThat(scriptResult.getError(), is("error"));
+		assertThat(scriptResult.getInstanceId(), is("instanceId"));
+		assertThat(scriptResult.getOutput(), is("output"));
+		assertThat(scriptResult.getError(), is("error"));
 
-    }
+	}
 
-    @Test
-    public void testExecuteScriptOnInstanceTag()
-            throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
+	@Test
+	public void testExecuteScriptOnInstanceTag()
+			throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
 
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "credential");
+		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
+				"credential");
 
-        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
+		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-        ExecResponse execResponse = mock(ExecResponse.class);
+		ExecResponse execResponse = mock(ExecResponse.class);
 
-        when(execResponse.getOutput()).thenReturn("output");
+		when(execResponse.getOutput()).thenReturn("output");
 
-        when(execResponse.getError()).thenReturn("error");
+		when(execResponse.getError()).thenReturn("error");
 
-        String allScriptsToExecute = new ScriptBuilder().addStatement(exec("ls -lrt")).render(OsFamily.UNIX);
+		String allScriptsToExecute = new ScriptBuilder().addStatement(exec("ls -lrt")).render(OsFamily.UNIX);
 
-        when(computeService.runScriptOnNodesMatching(runningInGroup("instanceTag"), allScriptsToExecute))
-                .thenReturn(Maps.newHashMap());
+		when(computeService.runScriptOnNodesMatching(runningInGroup("instanceTag"), allScriptsToExecute))
+				.thenReturn(Maps.newHashMap());
 
-        List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceTag(infrastructure,
-                "instanceTag", InstanceScriptFixture.simpleInstanceScriptNoscripts());
+		List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceTag(infrastructure, "instanceTag",
+				InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
-        assertThat(scriptResults.size(), is(0));
+		assertThat(scriptResults.size(), is(0));
 
-    }
+	}
 }

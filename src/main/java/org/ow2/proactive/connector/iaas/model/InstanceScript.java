@@ -5,12 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-
 @Getter
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
 public class InstanceScript {
 
-    private String[] scripts;
+	private Credentials credentials;
+	private String[] scripts;
 }
