@@ -17,39 +17,40 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 
-
 @Component
 public class JCloudsComputeServiceBuilder {
 
-    public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
-        Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
-        ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
+	public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
 
-        .credentials(infrastructure.getUserName(), infrastructure.getCredential()).modules(modules)
-                .overrides(getTimeoutPolicy());
+		Iterable<Module> modules = ImmutableSet.<Module> of(new SshjSshClientModule());
+		ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
 
-        Optional.ofNullable(infrastructure.getEndPoint()).filter(endPoint -> !endPoint.isEmpty())
-                .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
+		.credentials(infrastructure.getUserName(), infrastructure.getCredential()).modules(modules)
+				.overrides(getTimeoutPolicy());
 
-        return contextBuilder.buildView(ComputeServiceContext.class).getComputeService();
-    }
+		Optional.ofNullable(infrastructure.getEndPoint()).filter(endPoint -> !endPoint.isEmpty())
+				.ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
 
-    /**
-     * Sets the timeouts for the deployment. 
-     * @return Properties object with the timeout policy. 
-     */
-    private Properties getTimeoutPolicy() {
-        Properties properties = new Properties();
-        long scriptTimeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-        properties.setProperty("jclouds.ssh.max-retries", "100");
-        properties.setProperty("jclouds.max-retries", "1000");
-        properties.setProperty("jclouds.request-timeout", "10000");
-        properties.setProperty("jclouds.connection-timeout", "18000");
+		return contextBuilder.buildView(ComputeServiceContext.class).getComputeService();
+	}
 
-        properties.setProperty(TIMEOUT_PORT_OPEN, scriptTimeout + "");
-        properties.setProperty(TIMEOUT_SCRIPT_COMPLETE, scriptTimeout + "");
+	/**
+	 * Sets the timeouts for the deployment.
+	 * 
+	 * @return Properties object with the timeout policy.
+	 */
+	private Properties getTimeoutPolicy() {
+		Properties properties = new Properties();
+		long scriptTimeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+		properties.setProperty("jclouds.ssh.max-retries", "100");
+		properties.setProperty("jclouds.max-retries", "1000");
+		properties.setProperty("jclouds.request-timeout", "10000");
+		properties.setProperty("jclouds.connection-timeout", "18000");
 
-        return properties;
-    }
+		properties.setProperty(TIMEOUT_PORT_OPEN, scriptTimeout + "");
+		properties.setProperty(TIMEOUT_SCRIPT_COMPLETE, scriptTimeout + "");
+
+		return properties;
+	}
 
 }

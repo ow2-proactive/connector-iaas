@@ -8,8 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Wither;
 
-
-@EqualsAndHashCode(exclude = { "image", "number", "ram", "cpu", "status" })
+@EqualsAndHashCode(exclude = { "image", "number", "ram", "cpu", "status", "postBootScript" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -18,12 +17,13 @@ import lombok.experimental.Wither;
 @Builder
 public class Instance {
 
-    private String id;
-    private String tag;
-    private String image;
-    private String number;
-    private String ram;
-    private String cpu;
-    private String status;
+	private String id;
+	private String tag;
+	private String image;
+	private String number;
+	private String ram;
+	private String cpu;
+	private String status;
+	private InstanceScript postBootScript;
 
 }
