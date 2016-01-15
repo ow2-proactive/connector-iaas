@@ -23,6 +23,7 @@ import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
@@ -78,7 +79,7 @@ public class JCloudsProviderTest {
 		when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
 		Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512", "cpu",
-				"running");
+				"running", InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
 		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 
@@ -99,6 +100,10 @@ public class JCloudsProviderTest {
 
 		when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()), template))
 				.thenReturn(nodes);
+
+		TemplateOptions templateOptions = mock(TemplateOptions.class);
+		when(template.getOptions()).thenReturn(templateOptions);
+		when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
 		Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
@@ -122,7 +127,7 @@ public class JCloudsProviderTest {
 		when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
 		Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512", "cpu",
-				"running");
+				"running", InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
 		when(templateBuilder.minRam(Integer.parseInt(instance.getRam()))).thenReturn(templateBuilder);
 

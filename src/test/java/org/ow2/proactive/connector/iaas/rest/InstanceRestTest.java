@@ -14,51 +14,51 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
+import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
 
 import com.google.common.collect.Sets;
 
-
 public class InstanceRestTest {
-    @InjectMocks
-    private InstanceRest instanceRest;
+	@InjectMocks
+	private InstanceRest instanceRest;
 
-    @Mock
-    private InstanceService instanceService;
+	@Mock
+	private InstanceService instanceService;
 
-    private String instanceStringFixture;
-    private Instance instanceFixture;
+	private String instanceStringFixture;
+	private Instance instanceFixture;
 
-    @Before
-    public void init() {
-        MockitoAnnotations.initMocks(this);
-        instanceStringFixture = InstanceFixture.getInstanceAsaString("instance-id", "name", "image", "number",
-                "cpu", "ram", "running");
-        instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram",
-                "running");
-    }
+	@Before
+	public void init() {
+		MockitoAnnotations.initMocks(this);
+		instanceStringFixture = InstanceFixture.getInstanceAsaString("instance-id", "name", "image", "number", "cpu",
+				"ram", "running", InstanceScriptFixture.simpleInstanceScriptNoscripts());
+		instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram", "running",
+				InstanceScriptFixture.simpleInstanceScriptNoscripts());
+	}
 
-    @Test
-    public void testCreateInstance() {
-        assertThat(instanceRest.createInstance("infrastructureId", instanceStringFixture).getStatus(),
-                is(Response.Status.OK.getStatusCode()));
-        verify(instanceService, times(1)).createInstance("infrastructureId", instanceFixture);
-    }
+	@Test
+	public void testCreateInstance() {
+		assertThat(instanceRest.createInstance("infrastructureId", instanceStringFixture).getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(instanceService, times(1)).createInstance("infrastructureId", instanceFixture);
+	}
 
-    @Test
-    public void testListAllInstance() {
-        when(instanceService.getAllInstances("infrastructureId")).thenReturn(Sets.newHashSet());
-        assertThat(instanceRest.listAllInstance("infrastructureId").getStatus(),
-                is(Response.Status.OK.getStatusCode()));
-        verify(instanceService, times(1)).getAllInstances("infrastructureId");
-    }
+	@Test
+	public void testListAllInstance() {
+		when(instanceService.getAllInstances("infrastructureId")).thenReturn(Sets.newHashSet());
+		assertThat(instanceRest.listAllInstance("infrastructureId").getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(instanceService, times(1)).getAllInstances("infrastructureId");
+	}
 
-    @Test
-    public void testDeleteInstance() {
-        assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID").getStatus(),
-                is(Response.Status.OK.getStatusCode()));
-        verify(instanceService, times(1)).deleteInstance("infrastructureId", "instanceID");
-    }
+	@Test
+	public void testDeleteInstance() {
+		assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID").getStatus(),
+				is(Response.Status.OK.getStatusCode()));
+		verify(instanceService, times(1)).deleteInstance("infrastructureId", "instanceID");
+	}
 
 }
