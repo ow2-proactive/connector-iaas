@@ -148,13 +148,10 @@ public class JCloudsProvider implements CloudProvider {
 	}
 
 	private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
-		RunScriptOptions runScriptOptions = RunScriptOptions.Builder.runAsRoot(true);
-
-		runScriptOptions = Optional.ofNullable(instanceScript.getCredentials())
+		return Optional.ofNullable(instanceScript.getCredentials())
 				.map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
 						.overrideLoginUser(credentials.getUsername()).overrideLoginPassword(credentials.getPassword()))
-				.get();
-		return runScriptOptions;
+				.orElse(RunScriptOptions.Builder.runAsRoot(true));
 	}
 
 }
