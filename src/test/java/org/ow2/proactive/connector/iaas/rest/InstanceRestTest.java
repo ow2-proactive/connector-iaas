@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
-import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
 
@@ -34,9 +33,9 @@ public class InstanceRestTest {
 	public void init() {
 		MockitoAnnotations.initMocks(this);
 		instanceStringFixture = InstanceFixture.getInstanceAsaString("instance-id", "name", "image", "number", "cpu",
-				"ram", "running", InstanceScriptFixture.simpleInstanceScriptNoscripts());
-		instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram", "running",
-				InstanceScriptFixture.simpleInstanceScriptNoscripts());
+				"ram", "running");
+		instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram",
+				"running");
 	}
 
 	@Test

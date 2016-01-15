@@ -44,9 +44,6 @@ public class JCloudsProvider implements CloudProvider {
 
 		Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
-		Optional.ofNullable(instance.getPostBootScript())
-				.ifPresent(script -> template.getOptions().runScript(buildScriptToExecuteString(script)));
-
 		try {
 			createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
 					Integer.parseInt(instance.getNumber()), template);
