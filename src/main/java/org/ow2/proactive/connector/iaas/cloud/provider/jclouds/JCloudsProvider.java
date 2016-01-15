@@ -17,6 +17,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
@@ -147,8 +148,9 @@ public class JCloudsProvider implements CloudProvider {
 	private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
 		return Optional.ofNullable(instanceScript.getCredentials())
 				.map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
-						.overrideLoginUser(credentials.getUsername()).overrideLoginPassword(credentials.getPassword()))
-				.orElse(RunScriptOptions.Builder.runAsRoot(true));
+						.overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
+								.password(credentials.getPassword()).privateKey(null).authenticateSudo(false).build()))
+				.orElse(RunScriptOptions.NONE);
 	}
 
 }
