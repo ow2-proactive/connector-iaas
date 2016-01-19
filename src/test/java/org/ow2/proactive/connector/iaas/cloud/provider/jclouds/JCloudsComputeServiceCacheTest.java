@@ -15,8 +15,6 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceBuilder;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 
@@ -40,53 +38,53 @@ public class JCloudsComputeServiceCacheTest {
 
 	@Test
 	public void testGetComputeServiceFirstTime() {
-		ComputeService computeService = computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		ComputeService computeService = computeServiceCache.getComputeService(InfrastructureFixture
+				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
 		assertThat(computeService, is(not(nullValue())));
-		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture
+				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
 	}
 
 	@Test
 	public void testGetComputeServiceManyTimeSameInfrastructure() {
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
 
-		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture
+				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
 	}
 
 	@Test
 	public void testGetComputeServiceDifferentInfrastructure() {
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
+				"endPoint", "userName", "password", "privateKey"));
 
 		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(any(Infrastructure.class));
 	}
 
 	@Test
 	public void testRemoveComputeService() {
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
 
-		computeServiceCache.removeComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		computeServiceCache.removeComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
 
-		computeServiceCache.getComputeService(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+				"endPoint", "userName", "password", "privateKey"));
 
-		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", "endPoint", "userName", "credential"));
+		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(InfrastructureFixture
+				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
 	}
 
 }

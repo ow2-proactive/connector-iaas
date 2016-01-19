@@ -149,7 +149,8 @@ public class JCloudsProvider implements CloudProvider {
 		return Optional.ofNullable(instanceScript.getCredentials())
 				.map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
 						.overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-								.password(credentials.getPassword()).privateKey(null).authenticateSudo(false).build()))
+								.password(credentials.getPassword()).privateKey(credentials.getPrivateKey())
+								.authenticateSudo(false).build()))
 				.orElse(RunScriptOptions.NONE);
 	}
 

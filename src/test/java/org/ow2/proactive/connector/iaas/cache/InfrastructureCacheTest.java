@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 
@@ -30,25 +29,26 @@ public class InfrastructureCacheTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void testImmutability() {
 		((Map<String, Infrastructure>) infrastructureCache.getSupportedInfrastructures()).put("openstack",
-				InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential"));
+				InfrastructureFixture.getInfrastructure("id-openstack", "openstack", "endPoint", "userName", "password",
+						"privateKey"));
 	}
 
 	@Test
 	public void testRegisterInfrastructure() {
-		infrastructureCache.registerInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential"));
+		infrastructureCache.registerInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
+				"endPoint", "userName", "password", "privateKey"));
 		assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
-		assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"),
-				is(InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential")));
+		assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"), is(InfrastructureFixture
+				.getInfrastructure("id-openstack", "openstack", "endPoint", "userName", "password", "privateKey")));
 	}
 
 	@Test
 	public void testDeleteInfrastructure() {
-		infrastructureCache.registerInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential"));
+		infrastructureCache.registerInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
+				"endPoint", "userName", "password", "privateKey"));
 
-		infrastructureCache.deleteInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-openstack","openstack", "endPoint", "userName", "credential"));
+		infrastructureCache.deleteInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
+				"endPoint", "userName", "password", "privateKey"));
 
 		assertThat(infrastructureCache.getSupportedInfrastructures(), is(not(nullValue())));
 		assertThat(infrastructureCache.getSupportedInfrastructures().isEmpty(), is(true));

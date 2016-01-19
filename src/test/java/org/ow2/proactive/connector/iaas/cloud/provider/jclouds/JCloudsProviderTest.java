@@ -72,7 +72,7 @@ public class JCloudsProviderTest {
 	public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -120,7 +120,7 @@ public class JCloudsProviderTest {
 	public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -151,7 +151,7 @@ public class JCloudsProviderTest {
 	public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -176,7 +176,7 @@ public class JCloudsProviderTest {
 	public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -190,7 +190,7 @@ public class JCloudsProviderTest {
 	public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -214,7 +214,7 @@ public class JCloudsProviderTest {
 	@Test
 	public void testGetAllImages() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -235,7 +235,7 @@ public class JCloudsProviderTest {
 	@Test
 	public void testGetAllImagesEmptySet() {
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -252,7 +252,7 @@ public class JCloudsProviderTest {
 	public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -279,7 +279,7 @@ public class JCloudsProviderTest {
 			throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
 
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 
 		when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

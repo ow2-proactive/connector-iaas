@@ -9,7 +9,6 @@ import org.jclouds.aws.ec2.compute.AWSEC2ComputeService;
 import org.jclouds.compute.ComputeService;
 import org.junit.Before;
 import org.junit.Test;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceBuilder;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 
 public class JCloudsComputeServiceBuilderTest {
@@ -23,24 +22,27 @@ public class JCloudsComputeServiceBuilderTest {
 
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWS() {
-		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2", "", "userName", "credential"));
+		ComputeService computerService = computeServiceBuilder
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+						"", "userName", "password", "privateKey"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
-	
+
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWSNullEndPoint() {
-		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-aws-ec2","aws-ec2", null, "userName", "credential"));
+		ComputeService computerService = computeServiceBuilder
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+						null, "userName", "password", "privateKey"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
 
 	@Test
 	public void testBuildComputeServiceFromInfrastructureOpenstack() {
-		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
-				InfrastructureFixture.getInfrastructure("id-openstack-nova","openstack-nova", "endPoint", "userName", "credential"));
+		ComputeService computerService = computeServiceBuilder
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack-nova",
+						"openstack-nova", "endPoint", "userName", "password", "privateKey"));
 
 		assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
 	}

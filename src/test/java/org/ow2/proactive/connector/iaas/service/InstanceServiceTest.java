@@ -43,7 +43,7 @@ public class InstanceServiceTest {
 	public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 		when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
 		Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512", "cpu",
@@ -64,7 +64,7 @@ public class InstanceServiceTest {
 	public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 		when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
 		instanceService.deleteInstance(infratructure.getId(), "instanceID");
@@ -77,7 +77,7 @@ public class InstanceServiceTest {
 	public void testGetAllInstances() throws NumberFormatException, RunNodesException {
 
 		Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"credential");
+				"password", "privateKey");
 		when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
 		when(cloudManager.getAllInfrastructureInstances(infratructure))
