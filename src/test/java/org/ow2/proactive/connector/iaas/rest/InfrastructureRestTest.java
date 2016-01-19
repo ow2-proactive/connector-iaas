@@ -35,9 +35,9 @@ public class InfrastructureRestTest {
 	public void init() {
 		MockitoAnnotations.initMocks(this);
 		infrastructureStringFixture = InfrastructureFixture.getInfrastructureAsaString("id-openstack", "openstack",
-				"endPoint", "userName", "password", "privateKey");
+				"endPoint", "userName", "password", "privateKey", "publicKey");
 		infrastructureFixture = InfrastructureFixture.getInfrastructure("id-openstack", "openstack", "endPoint",
-				"userName", "password", "privateKey");
+				"userName", "password", "privateKey", "publicKey");
 	}
 
 	@Test

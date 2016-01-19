@@ -1,5 +1,6 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
+import static org.jclouds.compute.options.TemplateOptions.Builder.authorizePublicKey;
 import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
@@ -40,14 +41,17 @@ public class JCloudsProvider implements CloudProvider {
 	@Override
 	public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 		ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-		Template template = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
-				.imageId(instance.getImage()).build();
+		TemplateBuilder templateBuilder = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
+				.imageId(instance.getImage());
+
+		Optional.ofNullable(infrastructure.getCredentials().getPublicKey())
+				.ifPresent(publicKey -> templateBuilder.options(authorizePublicKey(publicKey)));
 
 		Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
 		try {
 			createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
-					Integer.parseInt(instance.getNumber()), template);
+					Integer.parseInt(instance.getNumber()), templateBuilder.build());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

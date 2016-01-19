@@ -17,12 +17,12 @@ public class InstanceScriptFixture {
 	}
 
 	public static InstanceScript getInstanceScript(String[] scripts) {
-		return getInstanceScriptUserAndPassword("", "", "", scripts);
+		return getInstanceScriptUserAndPassword("", "", "", "", scripts);
 	}
 
 	public static InstanceScript getInstanceScriptUserAndPassword(String username, String pasword, String privateKey,
-			String[] scripts) {
-		return new InstanceScript(new Credentials(username, pasword, privateKey), scripts);
+			String publicKey, String[] scripts) {
+		return new InstanceScript(new Credentials(username, pasword, privateKey, publicKey), scripts);
 	}
 
 }

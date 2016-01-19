@@ -20,7 +20,7 @@ public class CredentialsTest {
 
 	@Test
 	public void testConstructor() {
-		Credentials credentials = new Credentials("username", "password", "privateKey");
+		Credentials credentials = new Credentials("username", "password", "privateKey", "publicKey");
 		assertThat(credentials.getUsername(), is("username"));
 		assertThat(credentials.getPassword(), is("password"));
 		assertThat(credentials.getPrivateKey(), is("privateKey"));
@@ -28,8 +28,8 @@ public class CredentialsTest {
 
 	@Test
 	public void testEqualsAndHashcode() {
-		Credentials credentials1 = new Credentials("username", "password", "privateKey");
-		Credentials credentials2 = new Credentials("username", "password", "privateKey");
+		Credentials credentials1 = new Credentials("username", "password", "privateKey", "publicKey");
+		Credentials credentials2 = new Credentials("username", "password", "privateKey", "publicKey");
 
 		Set<Credentials> credentialss = Sets.newHashSet(credentials1, credentials2);
 

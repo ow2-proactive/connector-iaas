@@ -20,16 +20,16 @@ public class InfrastructureTest {
 	@Test
 	public void testConstructor() {
 		Infrastructure infrastructure = new Infrastructure("id-openstack", "openstack", "openstackEndpoint",
-				new Credentials("openstackUserName", "openstackCredential", "privateKey"));
+				new Credentials("openstackUserName", "openstackCredential", "privateKey", "publicKey"));
 		assertThat(infrastructure.getId(), is("id-openstack"));
 	}
 
 	@Test
 	public void testEqualsAndHashcode() {
 		Infrastructure infrastructure1 = new Infrastructure("id-openstack", "openstack", "openstackEndpoint",
-				new Credentials("openstackUserName", "openstackCredential1", "privateKey1"));
+				new Credentials("openstackUserName", "openstackCredential1", "privateKey1", "publicKey1"));
 		Infrastructure infrastructure2 = new Infrastructure("id-openstack", "openstack", "openstackEndpoint",
-				new Credentials("openstackUserName", "openstackCredential2", "privateKey2"));
+				new Credentials("openstackUserName", "openstackCredential2", "privateKey2", "publicKey2"));
 
 		Set<Infrastructure> infrastructures = Sets.newHashSet(infrastructure1, infrastructure2);
 

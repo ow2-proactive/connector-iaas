@@ -41,7 +41,7 @@ public class InfrastructureServiceTest {
 	@Test
 	public void testRegisterInfrastructure() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey");
+				"password", "privateKey", "publicKey");
 		infrastructureService.registerInfrastructure(infrastructure);
 		verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
 	}
@@ -49,7 +49,7 @@ public class InfrastructureServiceTest {
 	@Test
 	public void testGetInfrastructureByName() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey");
+				"password", "privateKey", "publicKey");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
 		infrastructureService.registerInfrastructure(infrastructure);
@@ -59,7 +59,7 @@ public class InfrastructureServiceTest {
 	@Test
 	public void testDeleteInfrastructure() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey");
+				"password", "privateKey", "publicKey");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
 		infrastructureService.deleteInfrastructure(infrastructure);
@@ -72,7 +72,7 @@ public class InfrastructureServiceTest {
 	@Test
 	public void testGetAllSupportedInfrastructure() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey");
+				"password", "privateKey", "publicKey");
 		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
 		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
 		assertThat(infrastructureService.getAllSupportedInfrastructure().get("aws"), is(infrastructure));

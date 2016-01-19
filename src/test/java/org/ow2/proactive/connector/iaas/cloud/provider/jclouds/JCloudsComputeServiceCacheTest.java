@@ -38,36 +38,38 @@ public class JCloudsComputeServiceCacheTest {
 
 	@Test
 	public void testGetComputeServiceFirstTime() {
-		ComputeService computeService = computeServiceCache.getComputeService(InfrastructureFixture
-				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
+		ComputeService computeService = computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure(
+				"id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey", "publicKey"));
 		assertThat(computeService, is(not(nullValue())));
-		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture
-				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
+		verify(computeServiceBuilder, times(1))
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+						"endPoint", "userName", "password", "privateKey", "publicKey"));
 	}
 
 	@Test
 	public void testGetComputeServiceManyTimeSameInfrastructure() {
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 
-		verify(computeServiceBuilder, times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture
-				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
+		verify(computeServiceBuilder, times(1))
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+						"endPoint", "userName", "password", "privateKey", "publicKey"));
 	}
 
 	@Test
 	public void testGetComputeServiceDifferentInfrastructure() {
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 
 		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(any(Infrastructure.class));
 	}
@@ -75,16 +77,17 @@ public class JCloudsComputeServiceCacheTest {
 	@Test
 	public void testRemoveComputeService() {
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 
 		computeServiceCache.removeComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 
 		computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-				"endPoint", "userName", "password", "privateKey"));
+				"endPoint", "userName", "password", "privateKey", "publicKey"));
 
-		verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(InfrastructureFixture
-				.getInfrastructure("id-aws-ec2", "aws-ec2", "endPoint", "userName", "password", "privateKey"));
+		verify(computeServiceBuilder, times(2))
+				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
+						"endPoint", "userName", "password", "privateKey", "publicKey"));
 	}
 
 }
