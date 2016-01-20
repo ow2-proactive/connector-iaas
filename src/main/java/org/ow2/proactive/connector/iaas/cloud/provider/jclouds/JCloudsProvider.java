@@ -1,6 +1,5 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
-import static org.jclouds.compute.options.TemplateOptions.Builder.authorizePublicKey;
 import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
@@ -43,9 +42,6 @@ public class JCloudsProvider implements CloudProvider {
 		ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 		TemplateBuilder templateBuilder = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
 				.imageId(instance.getImage());
-
-		Optional.ofNullable(infrastructure.getCredentials().getPublicKey())
-				.ifPresent(publicKey -> templateBuilder.options(authorizePublicKey(publicKey)));
 
 		Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -153,8 +149,7 @@ public class JCloudsProvider implements CloudProvider {
 		return Optional.ofNullable(instanceScript.getCredentials())
 				.map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
 						.overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-								.password(credentials.getPassword()).privateKey(credentials.getPrivateKey())
-								.authenticateSudo(false).build()))
+								.password(credentials.getPassword()).authenticateSudo(false).build()))
 				.orElse(RunScriptOptions.NONE);
 	}
 

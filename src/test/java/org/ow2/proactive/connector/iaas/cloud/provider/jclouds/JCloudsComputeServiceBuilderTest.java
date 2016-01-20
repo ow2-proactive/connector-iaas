@@ -22,18 +22,16 @@ public class JCloudsComputeServiceBuilderTest {
 
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWS() {
-		ComputeService computerService = computeServiceBuilder
-				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-						"", "userName", "password", "privateKey", "publicKey"));
+		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
+				InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2", "", "userName", "password"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
 
 	@Test
 	public void testBuildComputeServiceFromInfrastructureAWSNullEndPoint() {
-		ComputeService computerService = computeServiceBuilder
-				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2",
-						null, "userName", "password", "privateKey", "publicKey"));
+		ComputeService computerService = computeServiceBuilder.buildComputeServiceFromInfrastructure(
+				InfrastructureFixture.getInfrastructure("id-aws-ec2", "aws-ec2", null, "userName", "password"));
 
 		assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
 	}
@@ -42,7 +40,7 @@ public class JCloudsComputeServiceBuilderTest {
 	public void testBuildComputeServiceFromInfrastructureOpenstack() {
 		ComputeService computerService = computeServiceBuilder
 				.buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack-nova",
-						"openstack-nova", "endPoint", "userName", "password", "privateKey", "publicKey"));
+						"openstack-nova", "endPoint", "userName", "password"));
 
 		assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
 	}

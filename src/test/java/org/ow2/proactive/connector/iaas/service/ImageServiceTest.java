@@ -39,7 +39,7 @@ public class ImageServiceTest {
 	@Test
 	public void testGetAllImages() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey", "publicKey");
+				"password");
 		when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
 		Set<Image> images = Sets.newHashSet();

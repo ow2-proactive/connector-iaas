@@ -29,27 +29,26 @@ public class InfrastructureCacheTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void testImmutability() {
 		((Map<String, Infrastructure>) infrastructureCache.getSupportedInfrastructures()).put("openstack",
-				InfrastructureFixture.getInfrastructure("id-openstack", "openstack", "endPoint", "userName", "password",
-						"privateKey", "publicKey"));
+				InfrastructureFixture.getInfrastructure("id-openstack", "openstack", "endPoint", "userName",
+						"password"));
 	}
 
 	@Test
 	public void testRegisterInfrastructure() {
 		infrastructureCache.registerInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
-				"endPoint", "userName", "password", "privateKey", "publicKey"));
+				"endPoint", "userName", "password"));
 		assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
-		assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"),
-				is(InfrastructureFixture.getInfrastructure("id-openstack", "openstack", "endPoint", "userName",
-						"password", "privateKey", "publicKey")));
+		assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"), is(InfrastructureFixture
+				.getInfrastructure("id-openstack", "openstack", "endPoint", "userName", "password")));
 	}
 
 	@Test
 	public void testDeleteInfrastructure() {
 		infrastructureCache.registerInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
-				"endPoint", "userName", "password", "privateKey", "publicKey"));
+				"endPoint", "userName", "password"));
 
 		infrastructureCache.deleteInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack", "openstack",
-				"endPoint", "userName", "password", "privateKey", "publicKey"));
+				"endPoint", "userName", "password"));
 
 		assertThat(infrastructureCache.getSupportedInfrastructures(), is(not(nullValue())));
 		assertThat(infrastructureCache.getSupportedInfrastructures().isEmpty(), is(true));

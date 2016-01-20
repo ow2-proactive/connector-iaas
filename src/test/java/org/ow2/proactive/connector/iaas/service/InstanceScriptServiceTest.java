@@ -41,7 +41,7 @@ public class InstanceScriptServiceTest {
 	@Test
 	public void testExecuteScriptOnInstance() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey", "publicKey");
+				"password");
 		when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
 		InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();
@@ -62,7 +62,7 @@ public class InstanceScriptServiceTest {
 	@Test
 	public void testExecuteScriptOnInstanceTag() {
 		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password", "privateKey", "publicKey");
+				"password");
 		when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
 		InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();

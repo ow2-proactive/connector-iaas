@@ -7,20 +7,18 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 public class InfrastructureFixture {
 
 	public static String getInfrastructureAsaString(String name, String type, String endPoint, String userName,
-			String password, String privateKey, String publicKey) {
-		JSONObject jsonObject = new JSONObject(
-				getInfrastructure(name, type, endPoint, userName, password, privateKey, publicKey));
+			String password) {
+		JSONObject jsonObject = new JSONObject(getInfrastructure(name, type, endPoint, userName, password));
 		return jsonObject.toString();
 	}
 
 	public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
-			String password, String privateKey, String publicKey) {
-		return new Infrastructure(name, type, endPoint, new Credentials(username, password, privateKey, publicKey));
+			String password) {
+		return new Infrastructure(name, type, endPoint, new Credentials(username, password));
 	}
 
 	public static Infrastructure getSimpleInfrastructure(String type) {
-		return new Infrastructure("id-" + type, type, "endPoint",
-				new Credentials("userName", "password", "privateKey", "publicKey"));
+		return new Infrastructure("id-" + type, type, "endPoint", new Credentials("userName", "password"));
 	}
 
 }
