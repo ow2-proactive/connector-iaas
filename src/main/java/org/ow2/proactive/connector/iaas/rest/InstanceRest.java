@@ -12,16 +12,14 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.aol.micro.server.auto.discovery.Rest;
 import com.aol.micro.server.rest.jackson.JacksonUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.json.JacksonJsonParser;
+import org.springframework.stereotype.Component;
 
 
 @Path("/infrastructures")
 @Component
-@Rest(isSingleton = true)
 public class InstanceRest {
 
     @Autowired

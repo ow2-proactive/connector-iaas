@@ -15,7 +15,6 @@ import com.aol.micro.server.auto.discovery.Rest;
 
 @Path("/infrastructures")
 @Component
-@Rest(isSingleton = true)
 public class ImageRest {
 
     @Autowired
