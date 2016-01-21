@@ -39,9 +39,9 @@ import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.testng.collections.Maps;
 
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 

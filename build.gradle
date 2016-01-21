@@ -124,7 +124,6 @@ dependencies {
             exclude module : 'hamcrest-core'
         }
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
-    testCompile 'org.powermock:powermock-mockito-release-full:1.6.2'
 	testCompile 'org.springframework:spring-test:2.5'
 }
 
