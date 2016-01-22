@@ -9,6 +9,16 @@ apply plugin: 'org.sonarqube'
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
 
+// Configure the maven repository deployment
+install {
+    repositories.mavenInstaller {
+            // Set the version
+            pom.version = connectorIaaSVersion
+            // Set the group/namespace for the maven repository deployment.
+            pom.groupId = 'org.ow2.proactive'
+    }
+}
+
 repositories {
 	mavenCentral()
     jcenter()
