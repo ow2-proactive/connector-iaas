@@ -31,126 +31,131 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
+
 @Component("defaultCloudProvider")
 public class JCloudsProvider implements CloudProvider {
 
-	@Autowired
-	private JCloudsComputeServiceCache jCloudsComputeServiceCache;
+    @Autowired
+    private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
-	@Override
-	public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-		ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-		TemplateBuilder templateBuilder = computeService.templateBuilder().minRam(Integer.parseInt(instance.getRam()))
-				.imageId(instance.getImage());
+    @Override
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        TemplateBuilder templateBuilder = computeService.templateBuilder()
+                .minRam(Integer.parseInt(instance.getMinRam()))
+                .minCores(Double.parseDouble(instance.getMinCores())).imageId(instance.getImage());
 
-		Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
+        Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
-		try {
-			createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
-					Integer.parseInt(instance.getNumber()), templateBuilder.build());
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        try {
+            createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
+                    Integer.parseInt(instance.getNumber()), templateBuilder.build());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-		return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata).map(
-				nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl, infrastructure.getId()))
-				.collect(Collectors.toSet());
+        return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
+                        infrastructure.getId()))
+                .collect(Collectors.toSet());
 
-	}
+    }
 
-	@Override
-	public void deleteInstance(Infrastructure infrastructure, String instanceId) {
-		getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
+    @Override
+    public void deleteInstance(Infrastructure infrastructure, String instanceId) {
+        getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
 
-	}
+    }
 
-	@Override
-	public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
-		return getComputeServiceFromInfastructure(infrastructure).listNodes().stream()
-				.map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
-				.map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-						infrastructure.getId()))
-				.collect(Collectors.toSet());
-	}
+    @Override
+    public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listNodes().stream()
+                .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
+                        infrastructure.getId()))
+                .collect(Collectors.toSet());
+    }
 
-	@Override
-	public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
-			InstanceScript instanceScript) {
-		ExecResponse execResponse;
+    @Override
+    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript) {
+        ExecResponse execResponse;
 
-		try {
-			execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
-					buildScriptToExecuteString(instanceScript), buildScriptOptions(instanceScript));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        try {
+            execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
+                    buildScriptToExecuteString(instanceScript), buildScriptOptions(instanceScript));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-		return new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError());
-	}
+        return new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError());
+    }
 
-	@Override
-	public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
-			InstanceScript instanceScript) {
+    @Override
+    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
+            InstanceScript instanceScript) {
 
-		Map<? extends NodeMetadata, ExecResponse> execResponses;
+        Map<? extends NodeMetadata, ExecResponse> execResponses;
 
-		try {
-			execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(
-					runningInGroup(instanceTag), buildScriptToExecuteString(instanceScript),
-					buildScriptOptions(instanceScript));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        try {
+            execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(
+                    runningInGroup(instanceTag), buildScriptToExecuteString(instanceScript),
+                    buildScriptOptions(instanceScript));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-		return execResponses.entrySet().stream().map(entry -> new ScriptResult(entry.getKey().getId(),
-				entry.getValue().getOutput(), entry.getValue().getError())).collect(Collectors.toList());
+        return execResponses.entrySet().stream().map(entry -> new ScriptResult(entry.getKey().getId(),
+            entry.getValue().getOutput(), entry.getValue().getError())).collect(Collectors.toList());
 
-	}
+    }
 
-	@Override
-	public Set<Image> getAllImages(Infrastructure infrastructure) {
-		return getComputeServiceFromInfastructure(infrastructure).listImages().stream()
-				.map(it -> Image.builder().id(it.getId()).name(it.getName()).build()).collect(Collectors.toSet());
+    @Override
+    public Set<Image> getAllImages(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listImages().stream()
+                .map(it -> Image.builder().id(it.getId()).name(it.getName()).build())
+                .collect(Collectors.toSet());
 
-	}
+    }
 
-	@Override
-	public void deleteInfrastructure(Infrastructure infrastructure) {
-		getAllInfrastructureInstances(infrastructure).stream().forEach(instance -> {
-			deleteInstance(infrastructure, instance.getId());
-		});
-		jCloudsComputeServiceCache.removeComputeService(infrastructure);
+    @Override
+    public void deleteInfrastructure(Infrastructure infrastructure) {
+        getAllInfrastructureInstances(infrastructure).stream().forEach(instance -> {
+            deleteInstance(infrastructure, instance.getId());
+        });
+        jCloudsComputeServiceCache.removeComputeService(infrastructure);
 
-	}
+    }
 
-	private ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
-		return jCloudsComputeServiceCache.getComputeService(infrastructure);
-	}
+    private ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
+        return jCloudsComputeServiceCache.getComputeService(infrastructure);
+    }
 
-	private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (nodeMetadataImpl,
-			infrastructureId) -> {
-		return Instance.builder().id(nodeMetadataImpl.getId()).tag(nodeMetadataImpl.getName())
-				.image(nodeMetadataImpl.getImageId()).number("1")
-				.ram(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
-				.cpu(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
-				.status(nodeMetadataImpl.getStatus().name()).build();
-	};
+    private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
+            nodeMetadataImpl, infrastructureId) -> {
+        return Instance.builder().id(nodeMetadataImpl.getId()).tag(nodeMetadataImpl.getName())
+                .image(nodeMetadataImpl.getImageId()).number("1")
+                .minRam(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
+                .minCores(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
+                .status(nodeMetadataImpl.getStatus().name()).build();
+    };
 
-	private String buildScriptToExecuteString(InstanceScript instanceScript) {
-		ScriptBuilder scriptBuilder = new ScriptBuilder();
+    private String buildScriptToExecuteString(InstanceScript instanceScript) {
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
 
-		Arrays.stream(instanceScript.getScripts()).forEachOrdered(script -> scriptBuilder.addStatement(exec(script)));
+        Arrays.stream(instanceScript.getScripts())
+                .forEachOrdered(script -> scriptBuilder.addStatement(exec(script)));
 
-		String allScriptsToExecute = scriptBuilder.render(OsFamily.UNIX);
-		return allScriptsToExecute;
-	}
+        String allScriptsToExecute = scriptBuilder.render(OsFamily.UNIX);
+        return allScriptsToExecute;
+    }
 
-	private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
-		return Optional.ofNullable(instanceScript.getCredentials())
-				.map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
-						.overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-								.password(credentials.getPassword()).authenticateSudo(false).build()))
-				.orElse(RunScriptOptions.NONE);
-	}
+    private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
+        return Optional.ofNullable(instanceScript.getCredentials())
+                .map(credentials -> RunScriptOptions.Builder.runAsRoot(false).overrideLoginCredentials(
+                        new LoginCredentials.Builder().user(credentials.getUsername())
+                                .password(credentials.getPassword()).authenticateSudo(false).build()))
+                .orElse(RunScriptOptions.NONE);
+    }
 
 }
