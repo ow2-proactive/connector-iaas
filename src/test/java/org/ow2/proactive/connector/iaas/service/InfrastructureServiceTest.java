@@ -20,62 +20,76 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 
 import jersey.repackaged.com.google.common.collect.ImmutableMap;
 
+
 public class InfrastructureServiceTest {
 
-	@InjectMocks
-	private InfrastructureService infrastructureService;
+    @InjectMocks
+    private InfrastructureService infrastructureService;
 
-	@Mock
-	private InfrastructureCache infrastructureCache;
+    @Mock
+    private InfrastructureCache infrastructureCache;
 
-	@Mock
-	private CloudManager cloudManager;
+    @Mock
+    private CloudManager cloudManager;
 
-	private ImmutableMap<String, Infrastructure> mockSupportedInfrastructures;
+    private ImmutableMap<String, Infrastructure> mockSupportedInfrastructures;
 
-	@Before
-	public void init() {
-		MockitoAnnotations.initMocks(this);
-	}
+    @Before
+    public void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
-	@Test
-	public void testRegisterInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password");
-		infrastructureService.registerInfrastructure(infrastructure);
-		verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
-	}
+    @Test
+    public void testRegisterInfrastructure() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        infrastructureService.registerInfrastructure(infrastructure);
+        verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
+    }
 
-	@Test
-	public void testGetInfrastructureByName() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password");
-		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
-		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-		infrastructureService.registerInfrastructure(infrastructure);
-		assertThat(infrastructureCache.getSupportedInfrastructures().get("aws"), is(infrastructure));
-	}
+    @Test
+    public void testGetInfrastructureByName() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        infrastructureService.registerInfrastructure(infrastructure);
+        assertThat(infrastructureCache.getSupportedInfrastructures().get("aws"), is(infrastructure));
+    }
 
-	@Test
-	public void testDeleteInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password");
-		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
-		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-		infrastructureService.deleteInfrastructure(infrastructure);
+    @Test
+    public void testDeleteInfrastructure() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        infrastructureService.deleteInfrastructure(infrastructure);
 
-		InOrder inOrder = inOrder(cloudManager, infrastructureCache);
-		inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
-		inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
-	}
+        InOrder inOrder = inOrder(cloudManager, infrastructureCache);
+        inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
+        inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
+    }
 
-	@Test
-	public void testGetAllSupportedInfrastructure() {
-		Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint", "userName",
-				"password");
-		mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
-		when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-		assertThat(infrastructureService.getAllSupportedInfrastructure().get("aws"), is(infrastructure));
-		assertThat(infrastructureService.getAllSupportedInfrastructure().size(), is(1));
-	}
+    @Test
+    public void testDeleteInfrastructureNotInCache() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        mockSupportedInfrastructures = ImmutableMap.of("some-other-id", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        infrastructureService.deleteInfrastructure(infrastructure);
+
+        InOrder inOrder = inOrder(cloudManager, infrastructureCache);
+        inOrder.verify(cloudManager, times(0)).deleteInfrastructure(infrastructure);
+        inOrder.verify(infrastructureCache, times(0)).deleteInfrastructure(infrastructure);
+    }
+
+    @Test
+    public void testGetAllSupportedInfrastructure() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        assertThat(infrastructureService.getAllSupportedInfrastructure().get("aws"), is(infrastructure));
+        assertThat(infrastructureService.getAllSupportedInfrastructure().size(), is(1));
+    }
 }
