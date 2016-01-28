@@ -1,5 +1,7 @@
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.Optional;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -11,9 +13,10 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.service.InfrastructureService;
-import com.aol.micro.server.rest.jackson.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.aol.micro.server.rest.jackson.JacksonUtil;
 
 
 @Path("/infrastructures")
@@ -39,8 +42,9 @@ public class InfrastructureRest {
     @DELETE
     @Path("/{infrastructureId}")
     @Produces("application/json")
-    public Response deleteInfrastructureByName(@PathParam("infrastructureId") String infrastructureId) {
-        infrastructureService.deleteInfrastructure(infrastructureService.getInfrastructure(infrastructureId));
+    public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId) {
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .ifPresent(infrastructure -> infrastructureService.deleteInfrastructure(infrastructure));
         return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 

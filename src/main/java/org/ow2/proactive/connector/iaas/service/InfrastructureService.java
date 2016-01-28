@@ -28,10 +28,8 @@ public class InfrastructureService {
     }
 
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        if (infrastructureCache.getSupportedInfrastructures().containsKey(infrastructure.getId())) {
-            cloudManager.deleteInfrastructure(infrastructure);
-            infrastructureCache.deleteInfrastructure(infrastructure);
-        }
+        cloudManager.deleteInfrastructure(infrastructure);
+        infrastructureCache.deleteInfrastructure(infrastructure);
     }
 
     public Infrastructure getInfrastructure(String infrastructureId) {

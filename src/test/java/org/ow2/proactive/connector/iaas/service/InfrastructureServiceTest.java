@@ -71,19 +71,6 @@ public class InfrastructureServiceTest {
     }
 
     @Test
-    public void testDeleteInfrastructureNotInCache() {
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
-        mockSupportedInfrastructures = ImmutableMap.of("some-other-id", infrastructure);
-        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.deleteInfrastructure(infrastructure);
-
-        InOrder inOrder = inOrder(cloudManager, infrastructureCache);
-        inOrder.verify(cloudManager, times(0)).deleteInfrastructure(infrastructure);
-        inOrder.verify(infrastructureCache, times(0)).deleteInfrastructure(infrastructure);
-    }
-
-    @Test
     public void testGetAllSupportedInfrastructure() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "password");
