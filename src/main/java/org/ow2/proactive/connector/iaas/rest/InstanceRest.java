@@ -12,10 +12,10 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
-import com.aol.micro.server.rest.jackson.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.json.JacksonJsonParser;
 import org.springframework.stereotype.Component;
+
+import com.aol.micro.server.rest.jackson.JacksonUtil;
 
 
 @Path("/infrastructures")
@@ -48,6 +48,15 @@ public class InstanceRest {
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId) {
         instanceService.deleteInstance(infrastructureId, instanceId);
+        return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("{infrastructureId}/instances/tag")
+    @Produces("application/json")
+    public Response deleteInstanceByTag(@PathParam("infrastructureId") String infrastructureId,
+            @QueryParam("instanceTag") String instanceTag) {
+        instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
         return Response.ok().build();
     }
 

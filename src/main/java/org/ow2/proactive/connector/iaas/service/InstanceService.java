@@ -26,6 +26,13 @@ public class InstanceService {
         cloudManager.deleteInstance(infrastructureService.getInfrastructure(infrastructureId), instanceId);
     }
 
+    public void deleteInstanceByTag(String infrastructureId, String instanceTag) {
+        Set<Instance> instances = getAllInstances(infrastructureId);
+        instances.stream().filter(instance -> instance.getTag().equals(instanceTag))
+                .forEach(instance -> cloudManager.deleteInstance(
+                        infrastructureService.getInfrastructure(infrastructureId), instance.getId()));
+    }
+
     public Set<Instance> getAllInstances(String infrastructureId) {
         return cloudManager
                 .getAllInfrastructureInstances(infrastructureService.getInfrastructure(infrastructureId));
