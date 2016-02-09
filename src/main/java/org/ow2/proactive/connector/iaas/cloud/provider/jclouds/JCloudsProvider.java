@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
+import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -29,37 +29,12 @@ import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Sets;
 
-
-@Component("defaultCloudProvider")
-public class JCloudsProvider implements CloudProvider {
+@Component
+public abstract class JCloudsProvider implements CloudProvider {
 
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
-
-    @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-        TemplateBuilder templateBuilder = computeService.templateBuilder()
-                .minRam(Integer.parseInt(instance.getMinRam()))
-                .minCores(Double.parseDouble(instance.getMinCores())).imageId(instance.getImage());
-
-        Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
-
-        try {
-            createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
-                    Integer.parseInt(instance.getNumber()), templateBuilder.build());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        return createdNodeMetaData.stream().map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
-                .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                        infrastructure.getId()))
-                .collect(Collectors.toSet());
-
-    }
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -127,27 +102,31 @@ public class JCloudsProvider implements CloudProvider {
 
     }
 
-    private ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
-        return jCloudsComputeServiceCache.getComputeService(infrastructure);
-    }
-
-    private final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
+    protected final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
             nodeMetadataImpl, infrastructureId) -> {
         return Instance.builder().id(nodeMetadataImpl.getId()).tag(nodeMetadataImpl.getName())
                 .image(nodeMetadataImpl.getImageId()).number("1")
-                .minRam(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
-                .minCores(String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
+                .hardware(
+                        Hardware.builder().minRam(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
+                                .minCores(
+                                        String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
+                        .type(nodeMetadataImpl.getHardware().getType().name()).build())
                 .status(nodeMetadataImpl.getStatus().name()).build();
     };
 
-    private String buildScriptToExecuteString(InstanceScript instanceScript) {
-        ScriptBuilder scriptBuilder = new ScriptBuilder();
+    protected ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
+        return jCloudsComputeServiceCache.getComputeService(infrastructure);
+    }
 
-        Arrays.stream(instanceScript.getScripts())
-                .forEachOrdered(script -> scriptBuilder.addStatement(exec(script)));
+    protected String buildScriptToExecuteString(InstanceScript instanceScript) {
 
-        String allScriptsToExecute = scriptBuilder.render(OsFamily.UNIX);
-        return allScriptsToExecute;
+        return Optional.ofNullable(instanceScript).map(scriptToRun -> {
+            ScriptBuilder scriptBuilder = new ScriptBuilder();
+            Arrays.stream(scriptToRun.getScripts())
+                    .forEachOrdered(script -> scriptBuilder.addStatement(exec(script)));
+            return scriptBuilder.render(OsFamily.UNIX);
+        }).orElse("");
+
     }
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {

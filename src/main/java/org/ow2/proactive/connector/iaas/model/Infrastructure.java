@@ -6,16 +6,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@EqualsAndHashCode(exclude = { "type", "endPoint", "credentials" })
+
+@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials" })
 @Getter
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
 public class Infrastructure {
 
-	private String id;
-	private String type;
-	private String endPoint;
-	private Credentials credentials;
+    private String id;
+    private String type;
+    private String endpoint;
+    private Credentials credentials;
 
 }

@@ -7,31 +7,42 @@ import static org.junit.Assert.assertThat;
 import java.util.Set;
 
 import org.junit.Test;
+import org.ow2.proactive.connector.iaas.fixtures.CredentialsFixtures;
+import org.ow2.proactive.connector.iaas.fixtures.HardwareFixtures;
+import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
+
 public class InstanceTest {
-	@Test
-	public void testEmptyConstructor() {
-		Instance instance = new Instance();
-		assertThat(instance.getTag(), is(nullValue()));
-	}
+    @Test
+    public void testEmptyConstructor() {
+        Instance instance = new Instance();
+        assertThat(instance.getTag(), is(nullValue()));
+    }
 
-	@Test
-	public void testConstructor() {
-		Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running");
-		assertThat(instance.getTag(), is("new-vm"));
-	}
+    @Test
+    public void testConstructor() {
+        Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
+            HardwareFixtures.getHardware("1", "512"), CredentialsFixtures.getCredentials("publicKeyName"),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
-	@Test
-	public void testEqualsAndHashcode() {
-		Instance instance1 = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running");
-		Instance instance2 = new Instance("instance-id", "new-vm", "ubuntu", "1", "1", "512", "running");
+        assertThat(instance.getTag(), is("new-vm"));
+    }
 
-		Set<Instance> instances = Sets.newHashSet(instance1, instance2);
+    @Test
+    public void testEqualsAndHashcode() {
+        Instance instance1 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
+            HardwareFixtures.getHardware("1", "512"), CredentialsFixtures.getCredentials("publicKeyName"),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+        Instance instance2 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
+            HardwareFixtures.getHardware("1", "512"), CredentialsFixtures.getCredentials("publicKeyName"),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
-		assertThat(instances.size(), is(1));
-		assertThat(instance1.equals(instance2), is(true));
-	}
+        Set<Instance> instances = Sets.newHashSet(instance1, instance2);
+
+        assertThat(instances.size(), is(1));
+        assertThat(instance1.equals(instance2), is(true));
+    }
 
 }

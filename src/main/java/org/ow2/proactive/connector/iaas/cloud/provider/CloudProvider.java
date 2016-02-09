@@ -12,6 +12,8 @@ import org.ow2.proactive.connector.iaas.model.ScriptResult;
 
 public interface CloudProvider {
 
+    public String getType();
+
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance);
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId);
