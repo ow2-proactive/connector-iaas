@@ -1,11 +1,9 @@
-package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
+package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
 import static org.hamcrest.Matchers.is;
 import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,7 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.ComputeType;
@@ -23,15 +20,11 @@ import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata.Status;
 import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
-import org.jclouds.openstack.v2_0.domain.Resource;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
@@ -40,6 +33,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws.AWSEC2JCloudsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -54,10 +49,10 @@ import com.google.common.collect.Maps;
 import jersey.repackaged.com.google.common.collect.Sets;
 
 
-public class OpenstackJCloudsProviderTest {
+public class AWSEC2JCloudsProviderTest {
 
     @InjectMocks
-    private OpenstackJCloudsProvider jcloudsProvider;
+    private AWSEC2JCloudsProvider jcloudsProvider;
 
     @Mock
     private JCloudsComputeServiceCache computeServiceCache;
@@ -66,25 +61,10 @@ public class OpenstackJCloudsProviderTest {
     private ComputeService computeService;
 
     @Mock
+    private TemplateBuilder templateBuilder;
+
+    @Mock
     private Template template;
-
-    @Mock
-    private ComputeServiceContext contextMock;
-
-    @Mock
-    private NovaApi novaApi;
-
-    @Mock
-    private ServerApi serverApi;
-
-    @Mock
-    private ServerCreated serverCreated;
-
-    @Mock
-    private Server server;
-
-    @Mock
-    private Resource resource;
 
     @Before
     public void init() {
@@ -98,43 +78,32 @@ public class OpenstackJCloudsProviderTest {
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "password");
 
+        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+
+        when(computeService.templateBuilder()).thenReturn(templateBuilder);
+
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
                 "2", "running");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
+                .thenReturn(templateBuilder);
 
-        when(computeService.getContext()).thenReturn(contextMock);
+        when(templateBuilder.minCores(Double.parseDouble(instance.getHardware().getMinCores())))
+                .thenReturn(templateBuilder);
 
-        when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
+        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
-        when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
-
-        when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
-
-        when(serverCreated.getId()).thenReturn("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-
-        when(serverApi.get("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592")).thenReturn(server);
-
-        when(server.getId()).thenReturn("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
-
-        when(server.getImage()).thenReturn(resource);
-
-        when(resource.getName()).thenReturn("resource-name");
-
-        when(server.getFlavor()).thenReturn(
-                org.jclouds.openstack.v2_0.domain.Resource.builder().id("id").name("same name").build());
-
-        when(server.getStatus()).thenReturn(org.jclouds.openstack.nova.v2_0.domain.Server.Status.BUILD);
+        when(templateBuilder.build()).thenReturn(template);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
-        when(node.getId()).thenReturn("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
+        when(node.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
         when(node.getName()).thenReturn("someName");
         Hardware hardware = mock(Hardware.class);
         when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
         when(node.getHardware()).thenReturn(hardware);
-        when(node.getStatus()).thenReturn(Status.RUNNING);
         when(hardware.getType()).thenReturn(ComputeType.HARDWARE);
+        when(node.getStatus()).thenReturn(Status.RUNNING);
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
@@ -150,7 +119,11 @@ public class OpenstackJCloudsProviderTest {
 
         assertThat(created.size(), is(1));
 
-        assertThat(created.stream().findAny().get().getId(), is("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
+        assertThat(created.stream().findAny().get().getId(),
+                is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
+
+        verify(computeService, times(1)).createNodesInGroup(instance.getTag(),
+                Integer.parseInt(instance.getNumber()), template);
 
     }
 
@@ -160,26 +133,30 @@ public class OpenstackJCloudsProviderTest {
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "password");
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2", "running");
-
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
-        when(computeService.getContext()).thenReturn(contextMock);
+        when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-        when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
+        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
+                "1", "running");
 
-        when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
+        when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
+                .thenReturn(templateBuilder);
 
-        when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
+        when(templateBuilder.minCores(Double.parseDouble(instance.getHardware().getMinCores())))
+                .thenReturn(templateBuilder);
+
+        when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
+
+        when(templateBuilder.build()).thenReturn(template);
 
         Set nodesMetaData = Sets.newHashSet();
         NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);
         when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
         nodesMetaData.add(nodeMetadataImpl);
 
-        when(serverApi.create(anyString(), anyString(), anyString(), anyObject()))
-                .thenThrow(new RuntimeException());
+        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
+                template)).thenThrow(new RuntimeException());
 
         jcloudsProvider.createInstance(infratructure, instance);
 
@@ -199,8 +176,8 @@ public class OpenstackJCloudsProviderTest {
         when(node.getName()).thenReturn("someName");
         Hardware hardware = mock(Hardware.class);
         when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
-        when(hardware.getType()).thenReturn(ComputeType.HARDWARE);
         when(node.getHardware()).thenReturn(hardware);
+        when(hardware.getType()).thenReturn(ComputeType.HARDWARE);
         when(node.getStatus()).thenReturn(Status.RUNNING);
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);

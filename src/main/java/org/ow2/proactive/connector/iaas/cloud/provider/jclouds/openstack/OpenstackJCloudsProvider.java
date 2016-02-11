@@ -1,4 +1,4 @@
-package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
+package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -11,6 +11,7 @@ import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;

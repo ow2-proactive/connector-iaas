@@ -10,8 +10,6 @@ import org.ow2.proactive.connector.iaas.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.aol.micro.server.auto.discovery.Rest;
-
 
 @Path("/infrastructures")
 @Component

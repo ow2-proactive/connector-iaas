@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.Wither;
 
 
 @Getter
 @AllArgsConstructor
 @ToString
+@Wither
 @NoArgsConstructor
 public class ScriptResult {
 
