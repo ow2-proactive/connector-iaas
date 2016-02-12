@@ -41,7 +41,7 @@ public class InstanceScriptRestTest {
                 Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
         assertThat(
                 instanceScriptRest
-                        .executeScriptByInstanceId("infrastructureId", "instanceId",
+                        .executeScript("infrastructureId", "instanceId", "instanceTag",
                                 InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));
@@ -56,7 +56,7 @@ public class InstanceScriptRestTest {
                 Mockito.any(InstanceScript.class))).thenReturn(Lists.newArrayList(scriptResult));
         assertThat(
                 instanceScriptRest
-                        .executeScriptByInstanceTag("infrastructureId", "instanceTag",
+                        .executeScript("infrastructureId", null, "instanceTag",
                                 InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));

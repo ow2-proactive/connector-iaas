@@ -56,16 +56,16 @@ public class InstanceRestTest {
 
     @Test
     public void testDeleteInstance() {
-        assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID").getStatus(),
+        assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID", "instanceTAG").getStatus(),
                 is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).deleteInstance("infrastructureId", "instanceID");
     }
 
     @Test
     public void testDeleteInstanceByTag() {
-        assertThat(instanceRest.deleteInstanceByTag("infrastructureId", "instanceTag").getStatus(),
+        assertThat(instanceRest.deleteInstance("infrastructureId", null, "instanceTAG").getStatus(),
                 is(Response.Status.OK.getStatusCode()));
-        verify(instanceService, times(1)).deleteInstanceByTag("infrastructureId", "instanceTag");
+        verify(instanceService, times(1)).deleteInstanceByTag("infrastructureId", "instanceTAG");
     }
 
 }
