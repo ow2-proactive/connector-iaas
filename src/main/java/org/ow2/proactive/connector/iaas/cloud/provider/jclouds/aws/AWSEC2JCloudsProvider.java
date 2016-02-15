@@ -1,4 +1,4 @@
-package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
+package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -7,6 +7,7 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.springframework.stereotype.Component;

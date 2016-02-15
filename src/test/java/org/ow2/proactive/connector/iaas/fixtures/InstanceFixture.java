@@ -16,6 +16,11 @@ public class InstanceFixture {
         return getInstance(id, tag, id, "1", "512", "1", "RUNNING");
     }
 
+    public static Instance simpleInstanceWithTagAndImage(String tag, String image) {
+
+        return getInstance("", tag, image, "1", "512", "1", "RUNNING");
+    }
+
     public static String getInstanceAsaString(String id, String tag, String image, String number,
             String minRam, String minCores, String status) {
         JSONObject jsonObject = new JSONObject(getInstance(id, tag, image, number, minRam, minCores, status));

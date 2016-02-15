@@ -1,5 +1,7 @@
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.Optional;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -46,17 +48,14 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances")
     @Produces("application/json")
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceId") String instanceId) {
-        instanceService.deleteInstance(infrastructureId, instanceId);
-        return Response.ok().build();
-    }
+            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
 
-    @DELETE
-    @Path("{infrastructureId}/instances/tag")
-    @Produces("application/json")
-    public Response deleteInstanceByTag(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceTag") String instanceTag) {
-        instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
+        if (Optional.ofNullable(instanceId).isPresent()) {
+            instanceService.deleteInstance(infrastructureId, instanceId);
+        } else {
+            instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
+        }
+
         return Response.ok().build();
     }
 
