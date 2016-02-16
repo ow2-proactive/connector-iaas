@@ -15,12 +15,17 @@ public class InfrastructureFixture {
     public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
             String password) {
         return new Infrastructure(name, type, endPoint,
-            CredentialsFixtures.getCredentials(username, password));
+            CredentialsFixtures.getCredentials(username, password), false);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type) {
         return new Infrastructure("id-" + type, type, "endPoint",
-            CredentialsFixtures.getCredentials("userName", "password"));
+            CredentialsFixtures.getCredentials("userName", "password"), false);
+    }
+
+    public static Infrastructure getSimpleInfrastructure(String type, boolean removeOnShutdown) {
+        return new Infrastructure("id-" + type, type, "endPoint",
+            CredentialsFixtures.getCredentials("userName", "password"), removeOnShutdown);
     }
 
 }

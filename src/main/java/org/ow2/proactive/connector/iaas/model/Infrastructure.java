@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 
-@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials" })
+@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "toBeRemovedOnShutdown" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -18,5 +18,6 @@ public class Infrastructure {
     private String type;
     private String endpoint;
     private Credentials credentials;
+    private boolean toBeRemovedOnShutdown;
 
 }

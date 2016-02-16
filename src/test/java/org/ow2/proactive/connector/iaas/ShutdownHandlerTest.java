@@ -35,10 +35,12 @@ public class ShutdownHandlerTest {
     @Test
     public void testRemoveAllInfrastructures() {
         Map<String, Infrastructure> supportedInfrastructureMap = Maps.newHashMap();
-        supportedInfrastructureMap.put(InfrastructureFixture.getSimpleInfrastructure("type1").getId(),
-                InfrastructureFixture.getSimpleInfrastructure("type1"));
-        supportedInfrastructureMap.put(InfrastructureFixture.getSimpleInfrastructure("type2").getId(),
-                InfrastructureFixture.getSimpleInfrastructure("type2"));
+        supportedInfrastructureMap.put(InfrastructureFixture.getSimpleInfrastructure("type1", true).getId(),
+                InfrastructureFixture.getSimpleInfrastructure("type1", true));
+        supportedInfrastructureMap.put(InfrastructureFixture.getSimpleInfrastructure("type2", true).getId(),
+                InfrastructureFixture.getSimpleInfrastructure("type2", true));
+        supportedInfrastructureMap.put(InfrastructureFixture.getSimpleInfrastructure("type3", false).getId(),
+                InfrastructureFixture.getSimpleInfrastructure("type3", false));
 
         when(infrastructureService.getAllSupportedInfrastructure()).thenReturn(supportedInfrastructureMap);
 
@@ -48,6 +50,8 @@ public class ShutdownHandlerTest {
                 .deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("type1"));
         verify(infrastructureService, times(1))
                 .deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("type2"));
+        verify(infrastructureService, times(0))
+                .deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("type3"));
 
     }
 

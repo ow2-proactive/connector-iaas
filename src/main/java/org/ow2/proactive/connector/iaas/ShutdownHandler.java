@@ -17,14 +17,17 @@ public class ShutdownHandler {
     private InfrastructureService infrastructureService;
 
     @PreDestroy
-    public void removeAllInfrastructures() {
-        infrastructureService.getAllSupportedInfrastructure().values().stream().forEach(infrastructure -> {
-            try {
-                infrastructureService.deleteInfrastructure(infrastructure);
-            } catch (Exception e) {
-                logger.error("Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
-            }
-        });
+    public synchronized void removeAllInfrastructures() {
+        infrastructureService.getAllSupportedInfrastructure().values().stream()
+                .filter(infrastructure -> infrastructure.isToBeRemovedOnShutdown())
+                .forEach(infrastructure -> {
+                    try {
+                        infrastructureService.deleteInfrastructure(infrastructure);
+                    } catch (Exception e) {
+                        logger.error(
+                                "Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
+                    }
+                });
     }
 
 }
