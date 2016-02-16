@@ -43,7 +43,7 @@ public class VMWareProviderVirualMachineUtil {
             ManagedEntity[] managedEntities = new InventoryNavigator(rootFolder)
                     .searchManagedEntities("VirtualMachine");
 
-            return IntStream.rangeClosed(1, managedEntities.length)
+            return IntStream.range(0, managedEntities.length)
                     .mapToObj(i -> (VirtualMachine) managedEntities[i]).collect(Collectors.toSet());
 
         } catch (RemoteException e) {
