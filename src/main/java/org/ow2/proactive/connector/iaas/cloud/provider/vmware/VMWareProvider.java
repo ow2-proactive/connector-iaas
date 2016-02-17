@@ -22,7 +22,6 @@ import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.GuestAuthManager;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
 import com.vmware.vim25.mo.Task;
@@ -142,8 +141,6 @@ public class VMWareProvider implements CloudProvider {
             GuestOperationsManager gom = vmWareServiceInstanceCache.getServiceInstance(infrastructure)
                     .getGuestOperationsManager();
 
-            GuestAuthManager gam = gom.getAuthManager(vm);
-
             NamePasswordAuthentication npa = new NamePasswordAuthentication();
             npa.username = instanceScript.getCredentials().getUsername();
             npa.password = instanceScript.getCredentials().getPassword();
@@ -151,7 +148,6 @@ public class VMWareProvider implements CloudProvider {
 
             for (int i = 0; i < instanceScript.getScripts().length; i++) {
                 GuestProgramSpec gps = new GuestProgramSpec();
-                gps.workingDirectory = "/root";
 
                 gps.programPath = "/bin/bash";
                 gps.arguments = instanceScript.getScripts()[i];
