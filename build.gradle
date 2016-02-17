@@ -1,11 +1,10 @@
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: "org.sonarqube"
 apply plugin: 'net.researchgate.release'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
-apply plugin: 'org.sonarqube'
+apply plugin: "sonar-runner"
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
 
@@ -32,12 +31,10 @@ buildscript {
   	jcenter() 
   	}
   dependencies {
-  	classpath "org.sonarqube.gradle:gradle-sonarqube-plugin:1.0"
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
     classpath 'org.postgresql:postgresql:9.3-1102-jdbc41'  
     classpath 'org.ajoberstar:gradle-jacoco:0.3.0'
     classpath 'net.researchgate:gradle-release:2.2.1'
-    classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:1.2"
     classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.1.RELEASE'
   }
 }
@@ -174,12 +171,12 @@ task local {
     run { systemProperty "spring.profiles.active", "local" }
 }
 
-// Configure sonarqube plugin.
+// Configure runner plugin.
 // Username and password need to be added through the command line. Add username with
 // -Dsonar.jdbc.username=[username] and password with
 // -Dsonar.jdbc.password=[password] to the './gradlew sonarqube' command.
 
-// For sonarqube github access sonar.github.repository=ow2-proactive/connector-iaas
+// For runner github access sonar.github.repository=ow2-proactive/connector-iaas
 // is added. Following proerties need to be added
 // from commandline to make github pull request reports working.
 // -Dsonar.github.pullRequest=${ghprbPullId} The current pull request id. ${ghprbPullId} is a
@@ -189,14 +186,15 @@ task local {
 // sonar.issuesReport.console.enable=true to have a report on the commandline (for jenkins)
 // sonar.analysis.mode=preview the preview mode does not write the result into the database and only analyzes
 // files modified in the current pull request.
-sonarqube {
-    properties {
-        property "sonar.projectName", "connector-iaas"
-        property "sonar.host.url", "http://master.ci.activeeon.com:9000"
-        property "sonar.jdbc.url", "jdbc:postgresql://master.ci.activeeon.com:5432/sonar"
-        property "sonar.projectVersion", connectorIaaSVersion
-        // For github plugin
-        property "sonar.github.repository", "ow2-proactive/connector-iaas"
+sonarRunner {
+    sonarProperties {    
+    	property "sonar.projectKey", "$project.group:Connector-iaas"
+    	property "sonar.projectName", "Connector-iaas" 
+        property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
+        property "sonar.language", "java"
+        property "sonar.sources", "src/main"
+        property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
+        property 'sonar.junit.reportsPath', "${buildDir}/test-results"
     }
 }
 
