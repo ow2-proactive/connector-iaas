@@ -188,8 +188,8 @@ task local {
 // files modified in the current pull request.
 sonarRunner {
     sonarProperties {    
-    	property "sonar.projectKey", "$project.group:Connector-iaas"
-    	property "sonar.projectName", "Connector-iaas" 
+    	property "sonar.projectKey", "$project.group:connector-iaas"
+    	property "sonar.projectName", "connector-iaas" 
         property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
         property "sonar.language", "java"
         property "sonar.sources", "src/main"
