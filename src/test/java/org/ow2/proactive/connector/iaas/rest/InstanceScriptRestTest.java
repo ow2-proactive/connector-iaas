@@ -37,15 +37,21 @@ public class InstanceScriptRestTest {
     @Test
     public void testExecuteScriptByInstanceId() {
         ScriptResult scriptResult = new ScriptResult("instanceId", "output", "error");
+
         when(instanceScriptService.executeScriptOnInstance(Mockito.anyString(), Mockito.anyString(),
                 Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
+
         assertThat(
                 instanceScriptRest
-                        .executeScript("infrastructureId", "instanceId", "instanceTag",
+                        .executeScript("infrastructureId", "instanceId", "tag",
                                 InstanceScriptFixture.getInstanceScriptAsaString(new String[] {}))
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));
+
         verify(instanceScriptService, times(1)).executeScriptOnInstance(Mockito.anyString(),
+                Mockito.anyString(), Mockito.any(InstanceScript.class));
+
+        verify(instanceScriptService, times(0)).executeScriptOnInstanceTag(Mockito.anyString(),
                 Mockito.anyString(), Mockito.any(InstanceScript.class));
     }
 
@@ -61,6 +67,9 @@ public class InstanceScriptRestTest {
                         .getStatus(),
                 is(Response.Status.OK.getStatusCode()));
         verify(instanceScriptService, times(1)).executeScriptOnInstanceTag(Mockito.anyString(),
+                Mockito.anyString(), Mockito.any(InstanceScript.class));
+
+        verify(instanceScriptService, times(0)).executeScriptOnInstance(Mockito.anyString(),
                 Mockito.anyString(), Mockito.any(InstanceScript.class));
     }
 }

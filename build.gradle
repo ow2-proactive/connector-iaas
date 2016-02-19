@@ -5,6 +5,7 @@ apply plugin: 'net.researchgate.release'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: "sonar-runner"
+
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
 
@@ -171,35 +172,23 @@ task local {
     run { systemProperty "spring.profiles.active", "local" }
 }
 
-// Configure runner plugin.
-// Username and password need to be added through the command line. Add username with
-// -Dsonar.jdbc.username=[username] and password with
-// -Dsonar.jdbc.password=[password] to the './gradlew sonarqube' command.
 
-// For runner github access sonar.github.repository=ow2-proactive/connector-iaas
-// is added. Following proerties need to be added
-// from commandline to make github pull request reports working.
-// -Dsonar.github.pullRequest=${ghprbPullId} The current pull request id. ${ghprbPullId} is a
-// propagated jenkins variable, from the github pull request plugin.
-// sonar.github.login=[github-username] github login to write comments
-// sonar.github.oauth=[oauth-token] github oauth token to write comments on pull reqeust
-// sonar.issuesReport.console.enable=true to have a report on the commandline (for jenkins)
-// sonar.analysis.mode=preview the preview mode does not write the result into the database and only analyzes
-// files modified in the current pull request.
-sonarRunner {
-    sonarProperties {    
-    	property "sonar.projectKey", "$project.group:connector-iaas"
-    	property "sonar.projectName", "connector-iaas" 
-        property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
-        property "sonar.language", "java"
-        property "sonar.sources", "src/main"
-        property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
-        property 'sonar.junit.reportsPath', "${buildDir}/test-results"
-    }
-}
 
 allprojects {
+    apply plugin: "sonar-runner"
     apply plugin: 'jacoco'  
+    
+    sonarRunner {
+	    sonarProperties {    
+	    	property "sonar.projectKey", "$project.group:connector-iaas"
+	    	property "sonar.projectName", "connector-iaas" 
+	        property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
+	        property "sonar.language", "java"
+	        property "sonar.sources", "src/main/java"
+	        property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
+	        property 'sonar.junit.reportsPath', "${buildDir}/test-results"
+	    }
+	}
     
 	jacoco {
 	    toolVersion = '0.7.1.201405082137'
