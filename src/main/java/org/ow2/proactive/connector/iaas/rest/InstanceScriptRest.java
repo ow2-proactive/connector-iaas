@@ -41,8 +41,8 @@ public class InstanceScriptRest {
         final List<ScriptResult> scriptResults = Optional.ofNullable(instanceId)
                 .map(i -> Lists.newArrayList(instanceScriptService.executeScriptOnInstance(infrastructureId,
                         instanceId, instanceScript)))
-                .orElse(Lists.newArrayList(instanceScriptService.executeScriptOnInstanceTag(infrastructureId,
-                        instanceTag, instanceScript)));
+                .orElseGet(() -> Lists.newArrayList(instanceScriptService
+                        .executeScriptOnInstanceTag(infrastructureId, instanceTag, instanceScript)));
 
         return Response.ok(scriptResults).build();
     }
