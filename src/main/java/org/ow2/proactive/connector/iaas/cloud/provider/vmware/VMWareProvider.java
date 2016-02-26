@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.ws.rs.NotSupportedException;
+
 import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -184,7 +186,7 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public Set<Image> getAllImages(Infrastructure infrastructure) {
-        throw new RuntimeException("Operation not supported for VMWare");
+        throw new NotSupportedException("Operation not supported for VMWare");
     }
 
     @Override

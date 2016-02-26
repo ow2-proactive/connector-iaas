@@ -184,6 +184,7 @@ allprojects {
 	    	property "sonar.projectName", "connector-iaas" 
 	        property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
 	        property "sonar.language", "java"
+	        property "sonar.skipDesign" , "true"
 	        property "sonar.sources", "src/main/java"
 	        property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
 	        property 'sonar.junit.reportsPath', "${buildDir}/test-results"

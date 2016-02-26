@@ -1,6 +1,9 @@
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.Optional;
 import java.util.Set;
+
+import javax.ws.rs.NotFoundException;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -18,12 +21,18 @@ public class InstanceService {
     private CloudManager cloudManager;
 
     public Set<Instance> createInstance(String infrastructureId, Instance instance) {
-        return cloudManager.createInstance(infrastructureService.getInfrastructure(infrastructureId),
-                instance);
+
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .map(infrastructure -> cloudManager.createInstance(infrastructure, instance))
+                .orElseThrow(() -> new NotFoundException(
+                    "infrastructure id  : " + infrastructureId + " does not exists"));
+
     }
 
     public void deleteInstance(String infrastructureId, String instanceId) {
-        cloudManager.deleteInstance(infrastructureService.getInfrastructure(infrastructureId), instanceId);
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .ifPresent(infrastructure -> cloudManager.deleteInstance(infrastructure, instanceId));
+
     }
 
     public void deleteInstanceByTag(String infrastructureId, String instanceTag) {
@@ -34,8 +43,11 @@ public class InstanceService {
     }
 
     public Set<Instance> getAllInstances(String infrastructureId) {
-        return cloudManager
-                .getAllInfrastructureInstances(infrastructureService.getInfrastructure(infrastructureId));
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .map(infrastructure -> cloudManager.getAllInfrastructureInstances(infrastructure))
+                .orElseThrow(() -> new NotFoundException(
+                    "infrastructure id  : " + infrastructureId + " does not exists"));
+
     }
 
 }

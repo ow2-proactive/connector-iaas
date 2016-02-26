@@ -34,12 +34,15 @@
  */
 package org.ow2.proactive.connector.iaas.app.config;
 
+import org.glassfish.jersey.server.ResourceConfig;
+import org.ow2.proactive.connector.iaas.app.exception.ClientErrorExceptionMapper;
+import org.ow2.proactive.connector.iaas.app.exception.ServerErrorExceptionMapper;
 import org.ow2.proactive.connector.iaas.rest.ImageRest;
 import org.ow2.proactive.connector.iaas.rest.InfrastructureRest;
 import org.ow2.proactive.connector.iaas.rest.InstanceRest;
 import org.ow2.proactive.connector.iaas.rest.InstanceScriptRest;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
+
 
 @Configuration
 public class JerseyConfig extends ResourceConfig {
@@ -49,5 +52,8 @@ public class JerseyConfig extends ResourceConfig {
         register(ImageRest.class);
         register(InstanceRest.class);
         register(InstanceScriptRest.class);
+        register(ClientErrorExceptionMapper.class);
+        register(ServerErrorExceptionMapper.class);
+
     }
 }

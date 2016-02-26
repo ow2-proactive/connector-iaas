@@ -1,6 +1,9 @@
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.Optional;
 import java.util.Set;
+
+import javax.ws.rs.NotFoundException;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -18,7 +21,10 @@ public class ImageService {
     private CloudManager cloudManager;
 
     public Set<Image> getAllImages(String infrastructureId) {
-        return cloudManager.getAllImages(infrastructureService.getInfrastructure(infrastructureId));
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .map(infrastructure -> cloudManager.getAllImages(infrastructure))
+                .orElseThrow(() -> new NotFoundException(
+                    "infrastructure id  : " + infrastructureId + " does not exists"));
     }
 
 }

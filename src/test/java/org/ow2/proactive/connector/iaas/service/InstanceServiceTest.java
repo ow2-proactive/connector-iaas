@@ -61,6 +61,22 @@ public class InstanceServiceTest {
 
     }
 
+    @Test(expected = javax.ws.rs.NotFoundException.class)
+    public void testCreateInstanceException() throws NumberFormatException, RunNodesException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
+                "cpu", "running");
+
+        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
+
+        instanceService.createInstance("id-aws", instance);
+
+        verify(cloudManager, times(0)).createInstance(infrastructure, instance);
+
+    }
+
     @Test
     public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
@@ -71,6 +87,20 @@ public class InstanceServiceTest {
         instanceService.deleteInstance(infratructure.getId(), "instanceID");
 
         verify(cloudManager, times(1)).deleteInstance(infratructure, "instanceID");
+
+    }
+
+    @Test
+    public void testDeleteInstanceInfrastructureIdDoesNotExists()
+            throws NumberFormatException, RunNodesException {
+
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(null);
+
+        instanceService.deleteInstance(infratructure.getId(), "instanceID");
+
+        verify(cloudManager, times(0)).deleteInstance(infratructure, "instanceID");
 
     }
 
@@ -91,6 +121,20 @@ public class InstanceServiceTest {
         verify(cloudManager, times(0)).deleteInstance(infratructure, "id112");
     }
 
+    @Test(expected = javax.ws.rs.NotFoundException.class)
+    public void testDeleteInstanceByTagInfrastructureIdDoesNotExists()
+            throws NumberFormatException, RunNodesException {
+
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(null);
+
+        instanceService.deleteInstanceByTag(infratructure.getId(), "someTag");
+
+        verify(cloudManager, times(0)).deleteInstance(infratructure, "id111");
+        verify(cloudManager, times(0)).deleteInstance(infratructure, "id112");
+    }
+
     @Test
     public void testGetAllInstances() throws NumberFormatException, RunNodesException {
 
@@ -106,6 +150,20 @@ public class InstanceServiceTest {
         assertThat(created.size(), is(1));
 
         verify(cloudManager, times(1)).getAllInfrastructureInstances(infratructure);
+
+    }
+
+    @Test(expected = javax.ws.rs.NotFoundException.class)
+    public void testGetAllInstancesInfrastructureIdDoesNotExists()
+            throws NumberFormatException, RunNodesException {
+
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+        when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(null);
+
+        instanceService.getAllInstances(infratructure.getId());
+
+        verify(cloudManager, times(0)).getAllInfrastructureInstances(infratructure);
 
     }
 }

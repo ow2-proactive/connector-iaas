@@ -23,6 +23,7 @@ public class ImageRest {
     @Produces("application/json")
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
         return Response.ok(imageService.getAllImages(infrastructureId)).build();
+
     }
 
 }
