@@ -13,10 +13,9 @@ public class ServerErrorExceptionMapper implements ExceptionMapper<RuntimeExcept
     public Response toResponse(RuntimeException ex) {
 
         JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", ex.getMessage());
-        errorEntity.put("cause", ex.getCause());
+        errorEntity.put("error", ex.getMessage().replace("\"", "\\\""));
 
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorEntity)
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorEntity.toString())
                 .type("application/json").build();
 
     }

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThat;
 
 import javax.ws.rs.core.Response;
 
-import org.json.JSONObject;
 import org.junit.Test;
 
 
@@ -21,12 +20,9 @@ public class ServerErrorExceptionMapperTest {
 
         assertThat(response.getStatus(), is(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
-        JSONObject errorEntity = (JSONObject) response.getEntity();
+        String errorEntity = (String) response.getEntity();
 
-        assertThat(errorEntity.get("error"), is("Error message"));
-        assertThat(
-                errorEntity.get("cause").toString().contains("java.lang.Exception: Original Exception cause"),
-                is(true));
+        assertThat(errorEntity.contains("Error message"), is(true));
 
     }
 
