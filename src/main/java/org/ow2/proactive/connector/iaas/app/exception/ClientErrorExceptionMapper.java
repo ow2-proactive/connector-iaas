@@ -14,10 +14,9 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
     public Response toResponse(ClientErrorException ex) {
 
         JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", ex.getMessage());
-        errorEntity.put("cause", ex.getCause());
+        errorEntity.put("error", ex.getMessage().replace("\"", "\\\""));
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(errorEntity).type("application/json")
-                .build();
+        return Response.status(Response.Status.BAD_REQUEST).entity(errorEntity.toString())
+                .type("application/json").build();
     }
 }
