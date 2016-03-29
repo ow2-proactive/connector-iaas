@@ -132,17 +132,5 @@ The generic information for creating one or several instances are :
     $ curl -k -X GET http://IP_ADDRESS:9080/connector-iaas/infrastructures/INFRASTRUCTURE_ID/instances
 ```
 
-### Monitoring service
 
-This service gets the servers state, the virtual machines or the processus as RUNNING, STOPPED, SUSPENDED, PAUSED. 
-Moreover specific metric can be returned :
-- CPU
-  - Total/Free/Used
-- Memory
-  - Total/Free/Used
-- Network
-  - Bandwidth
-  - Speed
-- Disk
-  - Total/Free/Used
 
