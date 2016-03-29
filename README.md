@@ -124,12 +124,12 @@ The generic information for creating one or several instances are :
 }
 ```
 ```
-	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/connector-iaas/infrastructures/openstack-infra-id/instances
+	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/connector-iaas/infrastructures/INFRASTRUCTURE_ID/instances
 ```
 
 ### List an infrastructure instances
 ```
-    $ curl -k -X GET http://IP_ADDRESS:9080/connector-iaas/infrastructures/openstack-infra-id/instances
+    $ curl -k -X GET http://IP_ADDRESS:9080/connector-iaas/infrastructures/INFRASTRUCTURE_ID/instances
 ```
 
 ### Monitoring service
