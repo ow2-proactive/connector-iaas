@@ -114,22 +114,22 @@ The generic information for creating one or several instances are :
 
 ```javascript
 {
- "tag": "demo-aws-marco4",
- "image": "eu-central-1/ami-bc1021a1",
+ "tag": "TAG",
+ "image": "IMAGE",
  "number": "1",
  "hardware": {
-   "minRam": "512",
+   "minRam": "1024",
    "minCores" : "1"
  }
 }
 ```
 ```
-	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"test","image":"RegionOne/cd113242-82a8-43d1-ab3a-e78b5b851a4f","number":"1","minCores":"1","minRam":"1024"}' http://10.197.224.208:9080/connector-iaas/infrastructures/openstack-infra-id/instances
+	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/connector-iaas/infrastructures/openstack-infra-id/instances
 ```
 
 ### List an infrastructure instances
 ```
-    $ curl -k -X GET http://10.197.224.208:9080/connector-iaas/infrastructures/openstack-infra-id/instances
+    $ curl -k -X GET http://IP_ADDRESS:9080/connector-iaas/infrastructures/openstack-infra-id/instances
 ```
 
 ### Monitoring service
