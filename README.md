@@ -12,10 +12,10 @@
 ### Save an infrastructure 
 
 Generic information for saving an infrastructure are :
-    id: the name of the given infrastructure in order to identify it
-    type: the type is cloud nature or the hypervisor used (openstack-nova, aws-ec2, vmware, etc.)
-    endpoint: it’s the reference to the interface which manage the infrastructure    
-    credentials: the information which enables to connect
+- id: the name of the given infrastructure in order to identify it
+- type: the type is cloud nature or the hypervisor used (openstack-nova, aws-ec2, vmware, etc.)
+- endpoint: it’s the reference to the interface which manage the infrastructure    
+- credentials: the information which enables to connect
 
 #### Openstack
 
@@ -98,7 +98,7 @@ Once the infrastructure is saved, the virtual machines can be managed.
 
 ### Create an instance
 The generic information for creating one or several instances are :
-    Tag: the instance name for identifying them
-    Image: the image to use
-    Number: the number of instances to deploy
-    Hardware: the information related to the ram or the cpu
+- tag: the instance name for identifying them
+- image: the image to use
+- number: the number of instances to deploy
+- hardware: the information related to the ram or the cpu
