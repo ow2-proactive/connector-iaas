@@ -1,7 +1,7 @@
-# IaaS deployment
+## IaaS deployment
 
-      IaaS deployment is a solution which enables to use any provider. It improves flexibility and reduces the provider dependencies by giving the migration very easily to do from one provider to another.
-    The multi-IaaS connector enables to do CRUD operations on different infrastructures on public or private Cloud (AWS EC2, Openstack, VMWare, Docker, etc). It is connected with those infrastructure interfaces in order to manage their lifecycle on virtual machines.
+   IaaS deployment is a solution which enables to use any provider. It improves flexibility and reduces the provider dependencies by giving the migration very easily to do from one provider to another.
+   The multi-IaaS connector enables to do CRUD operations on different infrastructures on public or private Cloud (AWS EC2, Openstack, VMWare, Docker, etc). It is connected with those infrastructure interfaces in order to manage their lifecycle on virtual machines.
 
 ## Manage infrastructures
 
