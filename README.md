@@ -26,17 +26,11 @@ For saving an openstack infrastructure (in JSON), the information are :
 ```javascript
 {
   "id": "openstack-infra-id",
-
   "type": "openstack-nova",
-
   "endpoint": "http://ip_address:5000/v2.0/",
-
   "credentials": {
-
     "username": "NAME:LOGIN",
-
     "password": "PWD"
-
   }
 }
 ```
@@ -52,15 +46,10 @@ For saving a VMware infrastructure (in JSON), the information are :
 ```javascript
 {
   "id": "vmware-infra-id",
-
   "type": "vmware",
-
   "endpoint": "https://IP_ADDRESS/sdk",
-
   "credentials": {
-
     "username": "NAME",
-
     "password": "PWD"
   }
 }
@@ -76,17 +65,11 @@ For saving a EC2 infrastructure (in JSON), the information are :
 
 ```javascript
 {
-
   "id": "aws-infrastructure-id",
-
   "type": "aws-ec2",
-
   "credentials": {
-
     "username": "NAME",
-
     "password": "PWD"
-
   }
 }
 ```
