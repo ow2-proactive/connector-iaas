@@ -23,7 +23,7 @@ For openstack, credentials information are made of the login and the password.
 
 For saving an openstack infrastructure (in JSON), the information are :
 
-'''
+```javascript
 {
   "id": "openstack-infra-id",
 
@@ -39,7 +39,7 @@ For saving an openstack infrastructure (in JSON), the information are :
 
   }
 }
-'''
+```
 
 The curl command for save this infrastructure with the IaaS connector is :
 
@@ -49,7 +49,7 @@ The curl command for save this infrastructure with the IaaS connector is :
 
 For saving a VMware infrastructure (in JSON), the information are :
 
-'''
+```javascript
 {
   "id": "vmware-infra-id",
 
@@ -64,8 +64,9 @@ For saving a VMware infrastructure (in JSON), the information are :
     "password": "PWD"
   }
 }
-'''
-	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"id": "vmware-infra-id","type": "vmware","endPoint": "https://ip_address/sdk", "credentials": { "username": "NAME", "password": "PWD" }}' http://IP_ADDRESS:9080/connector-iaas/infrastructures
+```
+
+	curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"id": "vmware-infra-id","type": "vmware","endPoint": "https://ip_address/sdk", "credentials": { "username": "NAME", "password": "PWD" }}' http://IP_ADDRESS:9080/connector-iaas/infrastructures
 
 
 #### AWS-EC2
@@ -73,7 +74,7 @@ An infrastructure AWS-EC2 needs to have an AWS account. Once the account is crea
 
 For saving a EC2 infrastructure (in JSON), the information are :
 
-'''
+```javascript
 {
 
   "id": "aws-infrastructure-id",
@@ -88,7 +89,7 @@ For saving a EC2 infrastructure (in JSON), the information are :
 
   }
 }
-'''
+```
 
 	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"id": "aws-infrastructure-id","type": "aws-ec2","credentials": { "username": "NAME", "password": "PWD" }}' http://IP_ADDRESS:9080/connector-iaas/infrastructures
 
