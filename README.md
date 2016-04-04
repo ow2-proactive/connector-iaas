@@ -8,10 +8,14 @@
 On linux, in the root project directory,
 
 Building the project
+```
 	 $ ./gradlew
+```
 
 Running the application
+```
 	$ ./gradlew run	 
+```
 
 ## Manage infrastructures
 
