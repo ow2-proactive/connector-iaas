@@ -82,7 +82,7 @@ For saving a EC2 infrastructure (in JSON), the information are :
 
 ```javascript
 {
-  "id": "aws-infrastructure-id",
+  "id": "AWS_INFRASTRUCTURE_ID",
   "type": "aws-ec2",
   "credentials": {
     "username": "NAME",
