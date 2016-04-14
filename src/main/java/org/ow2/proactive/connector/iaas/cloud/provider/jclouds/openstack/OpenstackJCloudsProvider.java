@@ -55,6 +55,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
 	protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
 			infrastructureId) -> {
+								
 		return Instance.builder().id(server.getId()).tag(server.getName()).image(server.getImage().getName())
 				.number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
 				.status(server.getStatus().name()).build();

@@ -23,6 +23,7 @@ public class Instance {
 	private String number;
 	private String status;
 	private Hardware hardware;
+	private Network network;
 	private Credentials credentials;
 	private InstanceScript initScript;
 

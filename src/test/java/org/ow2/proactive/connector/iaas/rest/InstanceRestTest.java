@@ -34,8 +34,8 @@ public class InstanceRestTest {
     public void init() {
         MockitoAnnotations.initMocks(this);
         instanceStringFixture = InstanceFixture.getInstanceAsaString("instance-id", "name", "image", "number",
-                "cpu", "ram", "running");
-        instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram",
+                "cpu", "ram","publicIP","privateIP", "running");
+        instanceFixture = InstanceFixture.getInstance("instance-id", "name", "image", "number", "cpu", "ram","publicIP","privateIP", 
                 "running");
     }
 

@@ -48,7 +48,7 @@ public class InstanceServiceTest {
         when(infrastructureService.getInfrastructure(infratructure.getId())).thenReturn(infratructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running");
+                "cpu","publicIP","privateIP",  "running");
 
         when(cloudManager.createInstance(infratructure, instance))
                 .thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
@@ -67,7 +67,7 @@ public class InstanceServiceTest {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
                 "userName", "password");
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "cpu", "running");
+                "cpu","publicIP","privateIP",  "running");
 
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 

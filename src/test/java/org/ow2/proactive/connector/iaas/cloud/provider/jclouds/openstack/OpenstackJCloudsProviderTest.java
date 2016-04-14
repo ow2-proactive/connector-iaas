@@ -101,7 +101,7 @@ public class OpenstackJCloudsProviderTest {
                 "userName", "password");
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2", "running");
+                "2","77.154.227.148", "1.0.0.2", "running");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -163,7 +163,7 @@ public class OpenstackJCloudsProviderTest {
                 "userName", "password");
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2", "running");
+                "2","77.154.227.148", "1.0.0.2", "running");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 

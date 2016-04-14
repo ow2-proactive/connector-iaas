@@ -25,7 +25,9 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    	
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        
         TemplateBuilder templateBuilder = computeService.templateBuilder()
                 .minRam(Integer.parseInt(instance.getHardware().getMinRam()))
                 .minCores(Double.parseDouble(instance.getHardware().getMinCores()))
