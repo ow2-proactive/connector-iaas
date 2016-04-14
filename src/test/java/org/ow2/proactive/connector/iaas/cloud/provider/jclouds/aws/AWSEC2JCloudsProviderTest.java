@@ -83,7 +83,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2", "running");
+                "2","77.154.227.148", "1.0.0.2", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);
@@ -138,7 +138,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "1", "running");
+                "1","77.154.227.148", "1.0.0.2", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);

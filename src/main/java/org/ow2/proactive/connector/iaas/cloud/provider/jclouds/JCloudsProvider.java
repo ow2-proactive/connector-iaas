@@ -25,6 +25,7 @@ import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -111,6 +112,7 @@ public abstract class JCloudsProvider implements CloudProvider {
                                 .minCores(
                                         String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
                         .type(nodeMetadataImpl.getHardware().getType().name()).build())
+                .network(Network.builder().publicAddresses(nodeMetadataImpl.getPublicAddresses()).privateAddresses(nodeMetadataImpl.getPrivateAddresses()).build())
                 .status(nodeMetadataImpl.getStatus().name()).build();
     };
 

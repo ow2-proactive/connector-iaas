@@ -1,6 +1,7 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,10 +16,12 @@ import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Sets;
 import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
@@ -75,6 +78,8 @@ public class VMWareProvider implements CloudProvider {
         }
 
     }
+    
+    
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -119,12 +124,18 @@ public class VMWareProvider implements CloudProvider {
                         .hardware(Hardware.builder()
                                 .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
                                 .minRam((String.valueOf(vm.getConfig().getHardware().getMemoryMB()))).build())
+                        
+                        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
+                        
                         .status(String.valueOf(vm.getSummary().getOverallStatus())).build())
                 .collect(Collectors.toSet());
 
     }
 
-    @Override
+   
+
+
+	@Override
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
 

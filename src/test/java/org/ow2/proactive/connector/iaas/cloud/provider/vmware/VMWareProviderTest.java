@@ -26,6 +26,7 @@ import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 
 import com.vmware.vim25.FileFault;
+import com.vmware.vim25.GuestInfo;
 import com.vmware.vim25.GuestOperationsFault;
 import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.InvalidProperty;
@@ -82,6 +83,9 @@ public class VMWareProviderTest {
 
     @Mock
     private VirtualHardware hardware;
+    
+    @Mock
+    private GuestInfo guestInfo;
 
     @Mock
     private VirtualMachineSummary virtualMachineSummary;
@@ -196,6 +200,10 @@ public class VMWareProviderTest {
 
         when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
 
+        when(createdVirtualMachine.getGuest()).thenReturn(guestInfo);
+        
+        when(guestInfo.getIpAddress()).thenReturn("77.154.227.148");
+        
         when(virtualMachineConfigInfo.getHardware()).thenReturn(hardware);
 
         when(hardware.getNumCPU()).thenReturn(8);
@@ -213,6 +221,7 @@ public class VMWareProviderTest {
         assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
         assertThat(createdInstances.iterator().next().getHardware().getMinCores(), is("8"));
         assertThat(createdInstances.iterator().next().getHardware().getMinRam(), is("2048"));
+        assertThat(createdInstances.iterator().next().getNetwork().getPublicAddresses().iterator().next(), is("77.154.227.148"));
         assertThat(createdInstances.iterator().next().getStatus(), is(ManagedEntityStatus.green.toString()));
 
     }
