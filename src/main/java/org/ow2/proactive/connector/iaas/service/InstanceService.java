@@ -45,9 +45,10 @@ public class InstanceService {
 		return instances.stream().filter(instance -> instance.getTag().equals(instanceTag)).collect(Collectors.toSet());
 	}
 
-	public Set<Instance> getInstanceById(String infrastructureId, String instanceId) {
+	public Instance getInstanceById(String infrastructureId, String instanceId) {
 		Set<Instance> instances = getAllInstances(infrastructureId);
-		return instances.stream().filter(instance -> instance.getId().equals(instanceId)).collect(Collectors.toSet());
+		return instances.stream().filter(instance -> instance.getId().equals(instanceId)).findFirst()
+				.orElseThrow(() -> new RuntimeException("Instance not found"));
 	}
 
 	public Set<Instance> getAllInstances(String infrastructureId) {
