@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 
-@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "toBeRemovedOnShutdown" })
+@EqualsAndHashCode(of = { "id" })
 @Getter
 @AllArgsConstructor
 @ToString

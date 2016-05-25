@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Wither;
 
-@EqualsAndHashCode(exclude = { "image", "number", "hardware", "status", "credentials", "initScript" })
+
+@EqualsAndHashCode(of = { "id" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -17,14 +18,14 @@ import lombok.experimental.Wither;
 @Builder
 public class Instance {
 
-	private String id;
-	private String tag;
-	private String image;
-	private String number;
-	private String status;
-	private Hardware hardware;
-	private Network network;
-	private Credentials credentials;
-	private InstanceScript initScript;
+    private String id;
+    private String tag;
+    private String image;
+    private String number;
+    private String status;
+    private Hardware hardware;
+    private Network network;
+    private Credentials credentials;
+    private InstanceScript initScript;
 
 }
