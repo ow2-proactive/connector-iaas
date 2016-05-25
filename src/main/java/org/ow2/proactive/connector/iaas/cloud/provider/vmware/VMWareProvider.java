@@ -78,8 +78,6 @@ public class VMWareProvider implements CloudProvider {
         }
 
     }
-    
-    
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -124,18 +122,14 @@ public class VMWareProvider implements CloudProvider {
                         .hardware(Hardware.builder()
                                 .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
                                 .minRam((String.valueOf(vm.getConfig().getHardware().getMemoryMB()))).build())
-                        
-                        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
-                        
-                        .status(String.valueOf(vm.getSummary().getOverallStatus())).build())
-                .collect(Collectors.toSet());
+
+        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
+
+        .status(String.valueOf(vm.getSummary().getOverallStatus())).build()).collect(Collectors.toSet());
 
     }
 
-   
-
-
-	@Override
+    @Override
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
 

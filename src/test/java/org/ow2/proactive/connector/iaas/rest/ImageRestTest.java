@@ -18,22 +18,24 @@ import org.ow2.proactive.connector.iaas.service.ImageService;
 
 import com.google.common.collect.Sets;
 
+
 public class ImageRestTest {
-	@InjectMocks
-	private ImageRest imageRest;
+    @InjectMocks
+    private ImageRest imageRest;
 
-	@Mock
-	private ImageService imageService;
+    @Mock
+    private ImageService imageService;
 
-	@Before
-	public void init() {
-		MockitoAnnotations.initMocks(this);
-	}
+    @Before
+    public void init() {
+        MockitoAnnotations.initMocks(this);
+    }
 
-	@Test
-	public void testListAllImage() {
-		when(imageService.getAllImages("infrastructureId")).thenReturn(Sets.newHashSet());
-		assertThat(imageRest.listAllImage("infrastructureId").getStatus(), is(Response.Status.OK.getStatusCode()));
-		verify(imageService, times(1)).getAllImages("infrastructureId");
-	}
+    @Test
+    public void testListAllImage() {
+        when(imageService.getAllImages("infrastructureId")).thenReturn(Sets.newHashSet());
+        assertThat(imageRest.listAllImage("infrastructureId").getStatus(),
+                is(Response.Status.OK.getStatusCode()));
+        verify(imageService, times(1)).getAllImages("infrastructureId");
+    }
 }

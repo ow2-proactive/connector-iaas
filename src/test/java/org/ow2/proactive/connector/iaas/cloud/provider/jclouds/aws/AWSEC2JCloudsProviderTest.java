@@ -25,6 +25,7 @@ import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
@@ -34,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws.AWSEC2JCloudsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -83,7 +83,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2","77.154.227.148", "1.0.0.2", "running");
+                "2", "77.154.227.148", "1.0.0.2", "running", "securityGroup");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);
@@ -115,6 +115,9 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
+        EC2TemplateOptions ec2TemplateOptions = mock(EC2TemplateOptions.class);
+        when(templateOptions.as(EC2TemplateOptions.class)).thenReturn(ec2TemplateOptions);
+
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
         assertThat(created.size(), is(1));
@@ -138,7 +141,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "1","77.154.227.148", "1.0.0.2", "running");
+                "1", "77.154.227.148", "1.0.0.2", "running", "securityGroup");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);

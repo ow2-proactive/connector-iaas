@@ -24,8 +24,9 @@ public class InstanceTest {
 
     @Test
     public void testConstructor() {
-        Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
-            HardwareFixtures.getHardware("1", "512"),NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"), CredentialsFixtures.getCredentials("publicKeyName"),
+        Instance instance = new Instance("instance-id", "new-vm", "ubuntu", "1", "running", "securityGroup",
+            HardwareFixtures.getHardware("1", "512"), NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
+            CredentialsFixtures.getCredentials("publicKeyName"),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
         assertThat(instance.getTag(), is("new-vm"));
@@ -33,11 +34,13 @@ public class InstanceTest {
 
     @Test
     public void testEqualsAndHashcode() {
-        Instance instance1 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
-            HardwareFixtures.getHardware("1", "512"),NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"), CredentialsFixtures.getCredentials("publicKeyName"),
+        Instance instance1 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running", "securityGroup",
+            HardwareFixtures.getHardware("1", "512"), NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
+            CredentialsFixtures.getCredentials("publicKeyName"),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
-        Instance instance2 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running",
-            HardwareFixtures.getHardware("1", "512"),NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"), CredentialsFixtures.getCredentials("publicKeyName"),
+        Instance instance2 = new Instance("instance-id", "new-vm", "ubuntu", "1", "running", "securityGroup",
+            HardwareFixtures.getHardware("1", "512"), NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
+            CredentialsFixtures.getCredentials("publicKeyName"),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
         Set<Instance> instances = Sets.newHashSet(instance1, instance2);

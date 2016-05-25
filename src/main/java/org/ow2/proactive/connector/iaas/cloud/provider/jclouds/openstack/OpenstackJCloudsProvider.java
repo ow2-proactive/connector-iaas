@@ -19,46 +19,48 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
+
 @Component
 public class OpenstackJCloudsProvider extends JCloudsProvider {
 
-	@Getter
-	private final String type = "openstack-nova";
+    @Getter
+    private final String type = "openstack-nova";
 
-	@Override
-	public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    @Override
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
-		ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
-		NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
+        NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
 
-		ServerApi serverApi = novaApi.getServerApi("RegionOne");
+        ServerApi serverApi = novaApi.getServerApi("RegionOne");
 
-		String script = buildScriptToExecuteString(instance.getInitScript());
+        String script = buildScriptToExecuteString(instance.getInitScript());
 
-		CreateServerOptions serverOptions = new CreateServerOptions()
-				.keyPairName(instance.getCredentials().getPublicKeyName()).userData(script.getBytes());
+        CreateServerOptions serverOptions = new CreateServerOptions()
+                .keyPairName(instance.getCredentials().getPublicKeyName()).userData(script.getBytes());
 
-		return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-				.mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
-				.map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
-				.collect(Collectors.toSet());
+        return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
+                .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
+                .map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
+                .collect(Collectors.toSet());
 
-	}
+    }
 
-	private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
-		ServerCreated serverCreated = serverApi.create(instance.getTag(), instance.getImage(),
-				instance.getHardware().getType(), serverOptions);
+    private Server createOpenstackInstance(Instance instance, ServerApi serverApi,
+            CreateServerOptions serverOptions) {
+        ServerCreated serverCreated = serverApi.create(instance.getTag(), instance.getImage(),
+                instance.getHardware().getType(), serverOptions);
 
-		return serverApi.get(serverCreated.getId());
-	}
+        return serverApi.get(serverCreated.getId());
+    }
 
-	protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
-			infrastructureId) -> {
-								
-		return Instance.builder().id(server.getId()).tag(server.getName()).image(server.getImage().getName())
-				.number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
-				.status(server.getStatus().name()).build();
-	};
+    protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
+            infrastructureId) -> {
+
+        return Instance.builder().id(server.getId()).tag(server.getName()).image(server.getImage().getName())
+                .number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
+                .status(server.getStatus().name()).build();
+    };
 
 }

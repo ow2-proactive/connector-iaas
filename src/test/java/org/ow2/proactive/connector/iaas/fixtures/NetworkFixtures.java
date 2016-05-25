@@ -11,11 +11,8 @@ public class NetworkFixtures {
         return new Network(Sets.newHashSet(publicAddress), Sets.newHashSet(privateAddress));
     }
 
-    
-
     public static Network simpleNetwork() {
         return new Network(Sets.newHashSet("publicAddress"), Sets.newHashSet("privateAddress"));
     }
-
 
 }

@@ -112,7 +112,8 @@ public abstract class JCloudsProvider implements CloudProvider {
                                 .minCores(
                                         String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
                         .type(nodeMetadataImpl.getHardware().getType().name()).build())
-                .network(Network.builder().publicAddresses(nodeMetadataImpl.getPublicAddresses()).privateAddresses(nodeMetadataImpl.getPrivateAddresses()).build())
+                .network(Network.builder().publicAddresses(nodeMetadataImpl.getPublicAddresses())
+                        .privateAddresses(nodeMetadataImpl.getPrivateAddresses()).build())
                 .status(nodeMetadataImpl.getStatus().name()).build();
     };
 
