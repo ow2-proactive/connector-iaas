@@ -58,4 +58,14 @@ public class InstanceService {
 
 	}
 
+	public String addToInstancePublicIp(String infrastructureId, String instanceId){
+		return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .map(infrastructure -> {
+					String ip = cloudManager.addToInstancePublicIp(infrastructure,instanceId);
+                    return ip;
+				}).orElseThrow(
+                () -> new NotFoundException("infrastructure id  : " + infrastructureId  + "does not exists")
+        );
+	}
+
 }

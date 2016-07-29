@@ -1,14 +1,19 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.common.collect.FluentIterable;
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
+import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
@@ -19,8 +24,13 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.NotSupportedException;
+
 @Component
 public class OpenstackJCloudsProvider extends JCloudsProvider {
+
+    private final static String region = "RegionOne";
 
 	@Getter
 	private final String type = "openstack-nova";
@@ -32,7 +42,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
 		NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
 
-		ServerApi serverApi = novaApi.getServerApi("RegionOne");
+		ServerApi serverApi = novaApi.getServerApi(region);
 
 		String script = buildScriptToExecuteString(instance.getInitScript());
 
@@ -46,7 +56,39 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
 	}
 
-	private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
+    @Override
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
+        FloatingIPApi api;
+        if(! novaApi.getFloatingIPApi(region).isPresent()){
+            throw new NotSupportedException("Operation not supported for this Openstack cloud");
+        }else{
+            api = novaApi.getFloatingIPApi(region).get();
+        }
+
+        FloatingIP ip = Optional.ofNullable(api.list()
+                .toList()
+                .stream()
+                .filter(floatingIP -> floatingIP.getFixedIp()==null )
+                .findFirst()
+                .get())
+                .orElseThrow(NotSupportedException::new);
+
+        ComputeMetadata server = computeService.listNodes().stream()
+                .filter(node -> node.getId().contains(instanceId))
+                .findFirst()
+                .get();
+
+        api.addToServer(ip.getIp(),instanceId);
+
+        return ip.getIp();
+
+    }
+
+    private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
 		ServerCreated serverCreated = serverApi.create(instance.getTag(), instance.getImage(),
 				instance.getHardware().getType(), serverOptions);
 
@@ -60,5 +102,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 				.number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
 				.status(server.getStatus().name()).build();
 	};
+
+
 
 }

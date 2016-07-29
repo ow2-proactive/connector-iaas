@@ -1,7 +1,6 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -209,6 +208,11 @@ public class VMWareProvider implements CloudProvider {
                 .stream().forEach(vm -> deleteInstance(infrastructure, vm.getConfig().getUuid()));
         vmWareServiceInstanceCache.removeServiceInstance(infrastructure);
 
+    }
+
+    @Override
+    public String addToInstancePublicIp(Infrastructure infrastructure, String  instanceId) {
+        throw new NotSupportedException("Operation not supported for VMWare");
     }
 
     private VirtualMachine cloneVM(String instanceImageId, Instance instance, Folder rootFolder,

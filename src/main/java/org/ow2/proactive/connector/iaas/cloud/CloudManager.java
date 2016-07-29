@@ -60,4 +60,7 @@ public class CloudManager {
         return cloudProviderPerType.get(infrastructure.getType()).getAllImages(infrastructure);
     }
 
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId){
+        return cloudProviderPerType.get(infrastructure.getType()).addToInstancePublicIp(infrastructure,instanceId);
+    }
 }

@@ -67,4 +67,12 @@ public class InstanceRest {
         return Response.ok().build();
     }
 
+    @POST
+    @Path("{infrastructureId}/instances/{instanceId}/publicIp")
+    @Produces("application/json")
+    public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
+                                   @PathParam("instanceId") String instanceId){
+        return Response.ok(instanceService.addToInstancePublicIp(infrastructureId,instanceId)).build();
+    }
+
 }
