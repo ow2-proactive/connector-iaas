@@ -1,15 +1,10 @@
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -68,11 +63,18 @@ public class InstanceRest {
     }
 
     @POST
-    @Path("{infrastructureId}/instances/{instanceId}/publicIp")
+    @Path("{infrastructureId}/instances/publicIp")
+    @Consumes("application/json")
     @Produces("application/json")
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
-                                   @PathParam("instanceId") String instanceId){
-        return Response.ok(instanceService.addToInstancePublicIp(infrastructureId,instanceId)).build();
+                                   @QueryParam("instanceId") String instanceId){
+        Map response = new HashMap();
+        if(Optional.ofNullable(instanceId).isPresent()) {
+            response.put("publicIp", instanceService.addToInstancePublicIp(infrastructureId, instanceId));
+        }else{
+            throw new ClientErrorException("The parameter \"instanceId\" is missing.", Response.Status.BAD_REQUEST);
+        }
+        return Response.ok(response).build();
     }
 
 }

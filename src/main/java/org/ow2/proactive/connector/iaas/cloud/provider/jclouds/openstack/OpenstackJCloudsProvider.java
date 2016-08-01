@@ -24,8 +24,10 @@ import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.NotSupportedException;
+import javax.ws.rs.core.Response;
 
 @Component
 public class OpenstackJCloudsProvider extends JCloudsProvider {
@@ -75,14 +77,20 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                 .filter(floatingIP -> floatingIP.getFixedIp()==null )
                 .findFirst()
                 .get())
-                .orElseThrow(NotSupportedException::new);
+                .orElseThrow(() -> new NotFoundException("No Floating IP available in the floating IP pool"));
 
-        ComputeMetadata server = computeService.listNodes().stream()
-                .filter(node -> node.getId().contains(instanceId))
-                .findFirst()
-                .get();
 
-        api.addToServer(ip.getIp(),instanceId);
+		System.out.println("thrown exception ?");
+		try {
+			api.addToServer(ip.getIp(), instanceId);
+		}catch (Exception e){
+			if (e.getMessage().contains("Unable to associate floating ip")){
+				throw new ClientErrorException("A floating IP is already associated to the instance "+instanceId, Response.Status.BAD_REQUEST);
+			}
+			else{
+				throw new RuntimeException(e);
+			}
+		}
 
         return ip.getIp();
 
