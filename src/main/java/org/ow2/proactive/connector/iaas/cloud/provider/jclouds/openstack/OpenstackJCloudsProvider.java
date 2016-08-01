@@ -70,7 +70,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                 .stream()
                 .filter(floatingIP -> floatingIP.getFixedIp() == null)
                 .findFirst()
-                .orElseThrow(() -> new ClientErrorException("No Floating IP available in the floating IP pool",
+                .orElseThrow(() -> new ClientErrorException("No floating IP available in the floating IP pool",
                         Response.Status.BAD_REQUEST));
 
 
@@ -87,6 +87,35 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         return ip.getIp();
 
+    }
+
+    @Override
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
+
+        FloatingIPApi api;
+        if (!novaApi.getFloatingIPApi(region).isPresent()) {
+            throw new NotSupportedException("Operation not supported for this Openstack cloud");
+        } else {
+            api = novaApi.getFloatingIPApi(region).get();
+        }
+
+        FloatingIP ip = api.list()
+                .toList()
+                .stream()
+                .filter(floatingIP -> instanceId.equals(floatingIP.getInstanceId()))
+                .findFirst()
+                .orElseThrow(() -> new ClientErrorException("No floating IP associated with this instance",
+                        Response.Status.BAD_REQUEST));
+
+
+        try {
+            api.removeFromServer(ip.getIp(), instanceId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {

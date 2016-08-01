@@ -1,6 +1,7 @@
 package org.ow2.proactive.connector.iaas.service;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,4 +68,11 @@ public class InstanceService {
                 );
     }
 
+    public void removeInstancePublicIp(String infrastructureId, String instanceId) {
+        Infrastructure infrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                .orElseThrow(
+                        () -> new NotFoundException("infrastructure id  : " + infrastructureId + "does not exists")
+        );
+        cloudManager.removeInstancePublicIp(infrastructure, instanceId);
+    }
 }

@@ -53,7 +53,12 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     @Override
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
-            throw new NotSupportedException("Operation not supported for VMWare");
+            throw new NotSupportedException("Operation not supported for AWS EC2");
+    }
+
+    @Override
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        throw new NotSupportedException("Operation not supported for AWS EC2");
     }
 
 }

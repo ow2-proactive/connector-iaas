@@ -215,6 +215,11 @@ public class VMWareProvider implements CloudProvider {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
+    @Override
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        throw new NotSupportedException("Operation not supported for VMWare");
+    }
+
     private VirtualMachine cloneVM(String instanceImageId, Instance instance, Folder rootFolder,
             VirtualMachineCloneSpec vmcs, Folder vmFolder) {
         try {

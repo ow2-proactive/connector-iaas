@@ -63,4 +63,8 @@ public class CloudManager {
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId){
         return cloudProviderPerType.get(infrastructure.getType()).addToInstancePublicIp(infrastructure,instanceId);
     }
+
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        cloudProviderPerType.get(infrastructure.getType()).removeInstancePublicIp(infrastructure,instanceId);
+    }
 }

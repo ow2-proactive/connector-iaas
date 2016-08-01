@@ -62,7 +62,6 @@ public class InstanceRest {
 
     @POST
     @Path("{infrastructureId}/instances/publicIp")
-    @Consumes("application/json")
     @Produces("application/json")
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
                                    @QueryParam("instanceId") String instanceId) {
@@ -74,5 +73,21 @@ public class InstanceRest {
         }
         return Response.ok(response).build();
     }
+
+    @DELETE
+    @Path("{infrastructureId}/instances/publicIp")
+    @Produces("application/json")
+    public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
+                                   @QueryParam("instanceId") String instanceId) {
+
+        if (Optional.ofNullable(instanceId).isPresent()) {
+            instanceService.removeInstancePublicIp(infrastructureId, instanceId);
+        } else {
+            throw new ClientErrorException("The parameter \"instanceId\" is missing.", Response.Status.BAD_REQUEST);
+        }
+
+        return Response.ok().build();
+    }
+
 
 }
