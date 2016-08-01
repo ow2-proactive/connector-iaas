@@ -1,18 +1,16 @@
 package org.ow2.proactive.connector.iaas.rest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
-
+import com.aol.micro.server.rest.jackson.JacksonUtil;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.aol.micro.server.rest.jackson.JacksonUtil;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 
 @Path("/infrastructures")
@@ -27,7 +25,7 @@ public class InstanceRest {
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId,
-            final String instanceJson) {
+                                   final String instanceJson) {
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
         return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
     }
@@ -36,7 +34,7 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances")
     @Produces("application/json")
     public Response getInstances(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
+                                 @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
@@ -51,7 +49,7 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances")
     @Produces("application/json")
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
+                                   @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             instanceService.deleteInstance(infrastructureId, instanceId);
@@ -67,11 +65,11 @@ public class InstanceRest {
     @Consumes("application/json")
     @Produces("application/json")
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
-                                   @QueryParam("instanceId") String instanceId){
+                                   @QueryParam("instanceId") String instanceId) {
         Map response = new HashMap();
-        if(Optional.ofNullable(instanceId).isPresent()) {
+        if (Optional.ofNullable(instanceId).isPresent()) {
             response.put("publicIp", instanceService.addToInstancePublicIp(infrastructureId, instanceId));
-        }else{
+        } else {
             throw new ClientErrorException("The parameter \"instanceId\" is missing.", Response.Status.BAD_REQUEST);
         }
         return Response.ok(response).build();

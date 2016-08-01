@@ -1,16 +1,5 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
-import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
-import static org.jclouds.scriptbuilder.domain.Statements.exec;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -20,15 +9,16 @@ import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.Hardware;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.Network;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+
+import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
+import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
 
 @Component
@@ -54,7 +44,7 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
-            InstanceScript instanceScript) {
+                                                  InstanceScript instanceScript) {
         ExecResponse execResponse;
 
         try {
@@ -69,7 +59,7 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
-            InstanceScript instanceScript) {
+                                                         InstanceScript instanceScript) {
 
         Map<? extends NodeMetadata, ExecResponse> execResponses;
 
@@ -82,7 +72,7 @@ public abstract class JCloudsProvider implements CloudProvider {
         }
 
         return execResponses.entrySet().stream().map(entry -> new ScriptResult(entry.getKey().getId(),
-            entry.getValue().getOutput(), entry.getValue().getError())).collect(Collectors.toList());
+                entry.getValue().getOutput(), entry.getValue().getError())).collect(Collectors.toList());
 
     }
 
@@ -111,7 +101,7 @@ public abstract class JCloudsProvider implements CloudProvider {
                         Hardware.builder().minRam(String.valueOf(nodeMetadataImpl.getHardware().getRam()))
                                 .minCores(
                                         String.valueOf(nodeMetadataImpl.getHardware().getProcessors().size()))
-                        .type(nodeMetadataImpl.getHardware().getType().name()).build())
+                                .type(nodeMetadataImpl.getHardware().getType().name()).build())
                 .network(Network.builder().publicAddresses(nodeMetadataImpl.getPublicAddresses()).privateAddresses(nodeMetadataImpl.getPrivateAddresses()).build())
                 .status(nodeMetadataImpl.getStatus().name()).build();
     };
