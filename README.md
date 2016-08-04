@@ -29,7 +29,7 @@ Running the application
 Generic information for saving an infrastructure are :
 - id: the name of the given infrastructure in order to identify it
 - type: the type is cloud nature or the hypervisor used (openstack-nova, aws-ec2, vmware, etc.)
-- endpoint: it’s the reference to the interface which manage the infrastructure    
+- endpoint: the reference to the interface which manage the infrastructure
 - credentials: the information which enables to connect
 
 #### Openstack
