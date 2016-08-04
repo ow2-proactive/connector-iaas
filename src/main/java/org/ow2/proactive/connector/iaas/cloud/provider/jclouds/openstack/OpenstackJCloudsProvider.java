@@ -58,12 +58,10 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
-        FloatingIPApi api;
-        if (!novaApi.getFloatingIPApi(region).isPresent()) {
-            throw new NotSupportedException("Operation not supported for this Openstack cloud");
-        } else {
-            api = novaApi.getFloatingIPApi(region).get();
-        }
+
+        validatePlateformOperation(novaApi);
+
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
         FloatingIP ip = api.list()
                 .toList()
@@ -95,12 +93,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
-        FloatingIPApi api;
-        if (!novaApi.getFloatingIPApi(region).isPresent()) {
-            throw new NotSupportedException("Operation not supported for this Openstack cloud");
-        } else {
-            api = novaApi.getFloatingIPApi(region).get();
-        }
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
         FloatingIP ip = api.list()
                 .toList()
@@ -115,6 +108,12 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
             api.removeFromServer(ip.getIp(), instanceId);
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void validatePlateformOperation(NovaApi novaApi){
+        if (!novaApi.getFloatingIPApi(region).isPresent()) {
+            throw new NotSupportedException("Operation not supported for this Openstack cloud");
         }
     }
 

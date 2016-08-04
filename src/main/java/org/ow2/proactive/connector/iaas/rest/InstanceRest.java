@@ -64,12 +64,16 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances/publicIp")
     @Produces("application/json")
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
-                                   @QueryParam("instanceId") String instanceId) {
+                                   @QueryParam("instanceId") String instanceId,
+                                   @QueryParam("instanceTag") String instanceTag) {
         Map response = new HashMap();
         if (Optional.ofNullable(instanceId).isPresent()) {
             response.put("publicIp", instanceService.addToInstancePublicIp(infrastructureId, instanceId));
+        }else if(Optional.ofNullable(instanceTag).isPresent()){
+            instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag);
         } else {
-            throw new ClientErrorException("The parameter \"instanceId\" is missing.", Response.Status.BAD_REQUEST);
+            throw new ClientErrorException("The parameter \"instanceId\" and \"instanceTag\" are  missing.",
+                    Response.Status.BAD_REQUEST);
         }
         return Response.ok(response).build();
     }
@@ -78,12 +82,18 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances/publicIp")
     @Produces("application/json")
     public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
-                                   @QueryParam("instanceId") String instanceId) {
+                                   @QueryParam("instanceId") String instanceId,
+                                   @QueryParam("instanceTag") String instanceTag){
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             instanceService.removeInstancePublicIp(infrastructureId, instanceId);
-        } else {
-            throw new ClientErrorException("The parameter \"instanceId\" is missing.", Response.Status.BAD_REQUEST);
+        }
+        else if(Optional.ofNullable(instanceTag).isPresent()){
+            instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag);
+        }
+        else {
+            throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
+                    Response.Status.BAD_REQUEST);
         }
 
         return Response.ok().build();

@@ -68,11 +68,23 @@ public class InstanceService {
                 );
     }
 
+    public void addInstancePublicIpByTag(String infrastructureId, String instanceTag) {
+        getInstanceByTag(infrastructureId,instanceTag).forEach(
+                instance -> addToInstancePublicIp(infrastructureId,instance.getId())
+        );
+    }
+
     public void removeInstancePublicIp(String infrastructureId, String instanceId) {
         Infrastructure infrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
                 .orElseThrow(
                         () -> new NotFoundException("infrastructure id  : " + infrastructureId + "does not exists")
         );
         cloudManager.removeInstancePublicIp(infrastructure, instanceId);
+    }
+
+    public void removeInstancePublicIpByTag(String infrastructureId, String instanceTag) {
+        getInstanceByTag(infrastructureId,instanceTag).forEach(
+                instance -> removeInstancePublicIp(infrastructureId,instance.getId())
+        );
     }
 }
