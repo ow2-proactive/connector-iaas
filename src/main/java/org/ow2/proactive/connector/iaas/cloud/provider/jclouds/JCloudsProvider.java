@@ -9,7 +9,13 @@ import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.*;
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Image;
+import org.ow2.proactive.connector.iaas.model.Hardware;
+import org.ow2.proactive.connector.iaas.model.Network;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

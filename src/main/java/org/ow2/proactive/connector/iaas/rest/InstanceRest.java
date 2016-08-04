@@ -6,7 +6,15 @@ import org.ow2.proactive.connector.iaas.service.InstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Path;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +77,7 @@ public class InstanceRest {
         Map response = new HashMap();
         if (Optional.ofNullable(instanceId).isPresent()) {
             response.put("publicIp", instanceService.addToInstancePublicIp(infrastructureId, instanceId));
-        }else if(Optional.ofNullable(instanceTag).isPresent()){
+        } else if (Optional.ofNullable(instanceTag).isPresent()) {
             instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag);
         } else {
             throw new ClientErrorException("The parameter \"instanceId\" and \"instanceTag\" are  missing.",
@@ -83,15 +91,13 @@ public class InstanceRest {
     @Produces("application/json")
     public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
                                    @QueryParam("instanceId") String instanceId,
-                                   @QueryParam("instanceTag") String instanceTag){
+                                   @QueryParam("instanceTag") String instanceTag) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             instanceService.removeInstancePublicIp(infrastructureId, instanceId);
-        }
-        else if(Optional.ofNullable(instanceTag).isPresent()){
+        } else if (Optional.ofNullable(instanceTag).isPresent()) {
             instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag);
-        }
-        else {
+        } else {
             throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
                     Response.Status.BAD_REQUEST);
         }
