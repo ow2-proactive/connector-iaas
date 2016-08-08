@@ -1,14 +1,12 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
-import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
+import lombok.Getter;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
+import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
@@ -17,48 +15,122 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.springframework.stereotype.Component;
 
-import lombok.Getter;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.NotSupportedException;
+import javax.ws.rs.core.Response;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 public class OpenstackJCloudsProvider extends JCloudsProvider {
 
-	@Getter
-	private final String type = "openstack-nova";
+    private final static String region = "RegionOne";
 
-	@Override
-	public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    @Getter
+    private final String type = "openstack-nova";
 
-		ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+    @Override
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
-		NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
-		ServerApi serverApi = novaApi.getServerApi("RegionOne");
+        NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
 
-		String script = buildScriptToExecuteString(instance.getInitScript());
+        ServerApi serverApi = novaApi.getServerApi(region);
 
-		CreateServerOptions serverOptions = new CreateServerOptions()
-				.keyPairName(instance.getCredentials().getPublicKeyName()).userData(script.getBytes());
+        String script = buildScriptToExecuteString(instance.getInitScript());
 
-		return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-				.mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
-				.map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
-				.collect(Collectors.toSet());
+        CreateServerOptions serverOptions = new CreateServerOptions()
+                .keyPairName(instance.getCredentials().getPublicKeyName()).userData(script.getBytes());
 
-	}
+        return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
+                .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
+                .map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
+                .collect(Collectors.toSet());
 
-	private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
-		ServerCreated serverCreated = serverApi.create(instance.getTag(), instance.getImage(),
-				instance.getHardware().getType(), serverOptions);
+    }
 
-		return serverApi.get(serverCreated.getId());
-	}
+    @Override
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
 
-	protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
-			infrastructureId) -> {
-								
-		return Instance.builder().id(server.getId()).tag(server.getName()).image(server.getImage().getName())
-				.number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
-				.status(server.getStatus().name()).build();
-	};
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
+
+        validatePlateformOperation(novaApi);
+
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
+
+        FloatingIP ip = api.list()
+                .toList()
+                .stream()
+                .filter(floatingIP -> floatingIP.getFixedIp() == null)
+                .findFirst()
+                .orElseThrow(() -> new ClientErrorException("No floating IP available in the floating IP pool",
+                        Response.Status.BAD_REQUEST));
+
+
+        try {
+            api.addToServer(ip.getIp(), instanceId);
+        } catch (Exception e) {
+            if (e.getMessage().contains("Unable to associate floating ip")) {
+                throw new ClientErrorException("A floating IP is already associated to the instance " + instanceId,
+                        Response.Status.BAD_REQUEST);
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return ip.getIp();
+
+    }
+
+    @Override
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
+
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
+
+        FloatingIP ip = api.list()
+                .toList()
+                .stream()
+                .filter(floatingIP -> instanceId.equals(floatingIP.getInstanceId()))
+                .findFirst()
+                .orElseThrow(() -> new ClientErrorException("No floating IP associated with this instance",
+                        Response.Status.BAD_REQUEST));
+
+
+        try {
+            api.removeFromServer(ip.getIp(), instanceId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void validatePlateformOperation(NovaApi novaApi){
+        if (!novaApi.getFloatingIPApi(region).isPresent()) {
+            throw new NotSupportedException("Operation not supported for this Openstack cloud");
+        }
+    }
+
+    private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
+        ServerCreated serverCreated = serverApi.create(instance.getTag(), instance.getImage(),
+                instance.getHardware().getType(), serverOptions);
+
+        return serverApi.get(serverCreated.getId());
+    }
+
+    protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
+                                                                                            infrastructureId) -> {
+
+        return Instance.builder().id(server.getId()).tag(server.getName()).image(server.getImage().getName())
+                .number("1").hardware(Hardware.builder().type(server.getFlavor().getName()).build())
+                .status(server.getStatus().name()).build();
+    };
+
 
 }
