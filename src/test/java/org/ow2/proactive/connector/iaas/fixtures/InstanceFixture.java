@@ -43,7 +43,7 @@ public class InstanceFixture {
         return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
             NetworkFixtures.getNetwork(publicAddress, privateAddress),
             CredentialsFixtures.getCredentials("username", "password"),
-            Options.builder().spotPrice("0.05f").build(),
+            Options.builder().spotPrice("0.05").build(),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 

@@ -118,8 +118,6 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
-        when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
-
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
         assertThat(created.size(), is(1));
@@ -129,9 +127,6 @@ public class AWSEC2JCloudsProviderTest {
 
         verify(computeService, times(1)).createNodesInGroup(instance.getTag(),
                 Integer.parseInt(instance.getNumber()), template);
-
-        verify(awsEC2TemplateOptions, times(1))
-                .spotPrice(Float.valueOf(instance.getOptions().getSpotPrice()));
 
     }
 
@@ -145,8 +140,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2", "77.154.227.148", "1.0.0.2", "running");
+        Instance instance = InstanceFixture.getInstanceWithSpotPrice("instance-id", "instance-name", "image",
+                "2", "512", "2", "77.154.227.148", "1.0.0.2", "running", "0.05f");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);
