@@ -39,7 +39,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
         Template template = templateBuilder.build();
 
-        addOptions(template, instance.getOptions());
+        Optional.ofNullable(instance.getOptions()).ifPresent(options -> addOptions(template, options));
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
