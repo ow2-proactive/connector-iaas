@@ -1,5 +1,6 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
@@ -37,8 +39,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
         Template template = templateBuilder.build();
 
-        template.getOptions().as(AWSEC2TemplateOptions.class)
-                .spotPrice(Float.valueOf(instance.getOptions().getSpotPrice()));
+        addOptions(template, instance.getOptions());
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -53,6 +54,14 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
                         infrastructure.getId()))
                 .collect(Collectors.toSet());
+
+    }
+
+    private void addOptions(Template template, Options options) {
+
+        Optional.ofNullable(options.getSpotPrice()).filter(spotPrice -> !spotPrice.isEmpty())
+                .ifPresent(spotPrice -> template.getOptions().as(AWSEC2TemplateOptions.class)
+                        .spotPrice(Float.valueOf(options.getSpotPrice())));
 
     }
 
