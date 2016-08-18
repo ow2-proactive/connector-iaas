@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 
+import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.RunScriptOnNodesException;
@@ -34,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws.AWSEC2JCloudsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -66,6 +66,9 @@ public class AWSEC2JCloudsProviderTest {
     @Mock
     private Template template;
 
+    @Mock
+    private AWSEC2TemplateOptions awsEC2TemplateOptions;
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -83,7 +86,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2","77.154.227.148", "1.0.0.2", "running");
+                "2", "77.154.227.148", "1.0.0.2", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);
@@ -115,6 +118,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
+        when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
+
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
         assertThat(created.size(), is(1));
@@ -124,6 +129,9 @@ public class AWSEC2JCloudsProviderTest {
 
         verify(computeService, times(1)).createNodesInGroup(instance.getTag(),
                 Integer.parseInt(instance.getNumber()), template);
+
+        verify(awsEC2TemplateOptions, times(1))
+                .spotPrice(Float.valueOf(instance.getOptions().getSpotPrice()));
 
     }
 
@@ -138,7 +146,7 @@ public class AWSEC2JCloudsProviderTest {
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
         Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "1","77.154.227.148", "1.0.0.2", "running");
+                "1", "77.154.227.148", "1.0.0.2", "running");
 
         when(templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam())))
                 .thenReturn(templateBuilder);

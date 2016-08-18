@@ -3,8 +3,10 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
@@ -25,19 +27,24 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-    	
+
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-        
+
         TemplateBuilder templateBuilder = computeService.templateBuilder()
                 .minRam(Integer.parseInt(instance.getHardware().getMinRam()))
                 .minCores(Double.parseDouble(instance.getHardware().getMinCores()))
                 .imageId(instance.getImage());
 
+        Template template = templateBuilder.build();
+
+        template.getOptions().as(AWSEC2TemplateOptions.class)
+                .spotPrice(Float.valueOf(instance.getOptions().getSpotPrice()));
+
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
         try {
             createdNodeMetaData = computeService.createNodesInGroup(instance.getTag(),
-                    Integer.parseInt(instance.getNumber()), templateBuilder.build());
+                    Integer.parseInt(instance.getNumber()), template);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
