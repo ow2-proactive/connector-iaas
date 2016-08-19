@@ -4,6 +4,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.NotSupportedException;
+
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -58,11 +60,19 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private void addOptions(Template template, Options options) {
-
         Optional.ofNullable(options.getSpotPrice()).filter(spotPrice -> !spotPrice.isEmpty())
                 .ifPresent(spotPrice -> template.getOptions().as(AWSEC2TemplateOptions.class)
                         .spotPrice(Float.valueOf(options.getSpotPrice())));
+    }
 
+    @Override
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        throw new NotSupportedException("Operation not supported for AWS EC2");
+    }
+
+    @Override
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+        throw new NotSupportedException("Operation not supported for AWS EC2");
     }
 
 }
