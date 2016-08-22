@@ -276,6 +276,31 @@ public class AWSEC2JCloudsProviderTest {
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
         when(node.getId()).thenReturn("someId");
+        when(node.getName()).thenReturn(null);
+        when(node.getHardware()).thenReturn(null);
+        when(node.getStatus()).thenReturn(Status.RUNNING);
+        nodes.add(node);
+        when(computeService.listNodes()).thenReturn(nodes);
+
+        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
+
+        assertThat(allNodes.iterator().next().getId(), is("someId"));
+        assertThat(allNodes.iterator().next().getTag(), is(""));
+
+    }
+
+    @Test
+    public void testGetAllInfrastructureInstancesMissingHardwareAndTag()
+            throws NumberFormatException, RunNodesException {
+
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
+                "userName", "password");
+
+        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+
+        Set nodes = Sets.newHashSet();
+        NodeMetadataImpl node = mock(NodeMetadataImpl.class);
+        when(node.getId()).thenReturn("someId");
         when(node.getName()).thenReturn("someName");
         Hardware hardware = mock(Hardware.class);
         when(hardware.getProcessors()).thenReturn(Lists.newArrayList());
