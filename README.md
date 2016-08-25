@@ -1,3 +1,6 @@
+# Connector IaaS
+[![Build Status](http://jenkins.activeeon.com/buildStatus/icon?job=connector-iaas)](http://jenkins.activeeon.com/job/connector-iaas/)
+
 ## IaaS deployment
 
    IaaS deployment is a solution which enables to use any provider. It improves flexibility and reduces the provider dependencies by giving the migration very easily to do from one provider to another.
