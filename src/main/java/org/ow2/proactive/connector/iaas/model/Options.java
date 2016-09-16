@@ -16,4 +16,6 @@ import lombok.ToString;
 @Builder
 public class Options {
     private String spotPrice;
+    private String securityGroupName;
+    private String subnetId;
 }
