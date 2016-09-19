@@ -1,5 +1,8 @@
 package org.ow2.proactive.connector.iaas.fixtures;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Options;
@@ -44,6 +47,30 @@ public class InstanceFixture {
             NetworkFixtures.getNetwork(publicAddress, privateAddress),
             CredentialsFixtures.getCredentials("username", "password"),
             Options.builder().spotPrice("0.05").build(),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    }
+    
+    public static Instance getInstanceWithSecurityGroup(String id, String tag, String image, String number,
+            String minRam, String minCores, String publicAddress, String privateAddress, String status,
+            String securityGroup) {
+    	
+    	Set<String> securityGroupNames = new HashSet<String>();
+    	securityGroupNames.add("default1");
+    	securityGroupNames.add("default2");
+        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
+            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+            CredentialsFixtures.getCredentials("username", "password"),
+            Options.builder().securityGroupNames(securityGroupNames).build(),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    }
+    
+    public static Instance getInstanceWithSubnetId(String id, String tag, String image, String number,
+            String minRam, String minCores, String publicAddress, String privateAddress, String status,
+            String subnetId) {
+        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
+            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+            CredentialsFixtures.getCredentials("username", "password"),
+            Options.builder().subnetId("127.0.0.1").build(),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
