@@ -308,7 +308,7 @@ public class AWSEC2JCloudsProviderTest {
                 Integer.parseInt(instance.getNumber()), template);
 
         verify(awsEC2TemplateOptions, times(1))
-                .securityGroups(instance.getOptions().getSecurityGroupName());
+                .securityGroups(instance.getOptions().getSecurityGroupNames());
 
     }
 

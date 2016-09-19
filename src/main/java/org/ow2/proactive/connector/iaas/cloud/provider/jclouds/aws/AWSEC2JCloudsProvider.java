@@ -64,9 +64,9 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 .ifPresent(spotPrice -> template.getOptions().as(AWSEC2TemplateOptions.class)
                         .spotPrice(Float.valueOf(options.getSpotPrice())));
         
-        Optional.ofNullable(options.getSecurityGroupName()).filter(securityGroupName -> !securityGroupName.isEmpty())
+        Optional.ofNullable(options.getSecurityGroupNames()).filter(securityGroupName -> !securityGroupName.isEmpty())
         .ifPresent(securityGroupName -> template.getOptions().as(AWSEC2TemplateOptions.class)
-                .securityGroups(options.getSecurityGroupName()));
+                .securityGroups(options.getSecurityGroupNames().stream().collect(Collectors.toSet())));
         
         Optional.ofNullable(options.getSubnetId()).filter(subnetId -> !subnetId.isEmpty())
         .ifPresent(subnetId -> template.getOptions().as(AWSEC2TemplateOptions.class)

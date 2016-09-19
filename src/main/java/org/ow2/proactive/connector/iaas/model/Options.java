@@ -1,5 +1,7 @@
 package org.ow2.proactive.connector.iaas.model;
 
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -16,6 +18,6 @@ import lombok.ToString;
 @Builder
 public class Options {
     private String spotPrice;
-    private String securityGroupName;
+    private Set<String> securityGroupNames;
     private String subnetId;
 }
