@@ -13,6 +13,7 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
+import org.ow2.proactive.connector.iaas.model.Credentials;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Options;
@@ -42,6 +43,8 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         Template template = templateBuilder.build();
 
         Optional.ofNullable(instance.getOptions()).ifPresent(options -> addOptions(template, options));
+        
+        Optional.ofNullable(instance.getCredentials()).ifPresent(options -> addCredential(template, options));
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -59,6 +62,12 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     }
 
+    private void addCredential(Template template, Credentials credentials) {
+    	Optional.ofNullable(credentials.getPublicKeyName()).filter(keyName -> !keyName.isEmpty())
+        .ifPresent(keyName -> template.getOptions().as(AWSEC2TemplateOptions.class)
+                .keyPair(credentials.getPublicKeyName()));
+    }
+    
     private void addOptions(Template template, Options options) {
         Optional.ofNullable(options.getSpotPrice()).filter(spotPrice -> !spotPrice.isEmpty())
                 .ifPresent(spotPrice -> template.getOptions().as(AWSEC2TemplateOptions.class)
