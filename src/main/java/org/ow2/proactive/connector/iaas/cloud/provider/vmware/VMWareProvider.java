@@ -246,4 +246,46 @@ public class VMWareProvider implements CloudProvider {
         return vmconfigspec;
     }
 
+    /**
+     * Assign a single MAC address per VM
+     *
+     * @param vm            the original VM to clone
+     * @param vmConfigSpecs VirtualMachineConfigSpec objects' array, one for each VM to start
+     * @param macAddresses  set of MAC addresses to assign to the VMs (one for each)
+     */
+    private void assignMacAddresses(VirtualMachine vm, VirtualMachineConfigSpec[] vmConfigSpecs, Set<String> macAddresses) {
+
+        Iterator<String> macIt = macAddresses.iterator();
+
+        // Customize each VirtualMachineConfigSpec
+        for (int i=0; i<vmConfigSpecs.length; i++) {
+
+            // Assign MAC addresses as long as remaining
+            if (macIt.hasNext()) {
+                VirtualDevice[] virtualDevices = vm.getConfig().getHardware().getDevice();
+                VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
+
+                // Look for an Ethernet card
+                for (int j = 0; j < virtualDevices.length; j++) {
+                    if (virtualDevices[j] instanceof VirtualEthernetCard) {
+
+                        // Take the first Ethernet card found (change MAC address on the first adapter only)
+                        virtEthCard = (VirtualEthernetCard) virtualDevices[j];
+                        virtEthCard.setAddressType("Manual");
+                        virtEthCard.setMacAddress(macIt.next());
+                        break;
+                    }
+                }
+
+                // Set the change
+                VirtualDeviceConfigSpec virtDevConfSpec = new VirtualDeviceConfigSpec();
+                virtDevConfSpec.setDevice(virtEthCard);
+                virtDevConfSpec.setOperation(VirtualDeviceConfigSpecOperation.edit);
+                vmConfigSpecs[i].setDeviceChange(new VirtualDeviceConfigSpec[]{virtDevConfSpec});
+            }
+            else {
+                return;
+            }
+        }
+    }
 }
