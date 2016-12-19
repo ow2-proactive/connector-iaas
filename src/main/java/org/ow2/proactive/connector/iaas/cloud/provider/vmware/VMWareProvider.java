@@ -220,22 +220,21 @@ public class VMWareProvider implements CloudProvider {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
-    private VirtualMachine cloneVM(String instanceImageId, Instance instance, Folder rootFolder,
+    private VirtualMachine cloneVM(VirtualMachine vm, String newVMname, Instance instance, Folder rootFolder,
             VirtualMachineCloneSpec vmcs, Folder vmFolder) {
         try {
-            Task task = vmWareProviderVirualMachineUtil
-                    .searchVirtualMachineByName(instanceImageId, rootFolder)
-                    .cloneVM_Task(vmFolder, instance.getTag(), vmcs);
+            // Clone the VM : call to VMWare API
+            Task task = vm.cloneVM_Task(vmFolder, newVMname, vmcs);
 
             String result = task.waitForTask();
             if (Task.SUCCESS != result) {
                 throw new RuntimeException(
-                    "Unable to create VMWare istance with : " + instance + " Task result = " + result);
+                    "Unable to create VMWare instance with : " + instance + " Task result = " + result);
             }
 
-            return vmWareProviderVirualMachineUtil.searchVirtualMachineByName(instance.getTag(), rootFolder);
+            return vmWareProviderVirualMachineUtil.searchVirtualMachineByName(newVMname, rootFolder);
         } catch (RemoteException | InterruptedException e) {
-            throw new RuntimeException("ERROR when creating VMWare istance with : " + instance, e);
+            throw new RuntimeException("ERROR when creating VMWare instance with : " + instance, e);
         }
     }
 
