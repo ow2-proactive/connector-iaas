@@ -22,10 +22,10 @@ import com.vmware.vim25.mo.VirtualMachine;
 @Component
 public class VMWareProviderVirualMachineUtil {
 
-    public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(Folder rootFolder)
+    public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(VirtualMachine vmSource)
             throws InvalidProperty, RuntimeFault, RemoteException {
         VirtualMachineRelocateSpec vmrs = new VirtualMachineRelocateSpec();
-        vmrs.setPool(getManagedObjectReference(rootFolder));
+        vmrs.setPool(vmSource.getResourcePool().getMOR());
         return vmrs;
     }
 
