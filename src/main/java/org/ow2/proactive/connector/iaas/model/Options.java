@@ -20,4 +20,5 @@ public class Options {
     private String spotPrice;
     private Set<String> securityGroupNames;
     private String subnetId;
+    private Set<String> macAddresses;
 }
