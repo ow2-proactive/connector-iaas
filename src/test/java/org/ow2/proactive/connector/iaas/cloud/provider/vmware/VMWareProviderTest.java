@@ -9,9 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.vmware.vim25.VirtualDevice;
+import com.vmware.vim25.VirtualEthernetCard;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -136,6 +140,44 @@ public class VMWareProviderTest {
 
         assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
 
+    }
+
+    @Test
+    public void testCreateInstanceWithMacAddress() throws RemoteException, InterruptedException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+        Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag", "VM/vm-to-clone",
+                new HashSet<>(Arrays.asList("00:50:56:11:11:11")));
+
+        when(vmWareProviderVirualMachineUtil.searchFolderByName("VM", rootFolder))
+                .thenReturn(instanceFolder);
+
+        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
+                .thenReturn(virtualMachine);
+
+        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("cloned-tag", rootFolder))
+                .thenReturn(createdVirtualMachine);
+
+        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+
+        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+
+        when(virtualMachine.cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class)))
+                .thenReturn(task);
+
+        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
+
+        // Add a Virtual Ethernet Card with automatically generated MAC address on the VM to clone
+        when(virtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+        when(virtualMachine.getConfig().getHardware()).thenReturn(hardware);
+        VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
+        virtEthCard.setAddressType("Generated");
+        when(virtualMachine.getConfig().getHardware().getDevice()).thenReturn(new VirtualDevice[]{virtEthCard});
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
+
+        assertThat(createdInstances.iterator().next().getOptions().getMacAddresses().iterator().next(),
+                is("00:50:56:11:11:11"));
     }
 
     @Test
