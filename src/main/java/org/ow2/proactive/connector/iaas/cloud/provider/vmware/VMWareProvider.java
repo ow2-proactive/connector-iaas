@@ -1,6 +1,8 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -8,6 +10,10 @@ import java.util.stream.IntStream;
 
 import javax.ws.rs.NotSupportedException;
 
+import com.vmware.vim25.VirtualDevice;
+import com.vmware.vim25.VirtualDeviceConfigSpec;
+import com.vmware.vim25.VirtualDeviceConfigSpecOperation;
+import com.vmware.vim25.VirtualEthernetCard;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -57,18 +63,34 @@ public class VMWareProvider implements CloudProvider {
             String instanceImageId = instance.getImage().split("/")[1];
 
             Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
-
-            VirtualMachineCloneSpec vmcs = new VirtualMachineCloneSpec();
-
-            vmcs.setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(rootFolder));
-            vmcs.setPowerOn(true);
-            vmcs.setTemplate(false);
-            vmcs.setConfig(getVirtualMachineConfigSpec(instance));
-
             Folder vmFolder = vmWareProviderVirualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
+            VirtualMachine vmToClone = vmWareProviderVirualMachineUtil.searchVirtualMachineByName(instanceImageId, rootFolder);
+
+            // Create a VirtualMachineCloneSpec for each VM to start
+            VirtualMachineCloneSpec[] vmCloneSpecs = new VirtualMachineCloneSpec[Integer.valueOf(instance.getNumber())];
+
+            // Initialize and configure all VirtualMachineCloneSpec
+            for (int i=0; i<vmCloneSpecs.length; i++) {
+                vmCloneSpecs[i] = new VirtualMachineCloneSpec();
+                vmCloneSpecs[i].setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
+                vmCloneSpecs[i].setPowerOn(false);
+                vmCloneSpecs[i].setTemplate(false);
+                vmCloneSpecs[i].setConfig(getVirtualMachineConfigSpec(instance));
+            }
+
+            // Assign MAC Addresses if needed
+            if (instance.getOptions() != null && instance.getOptions().getMacAddresses() != null) {
+                assignMacAddresses(
+                        vmToClone,
+                        Arrays.stream(vmCloneSpecs).map(VirtualMachineCloneSpec::getConfig).toArray(VirtualMachineConfigSpec[]::new),
+                        instance.getOptions().getMacAddresses()
+                );
+            }
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(i -> cloneVM(instanceImageId, instance, rootFolder, vmcs, vmFolder))
+                    .mapToObj(i -> cloneVM(vmToClone,instance.getTag() + ("_"+i),
+                            instance, rootFolder, vmCloneSpecs[i-1], vmFolder)
+                    )
                     .map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
 
         } catch (RemoteException e) {
