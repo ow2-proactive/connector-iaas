@@ -1,19 +1,14 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.ws.rs.NotSupportedException;
 
-import com.vmware.vim25.VirtualDevice;
-import com.vmware.vim25.VirtualDeviceConfigSpec;
-import com.vmware.vim25.VirtualDeviceConfigSpecOperation;
-import com.vmware.vim25.VirtualEthernetCard;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -54,6 +49,9 @@ public class VMWareProvider implements CloudProvider {
     @Autowired
     private VMWareProviderVirualMachineUtil vmWareProviderVirualMachineUtil;
 
+    @Autowired
+    private VMWareProviderMacAddressHandler vmWareProviderMacAddressHandler;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
@@ -64,33 +62,14 @@ public class VMWareProvider implements CloudProvider {
 
             Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
             Folder vmFolder = vmWareProviderVirualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
-            VirtualMachine vmToClone = vmWareProviderVirualMachineUtil.searchVirtualMachineByName(instanceImageId, rootFolder);
-
-            // Create a VirtualMachineCloneSpec for each VM to start
-            VirtualMachineCloneSpec[] vmCloneSpecs = new VirtualMachineCloneSpec[Integer.valueOf(instance.getNumber())];
-
-            // Initialize and configure all VirtualMachineCloneSpec
-            for (int i=0; i<vmCloneSpecs.length; i++) {
-                vmCloneSpecs[i] = new VirtualMachineCloneSpec();
-                vmCloneSpecs[i].setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
-                vmCloneSpecs[i].setPowerOn(false);
-                vmCloneSpecs[i].setTemplate(false);
-                vmCloneSpecs[i].setConfig(getVirtualMachineConfigSpec(instance));
-            }
-
-            // Assign MAC Addresses if needed
-            if (instance.getOptions() != null && instance.getOptions().getMacAddresses() != null) {
-                assignMacAddresses(
-                        vmToClone,
-                        Arrays.stream(vmCloneSpecs).map(VirtualMachineCloneSpec::getConfig).toArray(VirtualMachineConfigSpec[]::new),
-                        instance.getOptions().getMacAddresses()
-                );
-            }
+            VirtualMachine vmToClone = vmWareProviderVirualMachineUtil
+                    .searchVirtualMachineByName(instanceImageId, rootFolder);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(i -> cloneVM(vmToClone,instance.getTag() + ("_"+i),
-                            instance, rootFolder, vmCloneSpecs[i-1], vmFolder)
-                    )
+                    .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
+                            instance.getTag() + ("_" + instanceIndexStartAt1), instance, rootFolder,
+                            createVirtualMachineCloneSpec(instanceIndexStartAt1, vmToClone, instance),
+                            vmFolder))
                     .map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
 
         } catch (RemoteException e) {
@@ -99,8 +78,43 @@ public class VMWareProvider implements CloudProvider {
         }
 
     }
-    
-    
+
+    private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1,
+            VirtualMachine vmToClone, Instance instance) {
+        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
+        assignMacAddressIfProvided(instanceIndexStartAt1, vmToClone, instance, vmCloneSpecs);
+        return vmCloneSpecs;
+    }
+
+    private void assignMacAddressIfProvided(int instanceIndexStartAt1, VirtualMachine vmToClone,
+            Instance instance, VirtualMachineCloneSpec vmCloneSpecs) {
+        getMacAddressIfPresent(instanceIndexStartAt1, instance)
+                .ifPresent(macAddress -> vmWareProviderMacAddressHandler
+                        .getVirtualDeviceConfigWithMacAddress(macAddress, vmToClone)
+                        .ifPresent(virtDevConfSpec -> vmCloneSpecs.getConfig()
+                                .setDeviceChange(virtDevConfSpec)));
+
+    }
+
+    private Optional<String> getMacAddressIfPresent(int instanceIndexStartAt1, Instance instance) {
+        Optional<String> macAdress = Optional.empty();
+        if (instance.getOptions() != null && instance.getOptions().getMacAddresses() != null) {
+            macAdress = Optional
+                    .ofNullable(instance.getOptions().getMacAddresses().get(instanceIndexStartAt1 - 1));
+        }
+        return macAdress;
+    }
+
+    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
+            Instance instance) {
+        VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
+        vmCloneSpecs = new VirtualMachineCloneSpec();
+        vmCloneSpecs.setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
+        vmCloneSpecs.setPowerOn(false);
+        vmCloneSpecs.setTemplate(false);
+        vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
+        return vmCloneSpecs;
+    }
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -146,18 +160,14 @@ public class VMWareProvider implements CloudProvider {
                         .hardware(Hardware.builder()
                                 .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
                                 .minRam((String.valueOf(vm.getConfig().getHardware().getMemoryMB()))).build())
-                        
-                        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
-                        
-                        .status(String.valueOf(vm.getSummary().getOverallStatus())).build())
-                .collect(Collectors.toSet());
+
+        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
+
+        .status(String.valueOf(vm.getSummary().getOverallStatus())).build()).collect(Collectors.toSet());
 
     }
 
-   
-
-
-	@Override
+    @Override
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
 
@@ -234,7 +244,7 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String  instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
@@ -268,46 +278,4 @@ public class VMWareProvider implements CloudProvider {
         return vmconfigspec;
     }
 
-    /**
-     * Assign a single MAC address per VM
-     *
-     * @param vm            the original VM to clone
-     * @param vmConfigSpecs VirtualMachineConfigSpec objects' array, one for each VM to start
-     * @param macAddresses  set of MAC addresses to assign to the VMs (one for each)
-     */
-    private void assignMacAddresses(VirtualMachine vm, VirtualMachineConfigSpec[] vmConfigSpecs, Set<String> macAddresses) {
-
-        Iterator<String> macIt = macAddresses.iterator();
-
-        // Customize each VirtualMachineConfigSpec
-        for (int i=0; i<vmConfigSpecs.length; i++) {
-
-            // Assign MAC addresses as long as remaining
-            if (macIt.hasNext()) {
-                VirtualDevice[] virtualDevices = vm.getConfig().getHardware().getDevice();
-                VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
-
-                // Look for an Ethernet card
-                for (int j = 0; j < virtualDevices.length; j++) {
-                    if (virtualDevices[j] instanceof VirtualEthernetCard) {
-
-                        // Take the first Ethernet card found (change MAC address on the first adapter only)
-                        virtEthCard = (VirtualEthernetCard) virtualDevices[j];
-                        virtEthCard.setAddressType("Manual");
-                        virtEthCard.setMacAddress(macIt.next());
-                        break;
-                    }
-                }
-
-                // Set the change
-                VirtualDeviceConfigSpec virtDevConfSpec = new VirtualDeviceConfigSpec();
-                virtDevConfSpec.setDevice(virtEthCard);
-                virtDevConfSpec.setOperation(VirtualDeviceConfigSpecOperation.edit);
-                vmConfigSpecs[i].setDeviceChange(new VirtualDeviceConfigSpec[]{virtDevConfSpec});
-            }
-            else {
-                return;
-            }
-        }
-    }
 }
