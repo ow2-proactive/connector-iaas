@@ -13,25 +13,36 @@ import com.vmware.vim25.mo.VirtualMachine;
 
 
 @Component
+/**
+ * Handle MAC address assignment by creating customized VirtualDeviceConfigSpec.
+ */
 public class VMWareProviderMacAddressHandler {
 
     private static final String ADDRESS_TYPE = "Manual";
 
     /**
-     * Assign a single MAC address per VM
-     * @param macAddress
-     * @param vm
-     * @return
+     * Retrieve a new VirtualDeviceConfigSpec with a customized VirtualEthernetCard's MAC address cloned from the
+     * specified VM
+     *
+     * @param macAddress    the MAC address to assign
+     * @param vm            the original VM to clone (containing a VirtualEthernetCard)
+     * @return  an optional VirtualDeviceConfigSpec[] (single object's array) with a customized VirtualEthernetCard
      */
-    public Optional<VirtualDeviceConfigSpec[]> getVirtualDeviceConfigWithMacAddress(String macAddress,
-            VirtualMachine vm) {
+    Optional<VirtualDeviceConfigSpec[]> getVirtualDeviceConfigWithMacAddress(String macAddress, VirtualMachine vm) {
 
         return Arrays.stream(vm.getConfig().getHardware().getDevice())
                 .filter(virtualDevice -> virtualDevice instanceof VirtualEthernetCard).findFirst()
-                .map(virtualDevice -> getVirtualEthernetCard(virtualDevice, macAddress))
-                .map(virtEthCard -> getVirtualDeviceConfigSpec(virtEthCard))
+                .map(virtualDevice -> getCustomizedVirtualEthernetCard(virtualDevice, macAddress))
+                .map(this::getVirtualDeviceConfigSpec)
                 .map(virtDevConfSpec -> new VirtualDeviceConfigSpec[] { virtDevConfSpec });
 
+    }
+
+    private VirtualEthernetCard getCustomizedVirtualEthernetCard(VirtualDevice virtualDevice, String macAddress) {
+        VirtualEthernetCard virtEthCard = (VirtualEthernetCard) virtualDevice;
+        virtEthCard.setAddressType(ADDRESS_TYPE);
+        virtEthCard.setMacAddress(macAddress);
+        return virtEthCard;
     }
 
     private VirtualDeviceConfigSpec getVirtualDeviceConfigSpec(VirtualEthernetCard virtEthCard) {
@@ -39,14 +50,6 @@ public class VMWareProviderMacAddressHandler {
         virtDevConfSpec.setDevice(virtEthCard);
         virtDevConfSpec.setOperation(VirtualDeviceConfigSpecOperation.edit);
         return virtDevConfSpec;
-    }
-
-    private VirtualEthernetCard getVirtualEthernetCard(VirtualDevice virtualDevice, String macAddress) {
-        VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
-        virtEthCard = (VirtualEthernetCard) virtualDevice;
-        virtEthCard.setAddressType(ADDRESS_TYPE);
-        virtEthCard.setMacAddress(macAddress);
-        return virtEthCard;
     }
 
 }

@@ -11,8 +11,11 @@ import static org.mockito.Mockito.when;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import com.vmware.vim25.VirtualDeviceConfigSpec;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -62,6 +65,12 @@ public class VMWareProviderTest {
 
     @Mock
     private VMWareProviderVirualMachineUtil vmWareProviderVirualMachineUtil;
+
+    @Mock
+    private VMWareProviderMacAddressHandler vMWareProviderMacAddressHandler;
+
+    @Mock
+    private VirtualDeviceConfigSpec virtDevConfSpec;
 
     @Mock
     private ServiceInstance serviceInstance;
@@ -148,35 +157,43 @@ public class VMWareProviderTest {
         Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag", "VM/vm-to-clone",
                 Arrays.asList("00:50:56:11:11:11"));
 
-        when(vmWareProviderVirualMachineUtil.searchFolderByName("VM", rootFolder)).thenReturn(instanceFolder);
-
+        // Ensure that we can find the original and the new VMs
         when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
                 .thenReturn(virtualMachine);
-
         when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("cloned-tag", rootFolder))
                 .thenReturn(createdVirtualMachine);
 
-        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
-
-        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
-
-        when(virtualMachine.cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class)))
-                .thenReturn(task);
-
-        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
-
-        // Add a Virtual Ethernet Card with automatically generated MAC address on the VM to clone
+        // Ensure that VM's config, UUID and hardware are set for both VMs
         when(virtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
-        when(virtualMachine.getConfig().getHardware()).thenReturn(hardware);
+        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+        when(virtualMachineConfigInfo.getHardware()).thenReturn(hardware);
+
+        // Add a Virtual Ethernet Card with an automatically generated MAC address
         VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
         virtEthCard.setAddressType("Generated");
-        when(virtualMachine.getConfig().getHardware().getDevice())
-                .thenReturn(new VirtualDevice[] { virtEthCard });
+        when(hardware.getDevice()).thenReturn(new VirtualDevice[] { virtEthCard });
 
+        // Emulate vMWareProviderMacAddressHandler behavior
+        when(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11", virtualMachine))
+                .thenReturn(Optional.of(new VirtualDeviceConfigSpec[]{virtDevConfSpec}));
+        VirtualEthernetCard newVirtEthCard = new VirtualEthernetCard();
+        newVirtEthCard.setAddressType("Manual");
+        newVirtEthCard.setMacAddress("00:50:56:11:11:11");
+        when(virtDevConfSpec.getDevice()).thenReturn(newVirtEthCard);
+
+        // Emulate the call to 'cloneVM_Task' (VMWare API)
+        when(virtualMachine.cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class)))
+                .thenReturn(task);
+        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
+
+        // Create the new instance and check if the MAC address is set as option
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
-
+        assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.iterator().next().getOptions().getMacAddresses().iterator().next(),
                 is("00:50:56:11:11:11"));
+
+        // TODO: Find a way to check the VirtualMachineCloneSpec object used to clone the VM
     }
 
     @Test

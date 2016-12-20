@@ -66,49 +66,83 @@ public class VMWareProvider implements CloudProvider {
                     .searchVirtualMachineByName(instanceImageId, rootFolder);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
-                            instance.getTag() + ("_" + instanceIndexStartAt1), instance, rootFolder,
+                    .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone, createUniqInstanceTag(instance.getTag(),
+                            instanceIndexStartAt1), instance, rootFolder,
                             createVirtualMachineCloneSpec(instanceIndexStartAt1, vmToClone, instance),
                             vmFolder))
                     .map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
 
         } catch (RemoteException e) {
-            logger.error("ERROR when creating VMWare istance with : " + instance, e);
-            throw new RuntimeException("ERROR when creating VMWare istance with : " + instance, e);
+            logger.error("ERROR when creating VMWare instance with : " + instance, e);
+            throw new RuntimeException("ERROR when creating VMWare instance with : " + instance, e);
         }
 
     }
 
-    private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1,
-            VirtualMachine vmToClone, Instance instance) {
-        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
-        assignMacAddressIfProvided(instanceIndexStartAt1, vmToClone, instance, vmCloneSpecs);
-        return vmCloneSpecs;
+    /**
+     * Create a uniq tag for a VM based on the original tag provided and the instance index
+     *
+     * @param tagBase       the tag base
+     * @param instanceIndex the instance index
+     * @return a uniq VM tag
+     */
+    private String createUniqInstanceTag(String tagBase, int instanceIndex) {
+        if (instanceIndex > 1) {
+            return tagBase + "_" + String.valueOf(instanceIndex);
+        }
+        return tagBase;
     }
 
-    private void assignMacAddressIfProvided(int instanceIndexStartAt1, VirtualMachine vmToClone,
-            Instance instance, VirtualMachineCloneSpec vmCloneSpecs) {
+    /**
+     * Create a new VirtualMachineCloneSpec based on the specified VM to clone.
+     * Customize it with a specific MAC address if defined in the instance's options parameter at the specified index
+     *
+     * @param instanceIndexStartAt1 the index to look for a MAC address
+     * @param vmToClone             the intial VM to clone
+     * @param instance              the instance to rely on
+     * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
+     */
+    private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1,
+            VirtualMachine vmToClone, Instance instance) {
+
+        // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
+        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
+
+        // Customize it with a manual MAC address, if specified
         getMacAddressIfPresent(instanceIndexStartAt1, instance)
                 .ifPresent(macAddress -> vmWareProviderMacAddressHandler
                         .getVirtualDeviceConfigWithMacAddress(macAddress, vmToClone)
                         .ifPresent(virtDevConfSpec -> vmCloneSpecs.getConfig()
                                 .setDeviceChange(virtDevConfSpec)));
-
+        return vmCloneSpecs;
     }
 
+    /**
+     * Retrieve an optional MAC address from the Instance 'options' parameter and the specified index
+     *
+     * @param instanceIndexStartAt1 the index of the MAC address to retrieve
+     * @param instance              the instance to rely on
+     * @return the desired MAC address (if it exists)
+     */
     private Optional<String> getMacAddressIfPresent(int instanceIndexStartAt1, Instance instance) {
-        Optional<String> macAdress = Optional.empty();
+        Optional<String> macAddress = Optional.empty();
         if (instance.getOptions() != null && instance.getOptions().getMacAddresses() != null) {
-            macAdress = Optional
+            macAddress = Optional
                     .ofNullable(instance.getOptions().getMacAddresses().get(instanceIndexStartAt1 - 1));
         }
-        return macAdress;
+        return macAddress;
     }
 
+    /**
+     * Generate a new VirtualMachineCloneSpec with parameters by default and based on the provided VM to clone
+     *
+     * @param vmToClone the source VM to rely on
+     * @param instance  the current instance to rely on
+     * @return a new customized VirtualMachineCloneSpec
+     */
     private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
             Instance instance) {
         VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
-        vmCloneSpecs = new VirtualMachineCloneSpec();
         vmCloneSpecs.setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
         vmCloneSpecs.setPowerOn(false);
         vmCloneSpecs.setTemplate(false);
@@ -132,15 +166,15 @@ public class VMWareProvider implements CloudProvider {
                             String result = task.waitForTask();
                             if (result != Task.SUCCESS) {
 
-                                throw new RuntimeException("Unable to delete VMWare istance : " + instanceId +
+                                throw new RuntimeException("Unable to delete VMWare instance : " + instanceId +
                                     " Task result = " + result);
                             }
                         } else {
-                            throw new RuntimeException("ERROR when powering OFF the istance : " + instanceId);
+                            throw new RuntimeException("ERROR when powering OFF the instance : " + instanceId);
                         }
 
                     } catch (RemoteException | InterruptedException e) {
-                        throw new RuntimeException("ERROR when deleting VMWare istance : " + instanceId, e);
+                        throw new RuntimeException("ERROR when deleting VMWare instance : " + instanceId, e);
                     }
 
                 });
@@ -206,7 +240,7 @@ public class VMWareProvider implements CloudProvider {
 
         } catch (RemoteException e) {
             throw new RuntimeException(
-                "ERROR when executing the script : " + instanceScript + " against instanceid : " + instanceId,
+                "ERROR when executing the script : " + instanceScript + " against instance id : " + instanceId,
                 e);
         }
 
