@@ -141,6 +141,7 @@ public class VMWareProvider implements CloudProvider {
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
                 .stream()
+                .filter(vm -> vm.getConfig() != null)
                 .map(vm -> Instance.builder().id(vm.getConfig().getUuid()).tag(vm.getName()).number("1")
                         .hardware(Hardware.builder()
                                 .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
