@@ -10,12 +10,9 @@ import static org.mockito.Mockito.when;
 
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.vmware.vim25.VirtualDevice;
-import com.vmware.vim25.VirtualEthernetCard;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -39,6 +36,8 @@ import com.vmware.vim25.ManagedEntityStatus;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.TaskInProgress;
+import com.vmware.vim25.VirtualDevice;
+import com.vmware.vim25.VirtualEthernetCard;
 import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigInfo;
@@ -87,7 +86,7 @@ public class VMWareProviderTest {
 
     @Mock
     private VirtualHardware hardware;
-    
+
     @Mock
     private GuestInfo guestInfo;
 
@@ -147,10 +146,9 @@ public class VMWareProviderTest {
 
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
         Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag", "VM/vm-to-clone",
-                new HashSet<>(Arrays.asList("00:50:56:11:11:11")));
+                Arrays.asList("00:50:56:11:11:11"));
 
-        when(vmWareProviderVirualMachineUtil.searchFolderByName("VM", rootFolder))
-                .thenReturn(instanceFolder);
+        when(vmWareProviderVirualMachineUtil.searchFolderByName("VM", rootFolder)).thenReturn(instanceFolder);
 
         when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
                 .thenReturn(virtualMachine);
@@ -172,7 +170,8 @@ public class VMWareProviderTest {
         when(virtualMachine.getConfig().getHardware()).thenReturn(hardware);
         VirtualEthernetCard virtEthCard = new VirtualEthernetCard();
         virtEthCard.setAddressType("Generated");
-        when(virtualMachine.getConfig().getHardware().getDevice()).thenReturn(new VirtualDevice[]{virtEthCard});
+        when(virtualMachine.getConfig().getHardware().getDevice())
+                .thenReturn(new VirtualDevice[] { virtEthCard });
 
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
@@ -243,9 +242,9 @@ public class VMWareProviderTest {
         when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
 
         when(createdVirtualMachine.getGuest()).thenReturn(guestInfo);
-        
+
         when(guestInfo.getIpAddress()).thenReturn("77.154.227.148");
-        
+
         when(virtualMachineConfigInfo.getHardware()).thenReturn(hardware);
 
         when(hardware.getNumCPU()).thenReturn(8);
@@ -263,7 +262,8 @@ public class VMWareProviderTest {
         assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
         assertThat(createdInstances.iterator().next().getHardware().getMinCores(), is("8"));
         assertThat(createdInstances.iterator().next().getHardware().getMinRam(), is("2048"));
-        assertThat(createdInstances.iterator().next().getNetwork().getPublicAddresses().iterator().next(), is("77.154.227.148"));
+        assertThat(createdInstances.iterator().next().getNetwork().getPublicAddresses().iterator().next(),
+                is("77.154.227.148"));
         assertThat(createdInstances.iterator().next().getStatus(), is(ManagedEntityStatus.green.toString()));
 
     }
