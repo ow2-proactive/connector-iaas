@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.vmware.vim25.VirtualDeviceConfigSpec;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -64,7 +63,7 @@ public class VMWareProviderTest {
     private VMWareServiceInstanceCache vmWareServiceInstanceCache;
 
     @Mock
-    private VMWareProviderVirualMachineUtil vmWareProviderVirualMachineUtil;
+    private VMWareProviderVirtualMachineUtil vmWareProviderVirtualMachineUtil;
 
     @Mock
     private VMWareProviderMacAddressHandler vMWareProviderMacAddressHandler;
@@ -124,13 +123,13 @@ public class VMWareProviderTest {
         Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag",
                 "activeeon/RoboconfAgent180116");
 
-        when(vmWareProviderVirualMachineUtil.searchFolderByName("activeeon", rootFolder))
+        when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder))
                 .thenReturn(instanceFolder);
 
-        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116", rootFolder))
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116", rootFolder))
                 .thenReturn(virtualMachine);
 
-        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("marco-tag", rootFolder))
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag", rootFolder))
                 .thenReturn(createdVirtualMachine);
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -158,9 +157,9 @@ public class VMWareProviderTest {
                 Arrays.asList("00:50:56:11:11:11"));
 
         // Ensure that we can find the original and the new VMs
-        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
                 .thenReturn(virtualMachine);
-        when(vmWareProviderVirualMachineUtil.searchVirtualMachineByName("cloned-tag", rootFolder))
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("cloned-tag", rootFolder))
                 .thenReturn(createdVirtualMachine);
 
         // Ensure that VM's config, UUID and hardware are set for both VMs
@@ -201,7 +200,7 @@ public class VMWareProviderTest {
             throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -226,7 +225,7 @@ public class VMWareProviderTest {
             throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -251,7 +250,7 @@ public class VMWareProviderTest {
             throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -293,7 +292,7 @@ public class VMWareProviderTest {
         InstanceScript instanceScript = InstanceScriptFixture.getInstanceScriptUserAndPassword("username",
                 "pasword", new String[] { "wget node.jar", "java -jar node.jar" });
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -322,7 +321,7 @@ public class VMWareProviderTest {
         InstanceScript instanceScript = InstanceScriptFixture.getInstanceScriptUserAndPassword("username",
                 "pasword", new String[] { "wget node.jar", "java -jar node.jar" });
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -350,7 +349,7 @@ public class VMWareProviderTest {
             throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);

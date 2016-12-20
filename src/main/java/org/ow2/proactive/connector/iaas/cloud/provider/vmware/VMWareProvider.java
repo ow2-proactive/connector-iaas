@@ -47,7 +47,7 @@ public class VMWareProvider implements CloudProvider {
     private VMWareServiceInstanceCache vmWareServiceInstanceCache;
 
     @Autowired
-    private VMWareProviderVirualMachineUtil vmWareProviderVirualMachineUtil;
+    private VMWareProviderVirtualMachineUtil vmWareProviderVirtualMachineUtil;
 
     @Autowired
     private VMWareProviderMacAddressHandler vmWareProviderMacAddressHandler;
@@ -61,8 +61,8 @@ public class VMWareProvider implements CloudProvider {
             String instanceImageId = instance.getImage().split("/")[1];
 
             Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
-            Folder vmFolder = vmWareProviderVirualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
-            VirtualMachine vmToClone = vmWareProviderVirualMachineUtil
+            Folder vmFolder = vmWareProviderVirtualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
+            VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil
                     .searchVirtualMachineByName(instanceImageId, rootFolder);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
@@ -143,7 +143,7 @@ public class VMWareProvider implements CloudProvider {
     private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
             Instance instance) {
         VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
-        vmCloneSpecs.setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
+        vmCloneSpecs.setLocation(vmWareProviderVirtualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
         vmCloneSpecs.setPowerOn(false);
         vmCloneSpecs.setTemplate(false);
         vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
@@ -153,7 +153,7 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
 
-        vmWareProviderVirualMachineUtil
+        vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -184,7 +184,7 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
 
-        return vmWareProviderVirualMachineUtil
+        return vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -209,7 +209,7 @@ public class VMWareProvider implements CloudProvider {
 
         try {
 
-            VirtualMachine vm = vmWareProviderVirualMachineUtil
+            VirtualMachine vm = vmWareProviderVirtualMachineUtil
                     .getAllVirtualMachinesByInfrastructure(
                             vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                             infrastructure)
@@ -251,7 +251,7 @@ public class VMWareProvider implements CloudProvider {
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
             InstanceScript instanceScript) {
 
-        return vmWareProviderVirualMachineUtil
+        return vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -268,7 +268,7 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        vmWareProviderVirualMachineUtil
+        vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -299,7 +299,7 @@ public class VMWareProvider implements CloudProvider {
                     "Unable to create VMWare instance with : " + instance + " Task result = " + result);
             }
 
-            return vmWareProviderVirualMachineUtil.searchVirtualMachineByName(newVMname, rootFolder);
+            return vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(newVMname, rootFolder);
         } catch (RemoteException | InterruptedException e) {
             throw new RuntimeException("ERROR when creating VMWare instance with : " + instance, e);
         }

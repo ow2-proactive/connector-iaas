@@ -18,7 +18,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 
 
 @Component
-public class VMWareProviderVirualMachineUtil {
+public class VMWareProviderVirtualMachineUtil {
 
     /**
      * Create a new VirtualMachineRelocateSpec based on the VM to clone
