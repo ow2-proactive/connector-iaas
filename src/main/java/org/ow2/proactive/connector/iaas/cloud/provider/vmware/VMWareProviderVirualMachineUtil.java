@@ -9,24 +9,26 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 import com.vmware.vim25.InvalidProperty;
-import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
-import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 
 
 @Component
 public class VMWareProviderVirualMachineUtil {
 
-    public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(VirtualMachine vmSource)
-            throws InvalidProperty, RuntimeFault, RemoteException {
-        VirtualMachineRelocateSpec vmrs = new VirtualMachineRelocateSpec();
-        vmrs.setPool(vmSource.getResourcePool().getMOR());
-        return vmrs;
+    public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(VirtualMachine vmSource) {
+        try {
+            VirtualMachineRelocateSpec vmrs = new VirtualMachineRelocateSpec();
+            vmrs.setPool(vmSource.getResourcePool().getMOR());
+            return vmrs;
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public VirtualMachine searchVirtualMachineByName(String name, Folder rootFolder)
@@ -56,13 +58,6 @@ public class VMWareProviderVirualMachineUtil {
     public Folder searchFolderByName(String name, Folder rootFolder)
             throws InvalidProperty, RuntimeFault, RemoteException {
         return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", name);
-    }
-
-    private ManagedObjectReference getManagedObjectReference(Folder rootFolder)
-            throws InvalidProperty, RuntimeFault, RemoteException {
-        ResourcePool rp = (ResourcePool) new InventoryNavigator(rootFolder)
-                .searchManagedEntities("ResourcePool")[0];
-        return rp.getMOR();
     }
 
 }
