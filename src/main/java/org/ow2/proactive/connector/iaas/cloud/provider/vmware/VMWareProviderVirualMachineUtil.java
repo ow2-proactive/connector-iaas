@@ -20,6 +20,12 @@ import com.vmware.vim25.mo.VirtualMachine;
 @Component
 public class VMWareProviderVirualMachineUtil {
 
+    /**
+     * Create a new VirtualMachineRelocateSpec based on the VM to clone
+     *
+     * @param vmSource  The source VM to rely on
+     * @return  a new customized VirtualMachineRelocateSpec
+     */
     public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(VirtualMachine vmSource) {
         try {
             VirtualMachineRelocateSpec vmrs = new VirtualMachineRelocateSpec();
