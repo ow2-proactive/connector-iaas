@@ -2,6 +2,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import com.vmware.vim25.VirtualDevice;
 import com.vmware.vim25.VirtualDeviceConfigSpec;
+import com.vmware.vim25.VirtualDisk;
 import com.vmware.vim25.VirtualEthernetCard;
 import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachineConfigInfo;
@@ -18,6 +19,7 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Matchers.any;
@@ -55,7 +57,7 @@ public class VMWareProviderMacAddressHandlerTest {
     }
 
     @Test
-    public void testGetVirtualDeviceConfigWithMacAddress() throws RemoteException, InterruptedException {
+    public void testGetVirtualDeviceConfigWithMacAddressOK() throws RemoteException, InterruptedException {
 
         // Add a Virtual Ethernet Card with automatically generated MAC address on the VM to clone
         when(virtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -64,21 +66,33 @@ public class VMWareProviderMacAddressHandlerTest {
         virtEthCard.setAddressType("Generated");
         when(virtualMachine.getConfig().getHardware().getDevice()).thenReturn(new VirtualDevice[]{virtEthCard});
 
-        Assert.assertTrue(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11",
+        Optional<VirtualDeviceConfigSpec[]> virtDevConfSpec = vMWareProviderMacAddressHandler
+                .getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11",
+                virtualMachine);
+
+        Assert.assertTrue(virtDevConfSpec.isPresent());
+
+        Assert.assertTrue(Arrays.stream(virtDevConfSpec.get()).findFirst().isPresent());
+
+        VirtualDevice virtDev = Arrays.stream(virtDevConfSpec.get()).findFirst().get().getDevice();
+        Assert.assertNotNull(virtDev);
+
+        Assert.assertTrue(virtDev instanceof VirtualEthernetCard);
+
+        Assert.assertThat(((VirtualEthernetCard) virtDev).getMacAddress(), is("00:50:56:11:11:11"));
+    }
+
+    @Test
+    public void testGetVirtualDeviceConfigWithMacAddressKO() throws RemoteException, InterruptedException {
+
+        // Add a virtual disk of 8G (instead of an ethernet card)
+        when(virtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+        when(virtualMachineConfigInfo.getHardware()).thenReturn(hardware);
+        VirtualDisk virtDisk = new VirtualDisk();
+        virtDisk.setCapacityInBytes((long) 8000000);
+        when(virtualMachine.getConfig().getHardware().getDevice()).thenReturn(new VirtualDevice[]{virtDisk});
+
+        Assert.assertFalse(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11",
                 virtualMachine).isPresent());
-
-        Assert.assertTrue(Arrays.stream(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11",
-                virtualMachine).get()).findFirst().isPresent());
-
-        Assert.assertNotNull(Arrays.stream(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress
-                ("00:50:56:11:11:11", virtualMachine).get()).findFirst().get().getDevice());
-
-        Assert.assertTrue(Arrays.stream(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress
-                ("00:50:56:11:11:11", virtualMachine).get()).findFirst().get().getDevice() instanceof VirtualEthernetCard);
-
-        Assert.assertThat(Arrays.stream(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress
-                ("00:50:56:11:11:11",
-                virtualMachine).get()).findFirst().map(VirtualDeviceConfigSpec::getDevice)
-                .map(virtDevice -> (VirtualEthernetCard) virtDevice).get().getMacAddress(), is("00:50:56:11:11:11"));
     }
 }
