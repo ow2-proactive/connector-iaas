@@ -227,6 +227,22 @@ public class VMWareProviderTest {
     }
 
     @Test
+    public void testGetAllInfrastructureInstancesWithBadConfigVM()
+            throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+
+        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+
+        when(createdVirtualMachine.getConfig()).thenReturn(null);
+
+        Set<Instance> createdInstances = vmWareProvider.getAllInfrastructureInstances(infrastructure);
+
+        assertThat(createdInstances.size(), is(0));
+
+    }
+
+    @Test
     public void testExecuteScriptOnInstanceId() throws GuestOperationsFault, InvalidState, TaskInProgress,
             FileFault, RuntimeFault, RemoteException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
