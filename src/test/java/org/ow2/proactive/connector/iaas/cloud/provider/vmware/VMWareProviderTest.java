@@ -289,7 +289,7 @@ public class VMWareProviderTest {
             throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
-        when(vmWareProviderVirualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                 infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(null);
