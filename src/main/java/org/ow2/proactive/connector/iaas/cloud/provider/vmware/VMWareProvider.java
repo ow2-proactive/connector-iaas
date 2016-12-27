@@ -2,6 +2,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -46,7 +47,10 @@ public class VMWareProvider implements CloudProvider {
     private VMWareServiceInstanceCache vmWareServiceInstanceCache;
 
     @Autowired
-    private VMWareProviderVirualMachineUtil vmWareProviderVirualMachineUtil;
+    private VMWareProviderVirtualMachineUtil vmWareProviderVirtualMachineUtil;
+
+    @Autowired
+    private VMWareProviderMacAddressHandler vmWareProviderMacAddressHandler;
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -57,33 +61,99 @@ public class VMWareProvider implements CloudProvider {
             String instanceImageId = instance.getImage().split("/")[1];
 
             Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
-
-            VirtualMachineCloneSpec vmcs = new VirtualMachineCloneSpec();
-
-            vmcs.setLocation(vmWareProviderVirualMachineUtil.getVirtualMachineRelocateSpec(rootFolder));
-            vmcs.setPowerOn(true);
-            vmcs.setTemplate(false);
-            vmcs.setConfig(getVirtualMachineConfigSpec(instance));
-
-            Folder vmFolder = vmWareProviderVirualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
+            Folder vmFolder = vmWareProviderVirtualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
+            VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil
+                    .searchVirtualMachineByName(instanceImageId, rootFolder);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(i -> cloneVM(instanceImageId, instance, rootFolder, vmcs, vmFolder))
+                    .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone, createUniqInstanceTag(instance.getTag(),
+                            instanceIndexStartAt1), instance, rootFolder,
+                            createVirtualMachineCloneSpec(instanceIndexStartAt1, vmToClone, instance),
+                            vmFolder))
                     .map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
 
         } catch (RemoteException e) {
-            logger.error("ERROR when creating VMWare istance with : " + instance, e);
-            throw new RuntimeException("ERROR when creating VMWare istance with : " + instance, e);
+            logger.error("ERROR when creating VMWare instance with : " + instance, e);
+            throw new RuntimeException("ERROR when creating VMWare instance with : " + instance, e);
         }
 
     }
-    
-    
+
+    /**
+     * Create a uniq tag for a VM based on the original tag provided and the instance index
+     *
+     * @param tagBase       the tag base
+     * @param instanceIndex the instance index
+     * @return a uniq VM tag
+     */
+    private String createUniqInstanceTag(String tagBase, int instanceIndex) {
+        if (instanceIndex > 1) {
+            return tagBase + "_" + String.valueOf(instanceIndex);
+        }
+        return tagBase;
+    }
+
+    /**
+     * Create a new VirtualMachineCloneSpec based on the specified VM to clone.
+     * Customize it with a specific MAC address if defined in the instance's options parameter at the specified index
+     *
+     * @param instanceIndexStartAt1 the index to look for a MAC address
+     * @param vmToClone             the intial VM to clone
+     * @param instance              the instance to rely on
+     * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
+     */
+    private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1,
+            VirtualMachine vmToClone, Instance instance) {
+
+        // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
+        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
+
+        // Customize it with a manual MAC address, if specified
+        getMacAddressIfPresent(instanceIndexStartAt1, instance)
+                .ifPresent(macAddress -> vmWareProviderMacAddressHandler
+                        .getVirtualDeviceConfigWithMacAddress(macAddress, vmToClone)
+                        .ifPresent(virtDevConfSpec -> vmCloneSpecs.getConfig()
+                                .setDeviceChange(virtDevConfSpec)));
+        return vmCloneSpecs;
+    }
+
+    /**
+     * Retrieve an optional MAC address from the Instance 'options' parameter and the specified index
+     *
+     * @param instanceIndexStartAt1 the index of the MAC address to retrieve
+     * @param instance              the instance to rely on
+     * @return the desired MAC address (if it exists)
+     */
+    private Optional<String> getMacAddressIfPresent(int instanceIndexStartAt1, Instance instance) {
+        Optional<String> macAddress = Optional.empty();
+        if (instance.getOptions() != null && instance.getOptions().getMacAddresses() != null) {
+            macAddress = Optional
+                    .ofNullable(instance.getOptions().getMacAddresses().get(instanceIndexStartAt1 - 1));
+        }
+        return macAddress;
+    }
+
+    /**
+     * Generate a new VirtualMachineCloneSpec with parameters by default and based on the provided VM to clone
+     *
+     * @param vmToClone the source VM to rely on
+     * @param instance  the current instance to rely on
+     * @return a new customized VirtualMachineCloneSpec
+     */
+    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
+            Instance instance) {
+        VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
+        vmCloneSpecs.setLocation(vmWareProviderVirtualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
+        vmCloneSpecs.setPowerOn(false);
+        vmCloneSpecs.setTemplate(false);
+        vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
+        return vmCloneSpecs;
+    }
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
 
-        vmWareProviderVirualMachineUtil
+        vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -96,15 +166,15 @@ public class VMWareProvider implements CloudProvider {
                             String result = task.waitForTask();
                             if (result != Task.SUCCESS) {
 
-                                throw new RuntimeException("Unable to delete VMWare istance : " + instanceId +
+                                throw new RuntimeException("Unable to delete VMWare instance : " + instanceId +
                                     " Task result = " + result);
                             }
                         } else {
-                            throw new RuntimeException("ERROR when powering OFF the istance : " + instanceId);
+                            throw new RuntimeException("ERROR when powering OFF the instance : " + instanceId);
                         }
 
                     } catch (RemoteException | InterruptedException e) {
-                        throw new RuntimeException("ERROR when deleting VMWare istance : " + instanceId, e);
+                        throw new RuntimeException("ERROR when deleting VMWare instance : " + instanceId, e);
                     }
 
                 });
@@ -114,7 +184,7 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
 
-        return vmWareProviderVirualMachineUtil
+        return vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -124,18 +194,14 @@ public class VMWareProvider implements CloudProvider {
                         .hardware(Hardware.builder()
                                 .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
                                 .minRam((String.valueOf(vm.getConfig().getHardware().getMemoryMB()))).build())
-                        
-                        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
-                        
-                        .status(String.valueOf(vm.getSummary().getOverallStatus())).build())
-                .collect(Collectors.toSet());
+
+        .network(Network.builder().publicAddresses(Sets.newHashSet(vm.getGuest().getIpAddress())).build())
+
+        .status(String.valueOf(vm.getSummary().getOverallStatus())).build()).collect(Collectors.toSet());
 
     }
 
-   
-
-
-	@Override
+    @Override
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
 
@@ -143,7 +209,7 @@ public class VMWareProvider implements CloudProvider {
 
         try {
 
-            VirtualMachine vm = vmWareProviderVirualMachineUtil
+            VirtualMachine vm = vmWareProviderVirtualMachineUtil
                     .getAllVirtualMachinesByInfrastructure(
                             vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                             infrastructure)
@@ -174,7 +240,7 @@ public class VMWareProvider implements CloudProvider {
 
         } catch (RemoteException e) {
             throw new RuntimeException(
-                "ERROR when executing the script : " + instanceScript + " against instanceid : " + instanceId,
+                "ERROR when executing the script : " + instanceScript + " against instance id : " + instanceId,
                 e);
         }
 
@@ -185,7 +251,7 @@ public class VMWareProvider implements CloudProvider {
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
             InstanceScript instanceScript) {
 
-        return vmWareProviderVirualMachineUtil
+        return vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -202,7 +268,7 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        vmWareProviderVirualMachineUtil
+        vmWareProviderVirtualMachineUtil
                 .getAllVirtualMachinesByInfrastructure(
                         vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder(),
                         infrastructure)
@@ -212,7 +278,7 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String  instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
@@ -221,22 +287,21 @@ public class VMWareProvider implements CloudProvider {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
-    private VirtualMachine cloneVM(String instanceImageId, Instance instance, Folder rootFolder,
+    private VirtualMachine cloneVM(VirtualMachine vm, String newVMname, Instance instance, Folder rootFolder,
             VirtualMachineCloneSpec vmcs, Folder vmFolder) {
         try {
-            Task task = vmWareProviderVirualMachineUtil
-                    .searchVirtualMachineByName(instanceImageId, rootFolder)
-                    .cloneVM_Task(vmFolder, instance.getTag(), vmcs);
+            // Clone the VM : call to VMWare API
+            Task task = vm.cloneVM_Task(vmFolder, newVMname, vmcs);
 
             String result = task.waitForTask();
             if (Task.SUCCESS != result) {
                 throw new RuntimeException(
-                    "Unable to create VMWare istance with : " + instance + " Task result = " + result);
+                    "Unable to create VMWare instance with : " + instance + " Task result = " + result);
             }
 
-            return vmWareProviderVirualMachineUtil.searchVirtualMachineByName(instance.getTag(), rootFolder);
+            return vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(newVMname, rootFolder);
         } catch (RemoteException | InterruptedException e) {
-            throw new RuntimeException("ERROR when creating VMWare istance with : " + instance, e);
+            throw new RuntimeException("ERROR when creating VMWare instance with : " + instance, e);
         }
     }
 

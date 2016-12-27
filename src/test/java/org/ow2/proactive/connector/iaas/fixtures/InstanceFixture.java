@@ -1,6 +1,7 @@
 package org.ow2.proactive.connector.iaas.fixtures;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.json.JSONObject;
@@ -23,6 +24,12 @@ public class InstanceFixture {
     public static Instance simpleInstanceWithTagAndImage(String tag, String image) {
 
         return getInstance("", tag, image, "1", "512", "1", "172.168.1.248", "1.0.0.2", "RUNNING");
+    }
+
+    public static Instance simpleInstanceWithMacAddress(String tag, String image, List<String> macAddresses) {
+
+        return getInstanceWithMacAddress(tag, tag, image, "1", "512", "1", "172.168.1.248", "1.0.0.2",
+                "RUNNING", macAddresses);
     }
 
     public static String getInstanceAsaString(String id, String tag, String image, String number,
@@ -49,21 +56,21 @@ public class InstanceFixture {
             Options.builder().spotPrice("0.05").build(),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
-    
+
     public static Instance getInstanceWithSecurityGroup(String id, String tag, String image, String number,
             String minRam, String minCores, String publicAddress, String privateAddress, String status,
             String securityGroup) {
-    	
-    	Set<String> securityGroupNames = new HashSet<String>();
-    	securityGroupNames.add("default1");
-    	securityGroupNames.add("default2");
+
+        Set<String> securityGroupNames = new HashSet<String>();
+        securityGroupNames.add("default1");
+        securityGroupNames.add("default2");
         return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
             NetworkFixtures.getNetwork(publicAddress, privateAddress),
             CredentialsFixtures.getCredentials("username", "password"),
             Options.builder().securityGroupNames(securityGroupNames).build(),
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
-    
+
     public static Instance getInstanceWithSubnetId(String id, String tag, String image, String number,
             String minRam, String minCores, String publicAddress, String privateAddress, String status,
             String subnetId) {
@@ -74,4 +81,13 @@ public class InstanceFixture {
             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
+    public static Instance getInstanceWithMacAddress(String id, String tag, String image, String number,
+            String minRam, String minCores, String publicAddress, String privateAddress, String status,
+            List<String> macAddresses) {
+        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
+            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+            CredentialsFixtures.getCredentials("username", "password"),
+            Options.builder().macAddresses(macAddresses).build(),
+            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    }
 }
