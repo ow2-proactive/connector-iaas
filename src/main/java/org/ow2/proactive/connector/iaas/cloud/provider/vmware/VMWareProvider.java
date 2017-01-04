@@ -174,7 +174,7 @@ public class VMWareProvider implements CloudProvider {
             Instance instance) {
         VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
         vmCloneSpecs.setLocation(vmWareProviderVirtualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
-        vmCloneSpecs.setPowerOn(false);
+        vmCloneSpecs.setPowerOn(true);
         vmCloneSpecs.setTemplate(false);
         vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
         return vmCloneSpecs;
