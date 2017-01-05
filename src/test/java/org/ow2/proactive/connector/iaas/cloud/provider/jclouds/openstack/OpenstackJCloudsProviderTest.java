@@ -1,3 +1,28 @@
+/*
+ * ProActive Parallel Suite(TM):
+ * The Open Source library for parallel and distributed
+ * Workflows & Scheduling, Orchestration, Cloud Automation
+ * and Big Data Analysis on Enterprise Grids & Clouds.
+ *
+ * Copyright (c) 2007 - 2017 ActiveEon
+ * Contact: contact@activeeon.com
+ *
+ * This library is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation: version 3 of
+ * the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If needed, contact us to obtain a release under GPL Version 2 or 3
+ * or a different license than the AGPL.
+ */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
 import static org.hamcrest.Matchers.is;
@@ -97,11 +122,21 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2","77.154.227.148", "1.0.0.2", "running");
+        Instance instance = InstanceFixture.getInstance("instance-id",
+                                                        "instance-name",
+                                                        "image",
+                                                        "2",
+                                                        "512",
+                                                        "2",
+                                                        "77.154.227.148",
+                                                        "1.0.0.2",
+                                                        "running");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -123,8 +158,10 @@ public class OpenstackJCloudsProviderTest {
 
         when(resource.getName()).thenReturn("resource-name");
 
-        when(server.getFlavor()).thenReturn(
-                org.jclouds.openstack.v2_0.domain.Resource.builder().id("id").name("same name").build());
+        when(server.getFlavor()).thenReturn(org.jclouds.openstack.v2_0.domain.Resource.builder()
+                                                                                      .id("id")
+                                                                                      .name("same name")
+                                                                                      .build());
 
         when(server.getStatus()).thenReturn(org.jclouds.openstack.nova.v2_0.domain.Server.Status.BUILD);
 
@@ -140,8 +177,9 @@ public class OpenstackJCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        when(computeService.createNodesInGroup(instance.getTag(), Integer.parseInt(instance.getNumber()),
-                template)).thenReturn(nodes);
+        when(computeService.createNodesInGroup(instance.getTag(),
+                                               Integer.parseInt(instance.getNumber()),
+                                               template)).thenReturn(nodes);
 
         TemplateOptions templateOptions = mock(TemplateOptions.class);
         when(template.getOptions()).thenReturn(templateOptions);
@@ -159,11 +197,21 @@ public class OpenstackJCloudsProviderTest {
     @Test(expected = RuntimeException.class)
     public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
-        Instance instance = InstanceFixture.getInstance("instance-id", "instance-name", "image", "2", "512",
-                "2","77.154.227.148", "1.0.0.2", "running");
+        Instance instance = InstanceFixture.getInstance("instance-id",
+                                                        "instance-name",
+                                                        "image",
+                                                        "2",
+                                                        "512",
+                                                        "2",
+                                                        "77.154.227.148",
+                                                        "1.0.0.2",
+                                                        "running");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -180,8 +228,7 @@ public class OpenstackJCloudsProviderTest {
         when(nodeMetadataImpl.getId()).thenReturn("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
         nodesMetaData.add(nodeMetadataImpl);
 
-        when(serverApi.create(anyString(), anyString(), anyString(), anyObject()))
-                .thenThrow(new RuntimeException());
+        when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenThrow(new RuntimeException());
 
         jcloudsProvider.createInstance(infratructure, instance);
 
@@ -190,8 +237,11 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -216,8 +266,11 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -230,8 +283,11 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -255,8 +311,11 @@ public class OpenstackJCloudsProviderTest {
 
     @Test
     public void testGetAllImages() {
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password");
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -276,8 +335,11 @@ public class OpenstackJCloudsProviderTest {
 
     @Test
     public void testGetAllImagesEmptySet() {
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                               "aws",
+                                                                               "endPoint",
+                                                                               "userName",
+                                                                               "password");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -293,8 +355,11 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password");
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -304,11 +369,13 @@ public class OpenstackJCloudsProviderTest {
 
         when(execResponse.getError()).thenReturn("error");
 
-        when(computeService.runScriptOnNode(Mockito.anyString(), Mockito.anyString(),
-                Mockito.any(RunScriptOptions.class))).thenReturn(execResponse);
+        when(computeService.runScriptOnNode(Mockito.anyString(),
+                                            Mockito.anyString(),
+                                            Mockito.any(RunScriptOptions.class))).thenReturn(execResponse);
 
-        ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure, "instanceId",
-                InstanceScriptFixture.simpleInstanceScriptNoscripts());
+        ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure,
+                                                                              "instanceId",
+                                                                              InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
         assertThat(scriptResult.getInstanceId(), is("instanceId"));
         assertThat(scriptResult.getOutput(), is("output"));
@@ -320,8 +387,11 @@ public class OpenstackJCloudsProviderTest {
     public void testExecuteScriptOnInstanceTag()
             throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
 
-        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws", "aws", "endPoint",
-                "userName", "password");
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password");
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -333,11 +403,12 @@ public class OpenstackJCloudsProviderTest {
 
         String allScriptsToExecute = new ScriptBuilder().addStatement(exec("ls -lrt")).render(OsFamily.UNIX);
 
-        when(computeService.runScriptOnNodesMatching(runningInGroup("instanceTag"), allScriptsToExecute))
-                .thenReturn(Maps.newHashMap());
+        when(computeService.runScriptOnNodesMatching(runningInGroup("instanceTag"),
+                                                     allScriptsToExecute)).thenReturn(Maps.newHashMap());
 
         List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceTag(infrastructure,
-                "instanceTag", InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                                                                      "instanceTag",
+                                                                                      InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
         assertThat(scriptResults.size(), is(0));
 

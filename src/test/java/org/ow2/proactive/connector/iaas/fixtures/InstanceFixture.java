@@ -1,3 +1,28 @@
+/*
+ * ProActive Parallel Suite(TM):
+ * The Open Source library for parallel and distributed
+ * Workflows & Scheduling, Orchestration, Cloud Automation
+ * and Big Data Analysis on Enterprise Grids & Clouds.
+ *
+ * Copyright (c) 2007 - 2017 ActiveEon
+ * Contact: contact@activeeon.com
+ *
+ * This library is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation: version 3 of
+ * the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If needed, contact us to obtain a release under GPL Version 2 or 3
+ * or a different license than the AGPL.
+ */
 package org.ow2.proactive.connector.iaas.fixtures;
 
 import java.util.HashSet;
@@ -28,33 +53,58 @@ public class InstanceFixture {
 
     public static Instance simpleInstanceWithMacAddress(String tag, String image, List<String> macAddresses) {
 
-        return getInstanceWithMacAddress(tag, tag, image, "1", "512", "1", "172.168.1.248", "1.0.0.2",
-                "RUNNING", macAddresses);
+        return getInstanceWithMacAddress(tag,
+                                         tag,
+                                         image,
+                                         "1",
+                                         "512",
+                                         "1",
+                                         "172.168.1.248",
+                                         "1.0.0.2",
+                                         "RUNNING",
+                                         macAddresses);
     }
 
-    public static String getInstanceAsaString(String id, String tag, String image, String number,
-            String minRam, String minCores, String publicAddress, String privateAddress, String status) {
-        JSONObject jsonObject = new JSONObject(
-            getInstance(id, tag, image, number, minRam, minCores, publicAddress, privateAddress, status));
+    public static String getInstanceAsaString(String id, String tag, String image, String number, String minRam,
+            String minCores, String publicAddress, String privateAddress, String status) {
+        JSONObject jsonObject = new JSONObject(getInstance(id,
+                                                           tag,
+                                                           image,
+                                                           number,
+                                                           minRam,
+                                                           minCores,
+                                                           publicAddress,
+                                                           privateAddress,
+                                                           status));
         return jsonObject.toString();
     }
 
     public static Instance getInstance(String id, String tag, String image, String number, String minRam,
             String minCores, String publicAddress, String privateAddress, String status) {
-        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
-            NetworkFixtures.getNetwork(publicAddress, privateAddress),
-            CredentialsFixtures.getCredentials("username", "password"), null,
-            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
-    public static Instance getInstanceWithSpotPrice(String id, String tag, String image, String number,
-            String minRam, String minCores, String publicAddress, String privateAddress, String status,
-            String spotPrice) {
-        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
-            NetworkFixtures.getNetwork(publicAddress, privateAddress),
-            CredentialsFixtures.getCredentials("username", "password"),
-            Options.builder().spotPrice("0.05").build(),
-            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    public static Instance getInstanceWithSpotPrice(String id, String tag, String image, String number, String minRam,
+            String minCores, String publicAddress, String privateAddress, String status, String spotPrice) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            Options.builder().spotPrice("0.05").build(),
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
     public static Instance getInstanceWithSecurityGroup(String id, String tag, String image, String number,
@@ -64,30 +114,43 @@ public class InstanceFixture {
         Set<String> securityGroupNames = new HashSet<String>();
         securityGroupNames.add("default1");
         securityGroupNames.add("default2");
-        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
-            NetworkFixtures.getNetwork(publicAddress, privateAddress),
-            CredentialsFixtures.getCredentials("username", "password"),
-            Options.builder().securityGroupNames(securityGroupNames).build(),
-            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            Options.builder().securityGroupNames(securityGroupNames).build(),
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
-    public static Instance getInstanceWithSubnetId(String id, String tag, String image, String number,
-            String minRam, String minCores, String publicAddress, String privateAddress, String status,
-            String subnetId) {
-        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
-            NetworkFixtures.getNetwork(publicAddress, privateAddress),
-            CredentialsFixtures.getCredentials("username", "password"),
-            Options.builder().subnetId("127.0.0.1").build(),
-            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    public static Instance getInstanceWithSubnetId(String id, String tag, String image, String number, String minRam,
+            String minCores, String publicAddress, String privateAddress, String status, String subnetId) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            Options.builder().subnetId("127.0.0.1").build(),
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
-    public static Instance getInstanceWithMacAddress(String id, String tag, String image, String number,
-            String minRam, String minCores, String publicAddress, String privateAddress, String status,
-            List<String> macAddresses) {
-        return new Instance(id, tag, image, number, status, HardwareFixtures.getHardware(minRam, minCores),
-            NetworkFixtures.getNetwork(publicAddress, privateAddress),
-            CredentialsFixtures.getCredentials("username", "password"),
-            Options.builder().macAddresses(macAddresses).build(),
-            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    public static Instance getInstanceWithMacAddress(String id, String tag, String image, String number, String minRam,
+            String minCores, String publicAddress, String privateAddress, String status, List<String> macAddresses) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            Options.builder().macAddresses(macAddresses).build(),
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 }
