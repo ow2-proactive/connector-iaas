@@ -12,12 +12,12 @@ On linux, in the root project directory,
 
 Building the project
 ```
-	 $ ./gradlew
+     $ ./gradlew
 ```
 
 Running the application
 ```
-	$ ./gradlew run	 
+    $ ./gradlew run
 ```
 
 ## Manage infrastructures
@@ -27,7 +27,7 @@ Running the application
     $ curl -k -X GET http://{IP_ADDRESS}/infrastructures
 ```
 
-### Save an infrastructure 
+### Save an infrastructure
 
 Generic information for saving an infrastructure are :
 - id: the name of the given infrastructure in order to identify it
@@ -75,11 +75,11 @@ For saving a VMware infrastructure (in JSON), the information are :
 ```
 
 ```
-	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"id": "VMWARE_INFRASTRUCTURE_ID","type": "vmware","endPoint": "https://IP_ADDRESS/sdk", "credentials": { "username": "NAME", "password": "PWD" }}' http://IP_ADDRESS:9080/infrastructures
+    $ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"id": "VMWARE_INFRASTRUCTURE_ID","type": "vmware","endPoint": "https://IP_ADDRESS/sdk", "credentials": { "username": "NAME", "password": "PWD" }}' http://IP_ADDRESS:9080/infrastructures
 ```
 
 #### AWS-EC2
-An infrastructure AWS-EC2 needs to have an AWS account. Once the account is created, the user will have an AWS-key (used as a login) and a AWS-secret-key (used as a password). Unlike Openstack, VMware, the AWS-EC2 infrastructure creation doesn’t need to reference to the interface which enables to manage the infrastructure (ip adress and port). 
+An infrastructure AWS-EC2 needs to have an AWS account. Once the account is created, the user will have an AWS-key (used as a login) and a AWS-secret-key (used as a password). Unlike Openstack, VMware, the AWS-EC2 infrastructure creation doesn’t need to reference to the interface which enables to manage the infrastructure (ip adress and port).
 
 For saving a EC2 infrastructure (in JSON), the information are :
 
@@ -141,13 +141,10 @@ The generic information for creating one or several instances are :
 }
 ```
 ```
-	$ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
+    $ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
 ```
 
 ### List an infrastructure instances
 ```
     $ curl -k -X GET http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
 ```
-
-
-

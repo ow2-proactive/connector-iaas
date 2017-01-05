@@ -1,3 +1,28 @@
+/*
+ * ProActive Parallel Suite(TM):
+ * The Open Source library for parallel and distributed
+ * Workflows & Scheduling, Orchestration, Cloud Automation
+ * and Big Data Analysis on Enterprise Grids & Clouds.
+ *
+ * Copyright (c) 2007 - 2017 ActiveEon
+ * Contact: contact@activeeon.com
+ *
+ * This library is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation: version 3 of
+ * the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * If needed, contact us to obtain a release under GPL Version 2 or 3
+ * or a different license than the AGPL.
+ */
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -14,7 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.vmware.vim25.VirtualDeviceConfigSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -39,6 +63,7 @@ import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.TaskInProgress;
 import com.vmware.vim25.VirtualDevice;
+import com.vmware.vim25.VirtualDeviceConfigSpec;
 import com.vmware.vim25.VirtualEthernetCard;
 import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachineCloneSpec;
@@ -110,34 +135,31 @@ public class VMWareProviderTest {
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
-        when(vmWareServiceInstanceCache.getServiceInstance(any(Infrastructure.class)))
-                .thenReturn(serviceInstance);
+        when(vmWareServiceInstanceCache.getServiceInstance(any(Infrastructure.class))).thenReturn(serviceInstance);
         when(serviceInstance.getRootFolder()).thenReturn(rootFolder);
 
     }
 
     @Test
-    public void testCreateInstance()
-            throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
+    public void testCreateInstance() throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
-        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag",
-                "activeeon/RoboconfAgent180116");
+        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag", "activeeon/RoboconfAgent180116");
 
-        when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder))
-                .thenReturn(instanceFolder);
+        when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder)).thenReturn(instanceFolder);
 
-        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116", rootFolder))
-                .thenReturn(virtualMachine);
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116",
+                                                                         rootFolder)).thenReturn(virtualMachine);
 
-        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag", rootFolder))
-                .thenReturn(createdVirtualMachine);
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag",
+                                                                         rootFolder)).thenReturn(createdVirtualMachine);
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
         when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
 
-        when(virtualMachine.cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class)))
-                .thenReturn(task);
+        when(virtualMachine.cloneVM_Task(any(Folder.class),
+                                         anyString(),
+                                         any(VirtualMachineCloneSpec.class))).thenReturn(task);
 
         when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
 
@@ -153,14 +175,15 @@ public class VMWareProviderTest {
     public void testCreateInstanceWithMacAddress() throws RemoteException, InterruptedException {
 
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
-        Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag", "VM/vm-to-clone",
-                Arrays.asList("00:50:56:11:11:11"));
+        Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag",
+                                                                         "VM/vm-to-clone",
+                                                                         Arrays.asList("00:50:56:11:11:11"));
 
         // Ensure that we can find the original and the new VMs
-        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("vm-to-clone", rootFolder))
-                .thenReturn(virtualMachine);
-        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("cloned-tag", rootFolder))
-                .thenReturn(createdVirtualMachine);
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("vm-to-clone",
+                                                                         rootFolder)).thenReturn(virtualMachine);
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("cloned-tag",
+                                                                         rootFolder)).thenReturn(createdVirtualMachine);
 
         // Ensure that VM's config, UUID and hardware are set for both VMs
         when(virtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
@@ -174,23 +197,24 @@ public class VMWareProviderTest {
         when(hardware.getDevice()).thenReturn(new VirtualDevice[] { virtEthCard });
 
         // Emulate vMWareProviderMacAddressHandler behavior
-        when(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11", virtualMachine))
-                .thenReturn(Optional.of(new VirtualDeviceConfigSpec[]{virtDevConfSpec}));
+        when(vMWareProviderMacAddressHandler.getVirtualDeviceConfigWithMacAddress("00:50:56:11:11:11",
+                                                                                  virtualMachine)).thenReturn(Optional.of(new VirtualDeviceConfigSpec[] { virtDevConfSpec }));
         VirtualEthernetCard newVirtEthCard = new VirtualEthernetCard();
         newVirtEthCard.setAddressType("Manual");
         newVirtEthCard.setMacAddress("00:50:56:11:11:11");
         when(virtDevConfSpec.getDevice()).thenReturn(newVirtEthCard);
 
         // Emulate the call to 'cloneVM_Task' (VMWare API)
-        when(virtualMachine.cloneVM_Task(any(Folder.class), anyString(), any(VirtualMachineCloneSpec.class)))
-                .thenReturn(task);
+        when(virtualMachine.cloneVM_Task(any(Folder.class),
+                                         anyString(),
+                                         any(VirtualMachineCloneSpec.class))).thenReturn(task);
         when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
 
         // Create the new instance and check if the MAC address is set as option
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.iterator().next().getOptions().getMacAddresses().iterator().next(),
-                is("00:50:56:11:11:11"));
+                   is("00:50:56:11:11:11"));
 
         // TODO: Find a way to check the VirtualMachineCloneSpec object used to clone the VM
     }
@@ -201,7 +225,7 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -226,7 +250,7 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -251,7 +275,7 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -279,7 +303,7 @@ public class VMWareProviderTest {
         assertThat(createdInstances.iterator().next().getHardware().getMinCores(), is("8"));
         assertThat(createdInstances.iterator().next().getHardware().getMinRam(), is("2048"));
         assertThat(createdInstances.iterator().next().getNetwork().getPublicAddresses().iterator().next(),
-                is("77.154.227.148"));
+                   is("77.154.227.148"));
         assertThat(createdInstances.iterator().next().getStatus(), is(ManagedEntityStatus.green.toString()));
 
     }
@@ -290,7 +314,7 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(null);
 
@@ -301,15 +325,17 @@ public class VMWareProviderTest {
     }
 
     @Test
-    public void testExecuteScriptOnInstanceId() throws GuestOperationsFault, InvalidState, TaskInProgress,
-            FileFault, RuntimeFault, RemoteException {
+    public void testExecuteScriptOnInstanceId()
+            throws GuestOperationsFault, InvalidState, TaskInProgress, FileFault, RuntimeFault, RemoteException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         InstanceScript instanceScript = InstanceScriptFixture.getInstanceScriptUserAndPassword("username",
-                "pasword", new String[] { "wget node.jar", "java -jar node.jar" });
+                                                                                               "pasword",
+                                                                                               new String[] { "wget node.jar",
+                                                                                                              "java -jar node.jar" });
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -319,26 +345,29 @@ public class VMWareProviderTest {
 
         when(gom.getProcessManager(createdVirtualMachine)).thenReturn(gpm);
 
-        when(gpm.startProgramInGuest(any(NamePasswordAuthentication.class), any(GuestProgramSpec.class)))
-                .thenReturn(132L);
+        when(gpm.startProgramInGuest(any(NamePasswordAuthentication.class),
+                                     any(GuestProgramSpec.class))).thenReturn(132L);
 
         ScriptResult scriptResult = vmWareProvider.executeScriptOnInstanceId(infrastructure,
-                "some-generated-virtual-machine-id", instanceScript);
+                                                                             "some-generated-virtual-machine-id",
+                                                                             instanceScript);
 
         assertThat(scriptResult.getOutput(), is("132 132"));
 
     }
 
     @Test
-    public void testExecuteScriptOnInstanceTag() throws GuestOperationsFault, InvalidState, TaskInProgress,
-            FileFault, RuntimeFault, RemoteException {
+    public void testExecuteScriptOnInstanceTag()
+            throws GuestOperationsFault, InvalidState, TaskInProgress, FileFault, RuntimeFault, RemoteException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         InstanceScript instanceScript = InstanceScriptFixture.getInstanceScriptUserAndPassword("username",
-                "pasword", new String[] { "wget node.jar", "java -jar node.jar" });
+                                                                                               "pasword",
+                                                                                               new String[] { "wget node.jar",
+                                                                                                              "java -jar node.jar" });
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -350,11 +379,12 @@ public class VMWareProviderTest {
 
         when(gom.getProcessManager(createdVirtualMachine)).thenReturn(gpm);
 
-        when(gpm.startProgramInGuest(any(NamePasswordAuthentication.class), any(GuestProgramSpec.class)))
-                .thenReturn(132L);
+        when(gpm.startProgramInGuest(any(NamePasswordAuthentication.class),
+                                     any(GuestProgramSpec.class))).thenReturn(132L);
 
         List<ScriptResult> scriptResults = vmWareProvider.executeScriptOnInstanceTag(infrastructure,
-                "some-virtual-machine-tag", instanceScript);
+                                                                                     "some-virtual-machine-tag",
+                                                                                     instanceScript);
 
         assertThat(scriptResults.get(0).getOutput(), is("132 132"));
 
@@ -366,7 +396,7 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
-                infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 

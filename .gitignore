@@ -10,3 +10,4 @@ smart-watch.iml
 /logs
 *.log
 /out/*
+/gradle/ext/
