@@ -93,6 +93,20 @@ public class InstanceFixture {
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
 
+    public static Instance getInstance(String id, String tag, String image, String number, String minRam,
+            String minCores, String networkId, String publicAddress, String privateAddress, String status) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
+                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+    }
+
     public static Instance getInstanceWithSpotPrice(String id, String tag, String image, String number, String minRam,
             String minCores, String publicAddress, String privateAddress, String status, String spotPrice) {
         return new Instance(id,

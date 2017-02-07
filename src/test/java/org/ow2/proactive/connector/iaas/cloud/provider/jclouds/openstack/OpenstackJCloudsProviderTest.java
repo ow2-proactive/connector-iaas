@@ -66,7 +66,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
-import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackJCloudsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -134,6 +133,7 @@ public class OpenstackJCloudsProviderTest {
                                                         "2",
                                                         "512",
                                                         "2",
+                                                        "network_id_1",
                                                         "77.154.227.148",
                                                         "1.0.0.2",
                                                         "running");

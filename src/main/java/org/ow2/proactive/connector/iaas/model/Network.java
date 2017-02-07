@@ -25,7 +25,6 @@
  */
 package org.ow2.proactive.connector.iaas.model;
 
-import java.util.List;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -43,6 +42,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @Builder
 public class Network {
+
+    private Set<String> networkIds;
 
     private Set<String> publicAddresses;
 
