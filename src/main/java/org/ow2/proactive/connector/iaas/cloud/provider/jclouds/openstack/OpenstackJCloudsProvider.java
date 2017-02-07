@@ -46,6 +46,7 @@ import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.Network;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -68,17 +69,30 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         ServerApi serverApi = novaApi.getServerApi(region);
 
-        String script = buildScriptToExecuteString(instance.getInitScript());
-
-        CreateServerOptions serverOptions = new CreateServerOptions().keyPairName(instance.getCredentials()
-                                                                                          .getPublicKeyName())
-                                                                     .userData(script.getBytes());
+        CreateServerOptions serverOptions = createOptions(instance);
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                         .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
                         .map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
                         .collect(Collectors.toSet());
 
+    }
+
+    private CreateServerOptions createOptions(Instance instance) {
+
+        CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(instance.getCredentials()
+                                                                                                .getPublicKeyName())
+                                                                           .userData(buildScriptToExecuteString(instance.getInitScript()).getBytes());
+
+        if (isNetworkIdSet(instance.getNetwork())) {
+            createServerOptions = createServerOptions.networks(instance.getNetwork().getNetworkIds());
+        }
+
+        return createServerOptions;
+    }
+
+    private boolean isNetworkIdSet(Network network) {
+        return network != null && network.getNetworkIds() != null;
     }
 
     @Override

@@ -99,7 +99,7 @@ public class InstanceRest {
     @Produces("application/json")
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
-        Map response = new HashMap();
+        Map<String, String> response = new HashMap<String, String>();
         if (Optional.ofNullable(instanceId).isPresent()) {
             response.put("publicIp", instanceService.addToInstancePublicIp(infrastructureId, instanceId));
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
