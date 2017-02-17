@@ -27,25 +27,27 @@ package org.ow2.proactive.connector.iaas.fixtures;
 
 import org.ow2.proactive.connector.iaas.model.Network;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 
 public class NetworkFixtures {
 
     public static Network getNetwork(String netowrkId, String publicAddress, String privateAddress) {
-        return new Network(Sets.newHashSet(netowrkId), Sets.newHashSet(publicAddress), Sets.newHashSet(privateAddress));
+        return new Network(Lists.newArrayList(netowrkId),
+                           Lists.newArrayList(publicAddress),
+                           Lists.newArrayList(privateAddress));
     }
 
     public static Network getNetwork(String publicAddress, String privateAddress) {
-        return new Network(Sets.newHashSet("netowrkId"),
-                           Sets.newHashSet(publicAddress),
-                           Sets.newHashSet(privateAddress));
+        return new Network(Lists.newArrayList("networkId"),
+                           Lists.newArrayList(publicAddress),
+                           Lists.newArrayList(privateAddress));
     }
 
     public static Network simpleNetwork() {
-        return new Network(Sets.newHashSet("netowrkId"),
-                           Sets.newHashSet("publicAddress"),
-                           Sets.newHashSet("privateAddress"));
+        return new Network(Lists.newArrayList("networkId"),
+                           Lists.newArrayList("publicAddress"),
+                           Lists.newArrayList("privateAddress"));
     }
 
 }

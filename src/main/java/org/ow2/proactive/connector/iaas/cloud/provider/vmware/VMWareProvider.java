@@ -46,7 +46,7 @@ import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
@@ -237,8 +237,8 @@ public class VMWareProvider implements CloudProvider {
                                                                                     .build())
 
                                                                   .network(Network.builder()
-                                                                                  .publicAddresses(Sets.newHashSet(vm.getGuest()
-                                                                                                                     .getIpAddress()))
+                                                                                  .publicAddresses(Lists.newArrayList(vm.getGuest()
+                                                                                                                        .getIpAddress()))
                                                                                   .build())
 
                                                                   .status(String.valueOf(vm.getSummary()

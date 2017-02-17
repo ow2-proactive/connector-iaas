@@ -55,6 +55,8 @@ import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
+
 
 @Component
 public abstract class JCloudsProvider implements CloudProvider {
@@ -157,8 +159,8 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                   .build())
                                          .orElse(new Hardware()))
                        .network(Network.builder()
-                                       .publicAddresses(nodeMetadataImpl.getPublicAddresses())
-                                       .privateAddresses(nodeMetadataImpl.getPrivateAddresses())
+                                       .publicAddresses(Lists.newArrayList(nodeMetadataImpl.getPublicAddresses()))
+                                       .privateAddresses(Lists.newArrayList(nodeMetadataImpl.getPrivateAddresses()))
                                        .build())
                        .status(nodeMetadataImpl.getStatus().name())
                        .build();
