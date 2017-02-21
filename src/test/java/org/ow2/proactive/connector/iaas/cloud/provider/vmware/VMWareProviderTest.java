@@ -59,6 +59,7 @@ import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.InvalidState;
 import com.vmware.vim25.ManagedEntityStatus;
+import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.TaskInProgress;
@@ -72,6 +73,7 @@ import com.vmware.vim25.VirtualMachineSummary;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
@@ -132,6 +134,12 @@ public class VMWareProviderTest {
     @Mock
     private GuestProcessManager gpm;
 
+    @Mock
+    private ResourcePool resourcePool;
+
+    @Mock
+    private ManagedObjectReference resourcePoolMOR;
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -143,7 +151,7 @@ public class VMWareProviderTest {
     @Test
     public void testCreateInstance() throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
-        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag", "activeeon/RoboconfAgent180116");
+        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag", "RoboconfAgent180116");
 
         when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder)).thenReturn(instanceFolder);
 
@@ -156,6 +164,10 @@ public class VMWareProviderTest {
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
         when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+
+        when(resourcePool.getMOR()).thenReturn(resourcePoolMOR);
+
+        when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
 
         when(virtualMachine.cloneVM_Task(any(Folder.class),
                                          anyString(),
@@ -176,7 +188,7 @@ public class VMWareProviderTest {
 
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
         Instance instance = InstanceFixture.simpleInstanceWithMacAddress("cloned-tag",
-                                                                         "VM/vm-to-clone",
+                                                                         "vm-to-clone",
                                                                          Arrays.asList("00:50:56:11:11:11"));
 
         // Ensure that we can find the original and the new VMs
@@ -203,6 +215,10 @@ public class VMWareProviderTest {
         newVirtEthCard.setAddressType("Manual");
         newVirtEthCard.setMacAddress("00:50:56:11:11:11");
         when(virtDevConfSpec.getDevice()).thenReturn(newVirtEthCard);
+
+        when(resourcePool.getMOR()).thenReturn(resourcePoolMOR);
+
+        when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
 
         // Emulate the call to 'cloneVM_Task' (VMWare API)
         when(virtualMachine.cloneVM_Task(any(Folder.class),
