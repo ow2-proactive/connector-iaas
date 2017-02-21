@@ -51,9 +51,13 @@ import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
+import com.vmware.vim25.VirtualMachineRelocateSpec;
+import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
+import com.vmware.vim25.mo.HostSystem;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -80,15 +84,43 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
+        String instanceImageId;
+        ResourcePool destinationPool = null;
+        HostSystem destinationHost = null;
+        Datastore destinationDatastore = null;
+        Folder destinationFolder = null, finalDestinationFolder;
+
         try {
-
-            String instanceFolder = instance.getImage().split("/")[0];
-            String instanceImageId = instance.getImage().split("/")[1];
-
             Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
-            Folder vmFolder = vmWareProviderVirtualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
+
+            if (instance.getImage().contains("/")) {
+                instanceImageId = instance.getImage().split("/")[0];
+                String hostname = instance.getImage().split("/")[1];
+                if (hostname.equals("*")) {
+                    destinationPool = vmWareProviderVirtualMachineUtil.getRandomResourcePool(rootFolder);
+                    destinationDatastore = vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromPool(destinationPool);
+                } else {
+                    destinationHost = vmWareProviderVirtualMachineUtil.searchHostByName(hostname, rootFolder);
+                    destinationPool = vmWareProviderVirtualMachineUtil.searchResourcePoolByHostname(hostname,
+                                                                                                    rootFolder);
+                    destinationDatastore = vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromHost(destinationHost);
+                    destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderByHostname(hostname, rootFolder);
+                }
+            } else {
+                instanceImageId = instance.getImage();
+                destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderFromVMName(instanceImageId,
+                                                                                              rootFolder);
+            }
+
             VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(instanceImageId,
                                                                                                    rootFolder);
+            finalDestinationFolder = Optional.ofNullable(destinationFolder)
+                                             .orElse(vmWareProviderVirtualMachineUtil.searchFolderByName("VM",
+                                                                                                         rootFolder));
+            VirtualMachineRelocateSpec relocateSpecs = generateCustomRelocateSpecs(vmToClone,
+                                                                                   destinationPool,
+                                                                                   destinationHost,
+                                                                                   destinationDatastore);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                             .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
@@ -98,8 +130,9 @@ public class VMWareProvider implements CloudProvider {
                                                                        rootFolder,
                                                                        createVirtualMachineCloneSpec(instanceIndexStartAt1,
                                                                                                      vmToClone,
+                                                                                                     relocateSpecs,
                                                                                                      instance),
-                                                                       vmFolder))
+                                                                       finalDestinationFolder))
                             .map(vm -> instance.withId(vm.getConfig().getUuid()))
                             .collect(Collectors.toSet());
 
@@ -134,10 +167,13 @@ public class VMWareProvider implements CloudProvider {
      * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
      */
     private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1, VirtualMachine vmToClone,
-            Instance instance) {
+            VirtualMachineRelocateSpec relocateSpecs, Instance instance) {
 
         // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
-        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
+        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(instance);
+
+        // Customize it with specific location
+        vmCloneSpecs.setLocation(relocateSpecs);
 
         // Customize it with a manual MAC address, if specified
         getMacAddressIfPresent(instanceIndexStartAt1,
@@ -164,16 +200,13 @@ public class VMWareProvider implements CloudProvider {
     }
 
     /**
-     * Generate a new VirtualMachineCloneSpec with parameters by default and based on the provided VM to clone
+     * Create a new VirtualMachineCloneSpec with parameters by default
      *
-     * @param vmToClone the source VM to rely on
      * @param instance  the current instance to rely on
      * @return a new customized VirtualMachineCloneSpec
      */
-    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
-            Instance instance) {
+    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(Instance instance) {
         VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
-        vmCloneSpecs.setLocation(vmWareProviderVirtualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
         vmCloneSpecs.setPowerOn(true);
         vmCloneSpecs.setTemplate(false);
         vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
