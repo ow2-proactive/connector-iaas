@@ -76,4 +76,103 @@ public class VMWareProviderVirtualMachineUtil {
         return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", name);
     }
 
+    public HostSystem searchHostByName(String name, Folder rootFolder) throws RemoteException {
+        return (HostSystem) new InventoryNavigator(rootFolder).searchManagedEntity("HostSystem", name);
+    }
+
+    public Folder searchVMFolderFromVMName(String name, Folder rootFolder) throws RemoteException {
+        ManagedEntity current = searchVirtualMachineByName(name, rootFolder).getParent();
+        while (!(current instanceof Folder)) {
+            current = current.getParent();
+        }
+        return (Folder) current;
+    }
+
+    public Folder searchVMFolderByHostname(String name, Folder rootFolder) throws RemoteException {
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("Folder"))
+                    .stream()
+                    .map(folder -> (Folder) folder)
+                    .filter(folder -> folder.getName().toLowerCase().contains("vm"))
+                    .filter(folder -> folder.getName().toLowerCase().contains(name.toLowerCase()))
+                    .findAny()
+                    .orElse(null);
+    }
+
+    public ResourcePool searchResourcePoolByHostname(String hostname, Folder rootFolder) throws RemoteException {
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+                    .stream()
+                    .map(resourcePool -> (ResourcePool) resourcePool)
+                    .filter(resourcePool -> resourcePool.getParent().getName().equals(hostname))
+                    .findAny()
+                    .orElse(null);
+    }
+
+    public Datastore getDatastoreWithMostSpaceFromHost(HostSystem host) throws RemoteException {
+        return Lists.newArrayList(host.getDatastores())
+                    .stream()
+                    .filter(datastore -> datastore.getSummary().isAccessible())
+                    .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()))
+                    .orElseGet(null);
+    }
+
+    public Datastore getDatastoreWithMostSpaceFromPool(ResourcePool resourcePool) throws RemoteException {
+        return Lists.newArrayList(resourcePool.getOwner().getDatastores())
+                    .stream()
+                    .filter(datastore -> datastore.getSummary().isAccessible())
+                    .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()))
+                    .orElseGet(null);
+    }
+
+    public ResourcePool getRandomResourcePool(Folder rootFolder) throws RemoteException {
+        ArrayList<ResourcePool> resourcePools = Lists.newArrayList((ResourcePool[]) new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"));
+        return resourcePools.isEmpty() ? null : resourcePools.get(new Random().nextInt(resourcePools.size()));
+    }
+
+    public ResourcePool getResourcePoolWithMoreMemoryAvailable(Folder rootFolder) throws RemoteException {
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+                    .stream()
+                    .map(resourcePool -> (ResourcePool) resourcePool)
+                    .max(Comparator.comparing(resourcePool -> resourcePool.getRuntime().getMemory().getOverallUsage() -
+                                                              resourcePool.getRuntime().getMemory().getMaxUsage()))
+                    .orElseGet(null);
+    }
+
+    public List<HostSystem> getHostsWithEnoughResourcesForVMFromPool(ResourcePool resourcePool, VirtualMachine vm)
+            throws RemoteException {
+        return Lists.newArrayList(resourcePool.getOwner().getHosts()).stream().filter(host -> {
+            try {
+                return Lists.newArrayList(host.getVms())
+                            .stream()
+                            .filter(virtm -> !virtm.getRuntime()
+                                                   .getPowerState()
+                                                   .equals(VirtualMachinePowerState.poweredOff))
+                            .map(virtm -> virtm.getResourceConfig().getMemoryAllocation().getLimit())
+                            .reduce((long) 0, Long::sum) +
+                       vm.getResourceConfig().getMemoryAllocation().getLimit() > host.getSystemResources()
+                                                                                     .getConfig()
+                                                                                     .getMemoryAllocation()
+                                                                                     .getLimit();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }).filter(host -> {
+            try {
+                return Lists.newArrayList(host.getVms())
+                            .stream()
+                            .filter(virtm -> !virtm.getRuntime()
+                                                   .getPowerState()
+                                                   .equals(VirtualMachinePowerState.poweredOff))
+                            .map(virtm -> virtm.getResourceConfig().getCpuAllocation().getLimit())
+                            .reduce((long) 0, Long::sum) +
+                       vm.getResourceConfig().getCpuAllocation().getLimit() > host.getSystemResources()
+                                                                                  .getConfig()
+                                                                                  .getCpuAllocation()
+                                                                                  .getLimit();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }).collect(Collectors.toList());
+    }
 }
