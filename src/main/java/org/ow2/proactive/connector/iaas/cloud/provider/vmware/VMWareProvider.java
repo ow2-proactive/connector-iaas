@@ -180,6 +180,21 @@ public class VMWareProvider implements CloudProvider {
         return vmCloneSpecs;
     }
 
+    private VirtualMachineRelocateSpec generateCustomRelocateSpecs(VirtualMachine vmToClone,
+            ResourcePool destinationPool, HostSystem destinationHost, Datastore destinationDatastore)
+            throws RemoteException {
+        VirtualMachineRelocateSpec vmRelocateSpecs = new VirtualMachineRelocateSpec();
+        vmRelocateSpecs.setPool(destinationPool == null ? vmToClone.getResourcePool().getMOR()
+                                                        : destinationPool.getMOR());
+        if (destinationHost != null) {
+            vmRelocateSpecs.setHost(destinationHost.getMOR());
+        }
+        if (destinationDatastore != null) {
+            vmRelocateSpecs.setDatastore(destinationDatastore.getMOR());
+        }
+        return vmRelocateSpecs;
+    }
+
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
 
