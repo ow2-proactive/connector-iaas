@@ -26,6 +26,10 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,37 +37,21 @@ import java.util.stream.IntStream;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
-import com.vmware.vim25.InvalidProperty;
-import com.vmware.vim25.RuntimeFault;
-import com.vmware.vim25.VirtualMachineRelocateSpec;
+import com.google.common.collect.Lists;
+import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
+import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 
 
 @Component
 public class VMWareProviderVirtualMachineUtil {
 
-    /**
-     * Create a new VirtualMachineRelocateSpec based on the VM to clone
-     *
-     * @param vmSource  The source VM to rely on
-     * @return  a new customized VirtualMachineRelocateSpec
-     */
-    public VirtualMachineRelocateSpec getVirtualMachineRelocateSpec(VirtualMachine vmSource) {
-        try {
-            VirtualMachineRelocateSpec vmrs = new VirtualMachineRelocateSpec();
-            vmrs.setPool(vmSource.getResourcePool().getMOR());
-            return vmrs;
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    public VirtualMachine searchVirtualMachineByName(String name, Folder rootFolder)
-            throws InvalidProperty, RuntimeFault, RemoteException {
+    public VirtualMachine searchVirtualMachineByName(String name, Folder rootFolder) throws RemoteException {
         return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", name);
     }
 
@@ -84,8 +72,7 @@ public class VMWareProviderVirtualMachineUtil {
 
     }
 
-    public Folder searchFolderByName(String name, Folder rootFolder)
-            throws InvalidProperty, RuntimeFault, RemoteException {
+    public Folder searchFolderByName(String name, Folder rootFolder) throws RemoteException {
         return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", name);
     }
 
