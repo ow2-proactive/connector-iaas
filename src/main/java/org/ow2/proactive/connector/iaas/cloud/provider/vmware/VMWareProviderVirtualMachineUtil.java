@@ -124,7 +124,10 @@ public class VMWareProviderVirtualMachineUtil {
     }
 
     public ResourcePool getRandomResourcePool(Folder rootFolder) throws RemoteException {
-        ArrayList<ResourcePool> resourcePools = Lists.newArrayList((ResourcePool[]) new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"));
+        List<ResourcePool> resourcePools = Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+                                                .stream()
+                                                .map(resourcePool -> (ResourcePool) resourcePool)
+                                                .collect(Collectors.toCollection(ArrayList::new));
         return resourcePools.isEmpty() ? null : resourcePools.get(new Random().nextInt(resourcePools.size()));
     }
 
