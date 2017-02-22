@@ -68,8 +68,17 @@ public class VMWareProviderVirtualMachineUtil {
         return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.VM.getValue(), name);
     }
 
-    public Set<VirtualMachine> getAllVirtualMachinesByInfrastructure(Folder rootFolder, Infrastructure infrastructure) {
+    public VirtualMachine searchVirtualMachineByUUID(String uuid, Folder rootFolder) throws RemoteException {
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"))
+                    .stream()
+                    .map(virtualMachine -> (VirtualMachine) virtualMachine)
+                    .filter(virtualMachine -> virtualMachine.getConfig() != null)
+                    .filter(virtualMachine -> virtualMachine.getConfig().getUuid().equals(uuid))
+                    .findFirst()
+                    .orElse(null);
+    }
 
+    public Set<VirtualMachine> getAllVirtualMachinesByInfrastructure(Folder rootFolder, Infrastructure infrastructure) {
         try {
 
             ManagedEntity[] managedEntities = new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.VM.getValue());
@@ -79,10 +88,9 @@ public class VMWareProviderVirtualMachineUtil {
                             .collect(Collectors.toSet());
 
         } catch (RemoteException e) {
-            throw new RuntimeException("ERROR when retrieving VMWare istances for infrastructure : " + infrastructure,
+            throw new RuntimeException("ERROR when retrieving VMWare instances for infrastructure : " + infrastructure,
                                        e);
         }
-
     }
 
     public Folder searchFolderByName(String name, Folder rootFolder) throws RemoteException {
