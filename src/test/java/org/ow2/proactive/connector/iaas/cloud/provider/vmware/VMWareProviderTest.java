@@ -70,9 +70,11 @@ import com.vmware.vim25.VirtualHardware;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachineSummary;
+import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
+import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
@@ -140,6 +142,18 @@ public class VMWareProviderTest {
     @Mock
     private ManagedObjectReference resourcePoolMOR;
 
+    @Mock
+    private HostSystem destinationHost;
+
+    @Mock
+    private ManagedObjectReference hostMOR;
+
+    @Mock
+    private Datastore destinationDatastore;
+
+    @Mock
+    private ManagedObjectReference datastoreMOR;
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -153,21 +167,20 @@ public class VMWareProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
         Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag", "RoboconfAgent180116");
 
-        when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder)).thenReturn(instanceFolder);
-
         when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116",
                                                                          rootFolder)).thenReturn(virtualMachine);
 
         when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag",
                                                                          rootFolder)).thenReturn(createdVirtualMachine);
 
+        // The destination resource pool and folder are the same than the VM to clone
+        when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
+        when(vmWareProviderVirtualMachineUtil.searchVMFolderFromVMName("RoboconfAgent180116",
+                                                                       rootFolder)).thenReturn(instanceFolder);
+
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
         when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
-
-        when(resourcePool.getMOR()).thenReturn(resourcePoolMOR);
-
-        when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
 
         when(virtualMachine.cloneVM_Task(any(Folder.class),
                                          anyString(),
@@ -180,7 +193,6 @@ public class VMWareProviderTest {
         assertThat(createdInstances.size(), is(1));
 
         assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
-
     }
 
     @Test
@@ -216,8 +228,7 @@ public class VMWareProviderTest {
         newVirtEthCard.setMacAddress("00:50:56:11:11:11");
         when(virtDevConfSpec.getDevice()).thenReturn(newVirtEthCard);
 
-        when(resourcePool.getMOR()).thenReturn(resourcePoolMOR);
-
+        // The destination resource pool is the same than the VM to clone
         when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
 
         // Emulate the call to 'cloneVM_Task' (VMWare API)
@@ -233,6 +244,126 @@ public class VMWareProviderTest {
                    is("00:50:56:11:11:11"));
 
         // TODO: Find a way to check the VirtualMachineCloneSpec object used to clone the VM
+    }
+
+    @Test
+    public void testCreateInstanceIntoSpecificHost()
+            throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag",
+                                                                          "RoboconfAgent180116/destinationHost");
+
+        //when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder)).thenReturn(instanceFolder);
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116",
+                                                                         rootFolder)).thenReturn(virtualMachine);
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag",
+                                                                         rootFolder)).thenReturn(createdVirtualMachine);
+
+        // Ensure to retrieve destination pool, datastore, folder, and host
+        when(vmWareProviderVirtualMachineUtil.searchHostByName("destinationHost",
+                                                               rootFolder)).thenReturn(destinationHost);
+        when(vmWareProviderVirtualMachineUtil.searchResourcePoolByHostname("destinationHost",
+                                                                           rootFolder)).thenReturn(resourcePool);
+        when(vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromHost(destinationHost)).thenReturn(destinationDatastore);
+        when(vmWareProviderVirtualMachineUtil.searchVMFolderByHostname("destinationHost",
+                                                                       rootFolder)).thenReturn(instanceFolder);
+
+        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+
+        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+
+        when(virtualMachine.getResourcePool()).thenReturn(resourcePool);
+
+        when(virtualMachine.cloneVM_Task(any(Folder.class),
+                                         anyString(),
+                                         any(VirtualMachineCloneSpec.class))).thenReturn(task);
+
+        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
+
+        assertThat(createdInstances.size(), is(1));
+
+        assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
+    }
+
+    @Test
+    public void testCreateInstanceIntoSpecificHostWithoutDedicatedVMFolder()
+            throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag",
+                                                                          "RoboconfAgent180116/destinationHost");
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116",
+                                                                         rootFolder)).thenReturn(virtualMachine);
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag",
+                                                                         rootFolder)).thenReturn(createdVirtualMachine);
+
+        // Ensure to retrieve destination pool, datastore, and host
+        when(vmWareProviderVirtualMachineUtil.searchHostByName("destinationHost",
+                                                               rootFolder)).thenReturn(destinationHost);
+        when(vmWareProviderVirtualMachineUtil.searchResourcePoolByHostname("destinationHost",
+                                                                           rootFolder)).thenReturn(resourcePool);
+        when(vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromHost(destinationHost)).thenReturn(destinationDatastore);
+
+        // A dedicated VM folder is not found on destination host, therefore the generic VM folder is used (must be present in all vCenter)
+        when(vmWareProviderVirtualMachineUtil.searchVMFolderByHostname("destinationHost", rootFolder)).thenReturn(null);
+        when(vmWareProviderVirtualMachineUtil.searchFolderByName("VM", rootFolder)).thenReturn(instanceFolder);
+
+        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+
+        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+
+        when(virtualMachine.cloneVM_Task(any(Folder.class),
+                                         anyString(),
+                                         any(VirtualMachineCloneSpec.class))).thenReturn(task);
+
+        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
+
+        assertThat(createdInstances.size(), is(1));
+
+        assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
+    }
+
+    @Test
+    public void testCreateInstanceIntoRandomHost()
+            throws InvalidProperty, RuntimeFault, RemoteException, InterruptedException {
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+        Instance instance = InstanceFixture.simpleInstanceWithTagAndImage("marco-tag", "RoboconfAgent180116/*");
+
+        when(vmWareProviderVirtualMachineUtil.searchFolderByName("activeeon", rootFolder)).thenReturn(instanceFolder);
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("RoboconfAgent180116",
+                                                                         rootFolder)).thenReturn(virtualMachine);
+
+        when(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName("marco-tag",
+                                                                         rootFolder)).thenReturn(createdVirtualMachine);
+
+        // Ensure to retrieve a (random) resource pool and a datastore (with most space available)
+        when(vmWareProviderVirtualMachineUtil.getRandomResourcePool(rootFolder)).thenReturn(resourcePool);
+        when(vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromPool(resourcePool)).thenReturn(destinationDatastore);
+
+        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
+
+        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
+
+        when(virtualMachine.cloneVM_Task(any(Folder.class),
+                                         anyString(),
+                                         any(VirtualMachineCloneSpec.class))).thenReturn(task);
+
+        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
+
+        assertThat(createdInstances.size(), is(1));
+
+        assertThat(createdInstances.iterator().next().getId(), is("some-generated-virtual-machine-id"));
     }
 
     @Test
