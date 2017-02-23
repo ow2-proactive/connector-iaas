@@ -37,6 +37,7 @@ import lombok.Getter;
 
 @Component
 public class InfrastructureCache {
+
     @Getter
     private volatile ImmutableMap<String, Infrastructure> supportedInfrastructures;
 
@@ -61,6 +62,6 @@ public class InfrastructureCache {
     private Map<String, Infrastructure> cloneSupportedInfrastructures() {
         return supportedInfrastructures.entrySet()
                                        .stream()
-                                       .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()));
+                                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

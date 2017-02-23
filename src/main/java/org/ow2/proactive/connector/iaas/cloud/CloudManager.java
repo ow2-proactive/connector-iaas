@@ -60,6 +60,10 @@ public class CloudManager {
         cloudProviderPerType.get(infrastructure.getType()).deleteInstance(infrastructure, instanceId);
     }
 
+    public void deleteAllInstances(Infrastructure infrastructure) {
+        cloudProviderPerType.get(infrastructure.getType()).deleteAllInstances(infrastructure);
+    }
+
     public void deleteInfrastructure(Infrastructure infrastructure) {
         cloudProviderPerType.get(infrastructure.getType()).deleteInfrastructure(infrastructure);
     }

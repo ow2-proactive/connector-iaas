@@ -40,8 +40,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
+import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InfrastructureService;
+import org.ow2.proactive.connector.iaas.service.InstanceService;
 
 import jersey.repackaged.com.google.common.collect.Maps;
 
@@ -53,9 +56,14 @@ public class InfrastructureRestTest {
     @Mock
     private InfrastructureService infrastructureService;
 
+    @Mock
+    private InstanceService instanceService;
+
     private String infrastructureStringFixture;
 
     private Infrastructure infrastructureFixture;
+
+    private Instance instanceFixture;
 
     @Before
     public void init() {
@@ -70,6 +78,16 @@ public class InfrastructureRestTest {
                                                                         "endPoint",
                                                                         "userName",
                                                                         "password");
+
+        instanceFixture = InstanceFixture.getInstance("instance-id",
+                                                      "name",
+                                                      "image",
+                                                      "number",
+                                                      "cpu",
+                                                      "ram",
+                                                      "publicIP",
+                                                      "privateIP",
+                                                      "running");
     }
 
     @Test
@@ -93,19 +111,41 @@ public class InfrastructureRestTest {
                                                                           .getId())).thenReturn(InfrastructureFixture.getSimpleInfrastructure("sometype"));
 
         assertThat(infrastructureRest.deleteInfrastructureById(InfrastructureFixture.getSimpleInfrastructure("sometype")
-                                                                                    .getId())
+                                                                                    .getId(),
+                                                               null)
                                      .getStatus(),
                    is(Response.Status.OK.getStatusCode()));
-        verify(infrastructureService,
-               times(1)).deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("sometype"));
+        verify(infrastructureService, times(1)).deleteInfrastructure(
+                                                                     InfrastructureFixture.getSimpleInfrastructure("sometype"),
+                                                                     false);
         verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
     }
 
     @Test
     public void testDeleteInfrastructureByIdNotInCache() {
-        assertThat(infrastructureRest.deleteInfrastructureById("openstack").getStatus(),
+        assertThat(infrastructureRest.deleteInfrastructureById("openstack", null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
-        verify(infrastructureService, times(0)).deleteInfrastructure(Mockito.any(Infrastructure.class));
+        verify(infrastructureService, times(0)).deleteInfrastructure(Mockito.any(Infrastructure.class),
+                                                                     Mockito.anyBoolean());
+        verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
+    }
+
+    @Test
+    public void testDeleteInfrastructureWithInstances() {
+        Infrastructure infra = InfrastructureFixture.getSimpleInfrastructure("sometype");
+
+        when(infrastructureService.getInfrastructure(InfrastructureFixture.getSimpleInfrastructure("sometype")
+                                                                          .getId())).thenReturn(infra);
+
+        assertThat(infrastructureRest.deleteInfrastructureById(InfrastructureFixture.getSimpleInfrastructure("sometype")
+                                                                                    .getId(),
+                                                               true)
+                                     .getStatus(),
+                   is(Response.Status.OK.getStatusCode()));
+
+        verify(infrastructureService, times(1)).deleteInfrastructure(
+                                                                     InfrastructureFixture.getSimpleInfrastructure("sometype"),
+                                                                     true);
         verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
     }
 

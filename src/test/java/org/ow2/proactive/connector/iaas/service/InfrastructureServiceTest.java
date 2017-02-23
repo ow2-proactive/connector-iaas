@@ -39,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
+import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -52,7 +53,13 @@ public class InfrastructureServiceTest {
     private InfrastructureService infrastructureService;
 
     @Mock
+    private InstanceService instanceService;
+
+    @Mock
     private InfrastructureCache infrastructureCache;
+
+    @Mock
+    private InstanceCache instanceCache;
 
     @Mock
     private CloudManager cloudManager;
@@ -97,11 +104,30 @@ public class InfrastructureServiceTest {
                                                                                 "password");
         mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.deleteInfrastructure(infrastructure);
+        infrastructureService.deleteInfrastructure(infrastructure, false);
 
         InOrder inOrder = inOrder(cloudManager, infrastructureCache);
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
         inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
+    }
+
+    @Test
+    public void testDeleteInfrastructureWithInstances() {
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password");
+        mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
+        when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
+        infrastructureService.deleteInfrastructure(infrastructure, true);
+
+        InOrder inOrder = inOrder(cloudManager, infrastructureCache, instanceCache);
+        inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
+        inOrder.verify(infrastructureCache, times(1)).deleteInfrastructure(infrastructure);
+        inOrder.verify(instanceCache, times(1)).deleteInfrastructure(infrastructure);
+
+        verify(instanceService, times(1)).deleteCreatedInstances(infrastructure.getId());
     }
 
     @Test

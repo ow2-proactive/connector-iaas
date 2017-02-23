@@ -43,18 +43,13 @@ public class ShutdownHandler {
 
     @PreDestroy
     public synchronized void removeAllInfrastructures() {
-        infrastructureService.getAllSupportedInfrastructure()
-                             .values()
-                             .stream()
-                             .filter(infrastructure -> infrastructure.isToBeRemovedOnShutdown())
-                             .forEach(infrastructure -> {
-                                 try {
-                                     infrastructureService.deleteInfrastructure(infrastructure);
-                                 } catch (Exception e) {
-                                     logger.error("Shutdown ERROR when trying to delete infrastructure : " +
-                                                  infrastructure, e);
-                                 }
-                             });
+        infrastructureService.getAllSupportedInfrastructure().values().forEach(infrastructure -> {
+            try {
+                infrastructureService.deleteInfrastructure(infrastructure, infrastructure.isToBeRemovedOnShutdown());
+            } catch (Exception e) {
+                logger.error("Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
+            }
+        });
     }
 
 }

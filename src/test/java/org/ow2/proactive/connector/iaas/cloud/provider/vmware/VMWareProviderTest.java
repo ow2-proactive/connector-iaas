@@ -398,6 +398,18 @@ public class VMWareProviderTest {
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                                                                                     infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+        vmWareProvider.deleteInfrastructure(infrastructure);
+        verify(vmWareServiceInstanceCache).removeServiceInstance(infrastructure);
+
+    }
+
+    @Test
+    public void testDeleteAllInstances()
+            throws TaskInProgress, InvalidState, RuntimeFault, RemoteException, InterruptedException {
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("vmware-type");
+
+        when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
+                                                                                    infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
 
         when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
 
@@ -555,12 +567,10 @@ public class VMWareProviderTest {
 
         when(createdVirtualMachine.destroy_Task()).thenReturn(task);
 
-        vmWareProvider.deleteInfrastructure(infrastructure);
+        vmWareProvider.deleteAllInstances(infrastructure);
 
         verify(createdVirtualMachine).powerOffVM_Task();
         verify(createdVirtualMachine).destroy_Task();
-        verify(vmWareServiceInstanceCache).removeServiceInstance(infrastructure);
-
     }
 
 }
