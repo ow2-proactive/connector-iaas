@@ -47,19 +47,33 @@ import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 
 @Component
 public class VMWareProviderVirtualMachineUtil {
 
+    @RequiredArgsConstructor
+    enum EntityType {
+        VM("VirtualMachine"),
+        FOLDER("Folder"),
+        HOST("HostSystem"),
+        POOL("ResourcePool");
+
+        @Getter
+        private final String type;
+    }
+
     public VirtualMachine searchVirtualMachineByName(String name, Folder rootFolder) throws RemoteException {
-        return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", name);
+        return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.VM.getType(), name);
     }
 
     public Set<VirtualMachine> getAllVirtualMachinesByInfrastructure(Folder rootFolder, Infrastructure infrastructure) {
 
         try {
 
-            ManagedEntity[] managedEntities = new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
+            ManagedEntity[] managedEntities = new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.VM.getType());
 
             return IntStream.range(0, managedEntities.length)
                             .mapToObj(i -> (VirtualMachine) managedEntities[i])
@@ -73,11 +87,11 @@ public class VMWareProviderVirtualMachineUtil {
     }
 
     public Folder searchFolderByName(String name, Folder rootFolder) throws RemoteException {
-        return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", name);
+        return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getType(), name);
     }
 
     public HostSystem searchHostByName(String name, Folder rootFolder) throws RemoteException {
-        return (HostSystem) new InventoryNavigator(rootFolder).searchManagedEntity("HostSystem", name);
+        return (HostSystem) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.HOST.getType(), name);
     }
 
     public Folder searchVMFolderFromVMName(String name, Folder rootFolder) throws RemoteException {
@@ -89,17 +103,17 @@ public class VMWareProviderVirtualMachineUtil {
     }
 
     public Folder searchVMFolderByHostname(String name, Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("Folder"))
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.FOLDER.getType()))
                     .stream()
                     .map(folder -> (Folder) folder)
-                    .filter(folder -> folder.getName().toLowerCase().contains("vm"))
-                    .filter(folder -> folder.getName().toLowerCase().contains(name.toLowerCase()))
+                    .filter(folder -> folder.getName().toLowerCase().contains("vm") &&
+                                      folder.getName().toLowerCase().contains(name.toLowerCase()))
                     .findAny()
                     .orElse(null);
     }
 
     public ResourcePool searchResourcePoolByHostname(String hostname, Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getType()))
                     .stream()
                     .map(resourcePool -> (ResourcePool) resourcePool)
                     .filter(resourcePool -> resourcePool.getParent().getName().equals(hostname))
@@ -124,7 +138,7 @@ public class VMWareProviderVirtualMachineUtil {
     }
 
     public ResourcePool getRandomResourcePool(Folder rootFolder) throws RemoteException {
-        List<ResourcePool> resourcePools = Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+        List<ResourcePool> resourcePools = Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getType()))
                                                 .stream()
                                                 .map(resourcePool -> (ResourcePool) resourcePool)
                                                 .collect(Collectors.toCollection(ArrayList::new));
@@ -132,7 +146,7 @@ public class VMWareProviderVirtualMachineUtil {
     }
 
     public ResourcePool getResourcePoolWithMoreMemoryAvailable(Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("ResourcePool"))
+        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getType()))
                     .stream()
                     .map(resourcePool -> (ResourcePool) resourcePool)
                     .max(Comparator.comparing(resourcePool -> resourcePool.getRuntime().getMemory().getOverallUsage() -
