@@ -38,7 +38,6 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
-import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
@@ -143,53 +142,5 @@ public class VMWareProviderVirtualMachineUtil {
                                                 .map(resourcePool -> (ResourcePool) resourcePool)
                                                 .collect(Collectors.toCollection(ArrayList::new));
         return resourcePools.isEmpty() ? null : resourcePools.get(new Random().nextInt(resourcePools.size()));
-    }
-
-    public ResourcePool getResourcePoolWithMoreMemoryAvailable(Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getType()))
-                    .stream()
-                    .map(resourcePool -> (ResourcePool) resourcePool)
-                    .max(Comparator.comparing(resourcePool -> resourcePool.getRuntime().getMemory().getOverallUsage() -
-                                                              resourcePool.getRuntime().getMemory().getMaxUsage()))
-                    .orElseGet(null);
-    }
-
-    public List<HostSystem> getHostsWithEnoughResourcesForVMFromPool(ResourcePool resourcePool, VirtualMachine vm)
-            throws RemoteException {
-        return Lists.newArrayList(resourcePool.getOwner().getHosts()).stream().filter(host -> {
-            try {
-                return Lists.newArrayList(host.getVms())
-                            .stream()
-                            .filter(virtm -> !virtm.getRuntime()
-                                                   .getPowerState()
-                                                   .equals(VirtualMachinePowerState.poweredOff))
-                            .map(virtm -> virtm.getResourceConfig().getMemoryAllocation().getLimit())
-                            .reduce((long) 0, Long::sum) +
-                       vm.getResourceConfig().getMemoryAllocation().getLimit() > host.getSystemResources()
-                                                                                     .getConfig()
-                                                                                     .getMemoryAllocation()
-                                                                                     .getLimit();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }).filter(host -> {
-            try {
-                return Lists.newArrayList(host.getVms())
-                            .stream()
-                            .filter(virtm -> !virtm.getRuntime()
-                                                   .getPowerState()
-                                                   .equals(VirtualMachinePowerState.poweredOff))
-                            .map(virtm -> virtm.getResourceConfig().getCpuAllocation().getLimit())
-                            .reduce((long) 0, Long::sum) +
-                       vm.getResourceConfig().getCpuAllocation().getLimit() > host.getSystemResources()
-                                                                                  .getConfig()
-                                                                                  .getCpuAllocation()
-                                                                                  .getLimit();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }).collect(Collectors.toList());
     }
 }
