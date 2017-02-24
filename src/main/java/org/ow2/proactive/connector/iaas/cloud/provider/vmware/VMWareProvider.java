@@ -51,9 +51,13 @@ import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
+import com.vmware.vim25.VirtualMachineRelocateSpec;
+import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
+import com.vmware.vim25.mo.HostSystem;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -64,6 +68,10 @@ import lombok.Getter;
 public class VMWareProvider implements CloudProvider {
 
     private final Logger logger = Logger.getLogger(VMWareProvider.class);
+
+    private final static String IMAGE_DELIMITER = "/";
+
+    private final static String RANDOM_HOST = "*";
 
     @Getter
     private final String type = "vmware";
@@ -80,15 +88,16 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
+        String image = instance.getImage();
+        Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
+        String instanceImageId = getInstanceIdFromImage(image);
+
         try {
 
-            String instanceFolder = instance.getImage().split("/")[0];
-            String instanceImageId = instance.getImage().split("/")[1];
-
-            Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
-            Folder vmFolder = vmWareProviderVirtualMachineUtil.searchFolderByName(instanceFolder, rootFolder);
             VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(instanceImageId,
                                                                                                    rootFolder);
+            VirtualMachineRelocateSpec relocateSpecs = inferRelocateSpecsFromImageArgument(image, rootFolder);
+            Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                             .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
@@ -98,8 +107,9 @@ public class VMWareProvider implements CloudProvider {
                                                                        rootFolder,
                                                                        createVirtualMachineCloneSpec(instanceIndexStartAt1,
                                                                                                      vmToClone,
+                                                                                                     relocateSpecs,
                                                                                                      instance),
-                                                                       vmFolder))
+                                                                       destinationFolder))
                             .map(vm -> instance.withId(vm.getConfig().getUuid()))
                             .collect(Collectors.toSet());
 
@@ -134,10 +144,13 @@ public class VMWareProvider implements CloudProvider {
      * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
      */
     private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1, VirtualMachine vmToClone,
-            Instance instance) {
+            VirtualMachineRelocateSpec relocateSpecs, Instance instance) {
 
         // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
-        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(vmToClone, instance);
+        VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(instance);
+
+        // Customize it with specific location
+        vmCloneSpecs.setLocation(relocateSpecs);
 
         // Customize it with a manual MAC address, if specified
         getMacAddressIfPresent(instanceIndexStartAt1,
@@ -164,20 +177,32 @@ public class VMWareProvider implements CloudProvider {
     }
 
     /**
-     * Generate a new VirtualMachineCloneSpec with parameters by default and based on the provided VM to clone
+     * Create a new VirtualMachineCloneSpec with parameters by default
      *
-     * @param vmToClone the source VM to rely on
      * @param instance  the current instance to rely on
      * @return a new customized VirtualMachineCloneSpec
      */
-    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(VirtualMachine vmToClone,
-            Instance instance) {
+    private VirtualMachineCloneSpec generateDefaultVirtualMachineCloneSpec(Instance instance) {
         VirtualMachineCloneSpec vmCloneSpecs = new VirtualMachineCloneSpec();
-        vmCloneSpecs.setLocation(vmWareProviderVirtualMachineUtil.getVirtualMachineRelocateSpec(vmToClone));
         vmCloneSpecs.setPowerOn(true);
         vmCloneSpecs.setTemplate(false);
         vmCloneSpecs.setConfig(getVirtualMachineConfigSpec(instance));
         return vmCloneSpecs;
+    }
+
+    private VirtualMachineRelocateSpec generateCustomRelocateSpecs(VirtualMachine vmToClone,
+            ResourcePool destinationPool, HostSystem destinationHostOptional, Datastore destinationDatastoreOptional)
+            throws RemoteException {
+
+        VirtualMachineRelocateSpec vmRelocateSpecs = new VirtualMachineRelocateSpec();
+        vmRelocateSpecs.setPool(destinationPool == null ? vmToClone.getResourcePool().getMOR()
+                                                        : destinationPool.getMOR());
+
+        Optional.ofNullable(destinationHostOptional).ifPresent(host -> vmRelocateSpecs.setHost(host.getMOR()));
+        Optional.ofNullable(destinationDatastoreOptional)
+                .ifPresent(datastore -> vmRelocateSpecs.setDatastore(datastore.getMOR()));
+
+        return vmRelocateSpecs;
     }
 
     @Override
@@ -360,4 +385,50 @@ public class VMWareProvider implements CloudProvider {
         return vmconfigspec;
     }
 
+    private Boolean isMultiPartImage(String image) {
+        return image.contains(IMAGE_DELIMITER) && image.split(IMAGE_DELIMITER).length > 1;
+    }
+
+    private String getInstanceIdFromImage(String image) {
+        return isMultiPartImage(image) ? image.split(IMAGE_DELIMITER)[0] : image;
+    }
+
+    private Folder getDestinationFolderFromImage(String image, Folder rootFolder) throws RemoteException {
+        Folder destinationFolder = null;
+        if (isMultiPartImage(image)) {
+            String host = image.split(IMAGE_DELIMITER)[1];
+            if (!host.equals(RANDOM_HOST)) {
+                destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderByHostname(host, rootFolder);
+            }
+        } else {
+            destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderFromVMName(image, rootFolder);
+        }
+        return Optional.ofNullable(destinationFolder)
+                       .orElse(vmWareProviderVirtualMachineUtil.searchFolderByName("VM", rootFolder));
+    }
+
+    private VirtualMachineRelocateSpec inferRelocateSpecsFromImageArgument(String image, Folder rootFolder)
+            throws RemoteException {
+
+        ResourcePool destinationPool = null;
+        HostSystem destinationHost = null;
+        Datastore destinationDatastore = null;
+
+        if (isMultiPartImage(image)) {
+            String hostname = image.split(IMAGE_DELIMITER)[1];
+            if (hostname.equals(RANDOM_HOST)) {
+                destinationPool = vmWareProviderVirtualMachineUtil.getRandomResourcePool(rootFolder);
+                destinationDatastore = vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromPool(destinationPool);
+            } else {
+                destinationHost = vmWareProviderVirtualMachineUtil.searchHostByName(hostname, rootFolder);
+                destinationPool = vmWareProviderVirtualMachineUtil.searchResourcePoolByHostname(hostname, rootFolder);
+                destinationDatastore = vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromHost(destinationHost);
+            }
+        }
+
+        VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(getInstanceIdFromImage(image),
+                                                                                               rootFolder);
+
+        return generateCustomRelocateSpecs(vmToClone, destinationPool, destinationHost, destinationDatastore);
+    }
 }
