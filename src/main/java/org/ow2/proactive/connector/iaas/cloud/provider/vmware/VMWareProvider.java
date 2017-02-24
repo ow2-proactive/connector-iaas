@@ -397,7 +397,7 @@ public class VMWareProvider implements CloudProvider {
         Folder destinationFolder = null;
         if (isMultiPartImage(image)) {
             String host = image.split(IMAGE_DELIMITER)[1];
-            if (!host.equals("*")) {
+            if (!host.equals(RANDOM_HOST)) {
                 destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderByHostname(host, rootFolder);
             }
         } else {
