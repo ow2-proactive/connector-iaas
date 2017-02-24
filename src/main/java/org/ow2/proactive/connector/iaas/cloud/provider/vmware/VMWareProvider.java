@@ -71,6 +71,8 @@ public class VMWareProvider implements CloudProvider {
 
     private final static String IMAGE_DELIMITER = "/";
 
+    private final static String RANDOM_HOST = "*";
+
     @Getter
     private final String type = "vmware";
 
@@ -394,14 +396,13 @@ public class VMWareProvider implements CloudProvider {
     private Folder getDestinationFolderFromImage(String image, Folder rootFolder) throws RemoteException {
         Folder destinationFolder = null;
         if (isMultiPartImage(image)) {
-            if (!image.split(IMAGE_DELIMITER)[1].equals("*")) {
-                destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderByHostname(image.split(IMAGE_DELIMITER)[1],
-                                                                                              rootFolder);
+            String host = image.split(IMAGE_DELIMITER)[1];
+            if (!host.equals("*")) {
+                destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderByHostname(host, rootFolder);
             }
         } else {
             destinationFolder = vmWareProviderVirtualMachineUtil.searchVMFolderFromVMName(image, rootFolder);
         }
-
         return Optional.ofNullable(destinationFolder)
                        .orElse(vmWareProviderVirtualMachineUtil.searchFolderByName("VM", rootFolder));
     }
@@ -415,7 +416,7 @@ public class VMWareProvider implements CloudProvider {
 
         if (isMultiPartImage(image)) {
             String hostname = image.split(IMAGE_DELIMITER)[1];
-            if (hostname.equals("*")) {
+            if (hostname.equals(RANDOM_HOST)) {
                 destinationPool = vmWareProviderVirtualMachineUtil.getRandomResourcePool(rootFolder);
                 destinationDatastore = vmWareProviderVirtualMachineUtil.getDatastoreWithMostSpaceFromPool(destinationPool);
             } else {
