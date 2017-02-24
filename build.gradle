@@ -28,13 +28,13 @@ repositories {
 buildscript {
   repositories {
       maven {
-      url "https://plugins.gradle.org/m2/"
-      url "http://repository.activeeon.com/content/groups/proactive/"
-
-
-    }
-      jcenter()
+        url "https://plugins.gradle.org/m2/"
       }
+      maven {
+        url "http://repository.activeeon.com/content/groups/proactive/"
+      }
+      jcenter()
+  }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     classpath 'org.postgresql:postgresql:9.3-1102-jdbc41'
@@ -43,6 +43,8 @@ buildscript {
     classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.1.RELEASE'
     classpath "com.diffplug.gradle.spotless:spotless:2.4.0"
     classpath "org.ow2.proactive:coding-rules:1.0.0"
+  }
+  dependencies {
     delete "gradle/ext"
     ant.unjar src: configurations.classpath.find { it.name.startsWith("coding-rules") }, dest: 'gradle/ext'
   }
