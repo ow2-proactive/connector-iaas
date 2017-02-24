@@ -25,9 +25,8 @@
  */
 package org.ow2.proactive.connector.iaas.fixtures;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -125,7 +124,7 @@ public class InstanceFixture {
             String minRam, String minCores, String publicAddress, String privateAddress, String status,
             String securityGroup) {
 
-        Set<String> securityGroupNames = new HashSet<String>();
+        List<String> securityGroupNames = new ArrayList<String>();
         securityGroupNames.add("default1");
         securityGroupNames.add("default2");
         return new Instance(id,

@@ -29,7 +29,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -50,7 +51,7 @@ public class InstanceTest {
 
     @Test
     public void testConstructor() {
-        Set<String> securityGroupNames = new HashSet<String>();
+        List<String> securityGroupNames = new ArrayList<String>();
         securityGroupNames.add("default1");
         securityGroupNames.add("default2");
         Instance instance = new Instance("instance-id",
@@ -73,7 +74,7 @@ public class InstanceTest {
 
     @Test
     public void testEqualsAndHashcode() {
-        Set<String> securityGroupNames = new HashSet<String>();
+        List<String> securityGroupNames = new ArrayList<String>();
         securityGroupNames.add("default1");
         securityGroupNames.add("default2");
         Instance instance1 = new Instance("instance-id",
