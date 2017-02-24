@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.cache;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,8 @@ public class InstanceCache {
 
     public void deleteInfrastructureInstance(Infrastructure infrastructure, Instance instance) {
         Map<String, Set<Instance>> tempInstances = cloneCreatedInstances();
-        tempInstances.get(infrastructure.getId()).remove(instance);
+        Optional.ofNullable(tempInstances.get(infrastructure.getId()))
+                .ifPresent(instances -> instances.remove(instance));
         createdInstances = ImmutableMap.copyOf(tempInstances);
     }
 

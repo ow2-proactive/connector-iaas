@@ -104,7 +104,7 @@ public class InfrastructureServiceTest {
                                                                                 "password");
         mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.deleteInfrastructure(infrastructure, false);
+        infrastructureService.deleteInfrastructure(infrastructure);
 
         InOrder inOrder = inOrder(cloudManager, infrastructureCache);
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);
@@ -112,7 +112,7 @@ public class InfrastructureServiceTest {
     }
 
     @Test
-    public void testDeleteInfrastructureWithInstances() {
+    public void testDeleteInfrastructureWithCreatedInstances() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                 "aws",
                                                                                 "endPoint",
@@ -120,7 +120,7 @@ public class InfrastructureServiceTest {
                                                                                 "password");
         mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
-        infrastructureService.deleteInfrastructure(infrastructure, true);
+        infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
 
         InOrder inOrder = inOrder(cloudManager, infrastructureCache, instanceCache);
         inOrder.verify(cloudManager, times(1)).deleteInfrastructure(infrastructure);

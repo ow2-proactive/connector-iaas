@@ -115,9 +115,8 @@ public class InfrastructureRestTest {
                                                                null)
                                      .getStatus(),
                    is(Response.Status.OK.getStatusCode()));
-        verify(infrastructureService, times(1)).deleteInfrastructure(
-                                                                     InfrastructureFixture.getSimpleInfrastructure("sometype"),
-                                                                     false);
+        verify(infrastructureService,
+               times(1)).deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("sometype"));
         verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
     }
 
@@ -125,13 +124,12 @@ public class InfrastructureRestTest {
     public void testDeleteInfrastructureByIdNotInCache() {
         assertThat(infrastructureRest.deleteInfrastructureById("openstack", null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
-        verify(infrastructureService, times(0)).deleteInfrastructure(Mockito.any(Infrastructure.class),
-                                                                     Mockito.anyBoolean());
+        verify(infrastructureService, times(0)).deleteInfrastructure(Mockito.any(Infrastructure.class));
         verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
     }
 
     @Test
-    public void testDeleteInfrastructureWithInstances() {
+    public void testDeleteInfrastructureWithCreatedInstances() {
         Infrastructure infra = InfrastructureFixture.getSimpleInfrastructure("sometype");
 
         when(infrastructureService.getInfrastructure(InfrastructureFixture.getSimpleInfrastructure("sometype")
@@ -143,9 +141,8 @@ public class InfrastructureRestTest {
                                      .getStatus(),
                    is(Response.Status.OK.getStatusCode()));
 
-        verify(infrastructureService, times(1)).deleteInfrastructure(
-                                                                     InfrastructureFixture.getSimpleInfrastructure("sometype"),
-                                                                     true);
+        verify(infrastructureService,
+               times(1)).deleteInfrastructureWithCreatedInstances(InfrastructureFixture.getSimpleInfrastructure("sometype"));
         verify(infrastructureService, times(1)).getAllSupportedInfrastructure();
     }
 

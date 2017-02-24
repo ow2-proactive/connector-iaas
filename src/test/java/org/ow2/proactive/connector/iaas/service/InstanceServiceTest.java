@@ -222,6 +222,35 @@ public class InstanceServiceTest {
         verify(instanceCache, times(1)).deleteAllInfrastructureInstances(infrastructure);
     }
 
+    @Test
+    public void testDeleteAllInstances() throws NumberFormatException, RunNodesException {
+
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password");
+        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
+
+        Instance instance1 = InstanceFixture.simpleInstance("id1");
+        Instance instance2 = InstanceFixture.simpleInstance("id2");
+        Instance instance3 = InstanceFixture.simpleInstance("id3");
+
+        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance1, instance2));
+        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
+        when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
+        when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
+                                                                                                    instance2,
+                                                                                                    instance3));
+
+        instanceService.deleteAllInstances(infrastructure.getId());
+
+        verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
+        verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
+        verify(cloudManager, times(1)).deleteInstance(infrastructure, "id3");
+        verify(instanceCache, times(1)).deleteAllInfrastructureInstances(infrastructure);
+    }
+
     @Test(expected = javax.ws.rs.NotFoundException.class)
     public void testDeleteInstanceByTagInfrastructureIdDoesNotExists() throws NumberFormatException, RunNodesException {
 

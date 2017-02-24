@@ -70,10 +70,13 @@ public class InfrastructureRest {
     @Produces("application/json")
     public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("deleteInstances") Boolean deleteInstances) {
-        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                .ifPresent(infrastructure -> infrastructureService.deleteInfrastructure(infrastructure,
-                                                                                        Optional.ofNullable(deleteInstances)
-                                                                                                .orElse(false)));
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            if (Optional.ofNullable(deleteInstances).orElse(false)) {
+                infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
+            } else {
+                infrastructureService.deleteInfrastructure(infrastructure);
+            }
+        });
         return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 

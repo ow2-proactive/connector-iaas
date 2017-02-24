@@ -45,7 +45,11 @@ public class ShutdownHandler {
     public synchronized void removeAllInfrastructures() {
         infrastructureService.getAllSupportedInfrastructure().values().forEach(infrastructure -> {
             try {
-                infrastructureService.deleteInfrastructure(infrastructure, infrastructure.isToBeRemovedOnShutdown());
+                if (infrastructure.isToBeRemovedOnShutdown()) {
+                    infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
+                } else {
+                    infrastructureService.deleteInfrastructure(infrastructure);
+                }
             } catch (Exception e) {
                 logger.error("Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
             }

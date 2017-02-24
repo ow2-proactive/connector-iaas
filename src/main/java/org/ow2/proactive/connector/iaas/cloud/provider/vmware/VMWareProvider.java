@@ -345,14 +345,6 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public void deleteAllInstances(Infrastructure infrastructure) {
-        vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
-                                                                                                         .getRootFolder(),
-                                                                               infrastructure)
-                                        .forEach(vm -> deleteInstance(infrastructure, vm.getConfig().getUuid()));
-    }
-
-    @Override
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
         throw new NotSupportedException("Operation not supported for VMWare");
     }

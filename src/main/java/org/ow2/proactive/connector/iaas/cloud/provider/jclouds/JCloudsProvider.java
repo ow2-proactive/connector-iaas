@@ -136,12 +136,6 @@ public abstract class JCloudsProvider implements CloudProvider {
         jCloudsComputeServiceCache.removeComputeService(infrastructure);
     }
 
-    @Override
-    public void deleteAllInstances(Infrastructure infrastructure) {
-        getAllInfrastructureInstances(infrastructure).forEach(instance -> deleteInstance(infrastructure,
-                                                                                         instance.getId()));
-    }
-
     protected final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
 
             nodeMetadataImpl, infrastructureId) -> {

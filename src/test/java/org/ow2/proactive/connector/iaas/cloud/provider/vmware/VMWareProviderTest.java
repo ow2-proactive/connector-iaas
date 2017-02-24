@@ -556,21 +556,8 @@ public class VMWareProviderTest {
 
         when(vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(rootFolder,
                                                                                     infrastructure)).thenReturn(Sets.newHashSet(createdVirtualMachine));
+        vmWareProvider.deleteInfrastructure(infrastructure);
+        verify(vmWareServiceInstanceCache).removeServiceInstance(infrastructure);
 
-        when(createdVirtualMachine.getConfig()).thenReturn(virtualMachineConfigInfo);
-
-        when(virtualMachineConfigInfo.getUuid()).thenReturn("some-generated-virtual-machine-id");
-
-        when(createdVirtualMachine.powerOffVM_Task()).thenReturn(task);
-
-        when(task.waitForTask()).thenReturn(Task.SUCCESS.toString());
-
-        when(createdVirtualMachine.destroy_Task()).thenReturn(task);
-
-        vmWareProvider.deleteAllInstances(infrastructure);
-
-        verify(createdVirtualMachine).powerOffVM_Task();
-        verify(createdVirtualMachine).destroy_Task();
     }
-
 }

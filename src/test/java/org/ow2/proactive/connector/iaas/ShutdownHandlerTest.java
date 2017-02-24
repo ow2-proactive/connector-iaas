@@ -71,15 +71,12 @@ public class ShutdownHandlerTest {
 
         shutdownHandler.removeAllInfrastructures();
 
-        verify(infrastructureService, times(1)).deleteInfrastructure(
-                                                                     InfrastructureFixture.getSimpleInfrastructure("type1"),
-                                                                     true);
-        verify(infrastructureService, times(1)).deleteInfrastructure(
-                                                                     InfrastructureFixture.getSimpleInfrastructure("type2"),
-                                                                     true);
-        verify(infrastructureService, times(1)).deleteInfrastructure(
-                                                                     InfrastructureFixture.getSimpleInfrastructure("type3"),
-                                                                     false);
+        verify(infrastructureService,
+               times(1)).deleteInfrastructureWithCreatedInstances(InfrastructureFixture.getSimpleInfrastructure("type1"));
+        verify(infrastructureService,
+               times(1)).deleteInfrastructureWithCreatedInstances(InfrastructureFixture.getSimpleInfrastructure("type2"));
+        verify(infrastructureService,
+               times(1)).deleteInfrastructure(InfrastructureFixture.getSimpleInfrastructure("type3"));
 
     }
 

@@ -43,8 +43,6 @@ public interface CloudProvider {
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId);
 
-    public void deleteAllInstances(Infrastructure infrastructure);
-
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
     public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,

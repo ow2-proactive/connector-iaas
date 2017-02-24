@@ -53,16 +53,16 @@ public class InstanceService {
 
     public Set<Instance> createInstance(String infrastructureId, Instance instance) {
 
-        Set<Instance> instancesCreated = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                                                 .map(infrastructure -> cloudManager.createInstance(infrastructure,
-                                                                                                    instance))
-                                                 .orElseThrow(() -> new NotFoundException("infrastructure id : " +
-                                                                                          infrastructureId +
-                                                                                          " does not exists"));
+        Optional<Infrastructure> optionalInfrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId));
 
-        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                .ifPresent(infrastructure -> instanceCache.registerInfrastructureInstances(infrastructure,
-                                                                                           instancesCreated));
+        Set<Instance> instancesCreated = optionalInfrastructure.map(infrastructure -> cloudManager.createInstance(infrastructure,
+                                                                                                                  instance))
+                                                               .orElseThrow(() -> new NotFoundException("infrastructure id : " +
+                                                                                                        infrastructureId +
+                                                                                                        " does not exists"));
+
+        optionalInfrastructure.ifPresent(infrastructure -> instanceCache.registerInfrastructureInstances(infrastructure,
+                                                                                                         instancesCreated));
 
         return instancesCreated;
     }
@@ -72,6 +72,14 @@ public class InstanceService {
             instanceCache.getCreatedInstances()
                          .get(infrastructure.getId())
                          .forEach(instance -> cloudManager.deleteInstance(infrastructure, instance.getId()));
+            instanceCache.deleteAllInfrastructureInstances(infrastructure);
+        });
+    }
+
+    public void deleteAllInstances(String infrastructureId) {
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            cloudManager.getAllInfrastructureInstances(infrastructure)
+                        .forEach(instance -> cloudManager.deleteInstance(infrastructure, instance.getId()));
             instanceCache.deleteAllInfrastructureInstances(infrastructure);
         });
     }
@@ -94,14 +102,7 @@ public class InstanceService {
                                          .forEach(instance -> {
                                              Infrastructure infrastructure = infrastructureService.getInfrastructure(infrastructureId);
                                              cloudManager.deleteInstance(infrastructure, instance.getId());
-                                             instanceCache.getCreatedInstances()
-                                                          .get(infrastructure.getId())
-                                                          .stream()
-                                                          .filter(createdInstance -> instance.getId()
-                                                                                             .equals(createdInstance.getId()))
-                                                          .findAny()
-                                                          .ifPresent(createdInstance -> instanceCache.deleteInfrastructureInstance(infrastructure,
-                                                                                                                                   instance));
+                                             instanceCache.deleteInfrastructureInstance(infrastructure, instance);
                                          });
     }
 

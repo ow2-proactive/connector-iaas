@@ -59,10 +59,14 @@ public class InfrastructureService {
         return infrastructure;
     }
 
-    public void deleteInfrastructure(Infrastructure infrastructure, Boolean deleteInstances) {
-        if (deleteInstances) {
-            instanceService.deleteCreatedInstances(infrastructure.getId());
-        }
+    public void deleteInfrastructure(Infrastructure infrastructure) {
+        cloudManager.deleteInfrastructure(infrastructure);
+        infrastructureCache.deleteInfrastructure(infrastructure);
+        instanceCache.deleteInfrastructure(infrastructure);
+    }
+
+    public void deleteInfrastructureWithCreatedInstances(Infrastructure infrastructure) {
+        instanceService.deleteCreatedInstances(infrastructure.getId());
         cloudManager.deleteInfrastructure(infrastructure);
         infrastructureCache.deleteInfrastructure(infrastructure);
         instanceCache.deleteInfrastructure(infrastructure);
