@@ -94,10 +94,12 @@ public class VMWareProvider implements CloudProvider {
 
         try {
 
-            VirtualMachine vmToClone = vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(instanceImageId,
-                                                                                                   rootFolder);
             VirtualMachineRelocateSpec relocateSpecs = inferRelocateSpecsFromImageArgument(image, rootFolder);
             Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
+            VirtualMachine vmToClone = Optional.ofNullable(vmWareProviderVirtualMachineUtil.searchVirtualMachineByName(instanceImageId,
+                                                                                                                       rootFolder))
+                                               .orElse(vmWareProviderVirtualMachineUtil.searchVirtualMachineByUUID(instanceImageId,
+                                                                                                                   rootFolder));
 
             return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                             .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
