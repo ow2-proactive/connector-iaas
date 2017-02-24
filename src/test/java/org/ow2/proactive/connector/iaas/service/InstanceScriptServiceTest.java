@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.service;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,16 +78,17 @@ public class InstanceScriptServiceTest {
 
         when(cloudManager.executeScriptOnInstanceId(infrastructure,
                                                     "instanceId",
-                                                    instanceScript)).thenReturn(new ScriptResult("instanceId",
-                                                                                                 "output",
-                                                                                                 "error"));
+                                                    instanceScript)).thenReturn(Lists.newArrayList(new ScriptResult("instanceId",
+                                                                                                                    "output",
+                                                                                                                    "error")));
 
-        ScriptResult scriptResult = instanceScriptService.executeScriptOnInstance(infrastructure.getId(),
-                                                                                  "instanceId",
-                                                                                  instanceScript);
+        List<ScriptResult> scriptResults = instanceScriptService.executeScriptOnInstance(infrastructure.getId(),
+                                                                                         "instanceId",
+                                                                                         instanceScript);
 
-        assertThat(scriptResult.getOutput(), is(scriptResult.getOutput()));
-        assertThat(scriptResult.getError(), is(scriptResult.getError()));
+        assertTrue(scriptResults.size() == 1);
+        assertThat(scriptResults.get(0).getOutput(), is("output"));
+        assertThat(scriptResults.get(0).getError(), is("error"));
 
         verify(cloudManager, times(1)).executeScriptOnInstanceId(infrastructure, "instanceId", instanceScript);
 

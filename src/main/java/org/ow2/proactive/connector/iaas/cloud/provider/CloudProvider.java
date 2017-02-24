@@ -45,7 +45,7 @@ public interface CloudProvider {
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
-    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript);
 
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
