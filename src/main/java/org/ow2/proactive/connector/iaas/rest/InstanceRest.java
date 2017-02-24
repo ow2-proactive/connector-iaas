@@ -68,14 +68,17 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances")
     @Produces("application/json")
     public Response getInstances(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
+            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
+            @QueryParam("allInstances") Boolean allInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
             return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
-        } else {
+        } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
             return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
+        } else {
+            return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
         }
     }
 
@@ -83,12 +86,15 @@ public class InstanceRest {
     @Path("{infrastructureId}/instances")
     @Produces("application/json")
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
+            @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
+            @QueryParam("allCreatedInstances") Boolean allCreatedInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
             instanceService.deleteInstance(infrastructureId, instanceId);
-        } else {
+        } else if (Optional.ofNullable(instanceTag).isPresent()) {
             instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
+        } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
+            instanceService.deleteCreatedInstances(infrastructureId);
         }
 
         return Response.ok().build();

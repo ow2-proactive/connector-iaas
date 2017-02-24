@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.NotFoundException;
 
+import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -42,6 +43,9 @@ import org.springframework.stereotype.Service;
 public class InstanceService {
 
     @Autowired
+    private InstanceCache instanceCache;
+
+    @Autowired
     private InfrastructureService infrastructureService;
 
     @Autowired
@@ -49,30 +53,63 @@ public class InstanceService {
 
     public Set<Instance> createInstance(String infrastructureId, Instance instance) {
 
-        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                       .map(infrastructure -> cloudManager.createInstance(infrastructure, instance))
-                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
-                                                                " does not exists"));
+        Optional<Infrastructure> optionalInfrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId));
 
+        Set<Instance> instancesCreated = optionalInfrastructure.map(infrastructure -> cloudManager.createInstance(infrastructure,
+                                                                                                                  instance))
+                                                               .orElseThrow(() -> new NotFoundException("infrastructure id : " +
+                                                                                                        infrastructureId +
+                                                                                                        " does not exists"));
+
+        optionalInfrastructure.ifPresent(infrastructure -> instanceCache.registerInfrastructureInstances(infrastructure,
+                                                                                                         instancesCreated));
+
+        return instancesCreated;
+    }
+
+    public void deleteCreatedInstances(String infrastructureId) {
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            instanceCache.getCreatedInstances()
+                         .get(infrastructure.getId())
+                         .forEach(instance -> cloudManager.deleteInstance(infrastructure, instance.getId()));
+            instanceCache.deleteAllInfrastructureInstances(infrastructure);
+        });
+    }
+
+    public void deleteAllInstances(String infrastructureId) {
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            cloudManager.getAllInfrastructureInstances(infrastructure)
+                        .forEach(instance -> cloudManager.deleteInstance(infrastructure, instance.getId()));
+            instanceCache.deleteAllInfrastructureInstances(infrastructure);
+        });
     }
 
     public void deleteInstance(String infrastructureId, String instanceId) {
-        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                .ifPresent(infrastructure -> cloudManager.deleteInstance(infrastructure, instanceId));
-
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            cloudManager.deleteInstance(infrastructure, instanceId);
+            instanceCache.getCreatedInstances()
+                         .get(infrastructure.getId())
+                         .stream()
+                         .filter(instance -> instance.getId().equals(instanceId))
+                         .findAny()
+                         .ifPresent(instance -> instanceCache.deleteInfrastructureInstance(infrastructure, instance));
+        });
     }
 
     public void deleteInstanceByTag(String infrastructureId, String instanceTag) {
-        Set<Instance> instances = getAllInstances(infrastructureId);
-        instances.stream()
-                 .filter(instance -> instance.getTag().equals(instanceTag))
-                 .forEach(instance -> cloudManager.deleteInstance(infrastructureService.getInfrastructure(infrastructureId),
-                                                                  instance.getId()));
+        getAllInstances(infrastructureId).stream()
+                                         .filter(instance -> instance.getTag().equals(instanceTag))
+                                         .forEach(instance -> {
+                                             Infrastructure infrastructure = infrastructureService.getInfrastructure(infrastructureId);
+                                             cloudManager.deleteInstance(infrastructure, instance.getId());
+                                             instanceCache.deleteInfrastructureInstance(infrastructure, instance);
+                                         });
     }
 
     public Set<Instance> getInstanceByTag(String infrastructureId, String instanceTag) {
-        Set<Instance> instances = getAllInstances(infrastructureId);
-        return instances.stream().filter(instance -> instance.getTag().equals(instanceTag)).collect(Collectors.toSet());
+        return getAllInstances(infrastructureId).stream()
+                                                .filter(instance -> instance.getTag().equals(instanceTag))
+                                                .collect(Collectors.toSet());
     }
 
     public Instance getInstanceById(String infrastructureId, String instanceId) {
@@ -91,11 +128,15 @@ public class InstanceService {
 
     }
 
+    public Set<Instance> getCreatedInstances(String infrastructureId) {
+        return instanceCache.getCreatedInstances().get(infrastructureId);
+    }
+
     public String addToInstancePublicIp(String infrastructureId, String instanceId) {
-        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).map(infrastructure -> {
-            String ip = cloudManager.addToInstancePublicIp(infrastructure, instanceId);
-            return ip;
-        }).orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId + "does not exists"));
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.addToInstancePublicIp(infrastructure, instanceId))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
+                                                                "does not exists"));
     }
 
     public void addInstancePublicIpByTag(String infrastructureId, String instanceTag) {

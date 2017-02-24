@@ -341,13 +341,7 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        vmWareProviderVirtualMachineUtil.getAllVirtualMachinesByInfrastructure(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
-                                                                                                         .getRootFolder(),
-                                                                               infrastructure)
-                                        .stream()
-                                        .forEach(vm -> deleteInstance(infrastructure, vm.getConfig().getUuid()));
         vmWareServiceInstanceCache.removeServiceInstance(infrastructure);
-
     }
 
     @Override
@@ -367,7 +361,7 @@ public class VMWareProvider implements CloudProvider {
             Task task = vm.cloneVM_Task(vmFolder, newVMname, vmcs);
 
             String result = task.waitForTask();
-            if (Task.SUCCESS != result) {
+            if (!Task.SUCCESS.equals(result)) {
                 throw new RuntimeException("Unable to create VMWare instance with : " + instance + " Task result = " +
                                            result);
             }

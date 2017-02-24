@@ -34,6 +34,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -67,9 +68,15 @@ public class InfrastructureRest {
     @DELETE
     @Path("/{infrastructureId}")
     @Produces("application/json")
-    public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId) {
-        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                .ifPresent(infrastructure -> infrastructureService.deleteInfrastructure(infrastructure));
+    public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId,
+            @QueryParam("deleteInstances") Boolean deleteInstances) {
+        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+            if (Optional.ofNullable(deleteInstances).orElse(false)) {
+                infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
+            } else {
+                infrastructureService.deleteInfrastructure(infrastructure);
+            }
+        });
         return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 

@@ -87,39 +87,54 @@ public class InstanceRestTest {
     }
 
     @Test
-    public void testListAllInstance() {
+    public void testListAllInstances() {
         when(instanceService.getAllInstances("infrastructureId")).thenReturn(Sets.newHashSet());
-        assertThat(instanceRest.getInstances("infrastructureId", null, null).getStatus(),
+        assertThat(instanceRest.getInstances("infrastructureId", null, null, true).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).getAllInstances("infrastructureId");
     }
 
     @Test
+    public void testListCreatedInstances() {
+        when(instanceService.getAllInstances("infrastructureId")).thenReturn(Sets.newHashSet());
+        assertThat(instanceRest.getInstances("infrastructureId", null, null, null).getStatus(),
+                   is(Response.Status.OK.getStatusCode()));
+        verify(instanceService, times(1)).getCreatedInstances("infrastructureId");
+    }
+
+    @Test
     public void testGetInstanceById() {
-        assertThat(instanceRest.getInstances("infrastructureId", "instanceID", null).getStatus(),
+        assertThat(instanceRest.getInstances("infrastructureId", "instanceID", null, null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).getInstanceById("infrastructureId", "instanceID");
     }
 
     @Test
     public void testGetInstanceByTag() {
-        assertThat(instanceRest.getInstances("infrastructureId", null, "instanceTAG").getStatus(),
+        assertThat(instanceRest.getInstances("infrastructureId", null, "instanceTAG", null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).getInstanceByTag("infrastructureId", "instanceTAG");
     }
 
     @Test
     public void testDeleteInstance() {
-        assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID", "instanceTAG").getStatus(),
+        assertThat(instanceRest.deleteInstance("infrastructureId", "instanceID", "instanceTAG", null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).deleteInstance("infrastructureId", "instanceID");
     }
 
     @Test
     public void testDeleteInstanceByTag() {
-        assertThat(instanceRest.deleteInstance("infrastructureId", null, "instanceTAG").getStatus(),
+        assertThat(instanceRest.deleteInstance("infrastructureId", null, "instanceTAG", null).getStatus(),
                    is(Response.Status.OK.getStatusCode()));
         verify(instanceService, times(1)).deleteInstanceByTag("infrastructureId", "instanceTAG");
+    }
+
+    @Test
+    public void testDeleteCreatedInstances() {
+        assertThat(instanceRest.deleteInstance("infrastructureId", null, null, true).getStatus(),
+                   is(Response.Status.OK.getStatusCode()));
+        verify(instanceService, times(1)).deleteCreatedInstances("infrastructureId");
     }
 
 }
