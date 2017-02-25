@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.service;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -219,7 +220,7 @@ public class InstanceServiceTest {
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(0)).deleteInstance(infrastructure, "id3");
-        verify(instanceCache, times(1)).deleteAllInfrastructureInstances(infrastructure);
+        verify(instanceCache, times(2)).deleteInfrastructureInstance(any(Infrastructure.class), any(Instance.class));
     }
 
     @Test
@@ -248,7 +249,7 @@ public class InstanceServiceTest {
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id3");
-        verify(instanceCache, times(1)).deleteAllInfrastructureInstances(infrastructure);
+        verify(instanceCache, times(3)).deleteInfrastructureInstance(any(Infrastructure.class), any(Instance.class));
     }
 
     @Test(expected = javax.ws.rs.NotFoundException.class)
