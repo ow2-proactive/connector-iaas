@@ -75,7 +75,7 @@ public class VMWareProviderVirtualMachineUtil {
 
     public Optional<VirtualMachine> searchVirtualMachineByUUID(String uuid, Folder rootFolder) {
         try {
-            return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"))
+            return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.VM.getValue()))
                         .stream()
                         .map(virtualMachine -> (VirtualMachine) virtualMachine)
                         .filter(virtualMachine -> virtualMachine.getConfig() != null)
