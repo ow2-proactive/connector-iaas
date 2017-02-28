@@ -35,11 +35,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
-import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
@@ -112,22 +110,24 @@ public class VMWareProviderVirtualMachineUtil {
 
     public Optional<Folder> searchFolderByName(String name, Folder rootFolder) {
         try {
-            return Optional.ofNullable((Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getValue(), name));
+            return Optional.ofNullable((Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getValue(),
+                                                                                                       name));
         } catch (RemoteException e) {
             throw new RuntimeException("ERROR when retrieving VMWare folder with name: " + name, e);
         }
     }
 
     public Optional<Folder> searchVMFolderFromVMName(String name, Folder rootFolder) {
-        final ManagedEntity[] vmFolder = new Folder[1];
-        searchVirtualMachineByName(name, rootFolder).ifPresent(vm -> {
-            ManagedEntity current = vm.getParent();
+        ManagedEntity vmFolder = null;
+        Optional<VirtualMachine> vm = searchVirtualMachineByName(name, rootFolder);
+        if (vm.isPresent()) {
+            ManagedEntity current = vm.get().getParent();
             while (current != null && !(current instanceof Folder)) {
                 current = current.getParent();
             }
-            vmFolder[0] = current;
-        });
-        return Optional.ofNullable((Folder) vmFolder[0]);
+            vmFolder = current;
+        }
+        return Optional.ofNullable((Folder) vmFolder);
     }
 
     public Optional<Folder> searchVMFolderByHostname(String hostname, Folder rootFolder) {
