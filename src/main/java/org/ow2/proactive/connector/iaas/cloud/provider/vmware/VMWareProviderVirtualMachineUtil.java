@@ -112,7 +112,7 @@ public class VMWareProviderVirtualMachineUtil {
 
     public Optional<Folder> searchFolderByName(String name, Folder rootFolder) {
         try {
-            return Optional.ofNullable((Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", name));
+            return Optional.ofNullable((Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getValue(), name));
         } catch (RemoteException e) {
             throw new RuntimeException("ERROR when retrieving VMWare folder with name: " + name, e);
         }
