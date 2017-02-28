@@ -81,7 +81,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     @Override
-    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
         ExecResponse execResponse;
 
@@ -93,7 +93,7 @@ public abstract class JCloudsProvider implements CloudProvider {
             throw new RuntimeException(e);
         }
 
-        return new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError());
+        return Lists.newArrayList(new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError()));
     }
 
     @Override

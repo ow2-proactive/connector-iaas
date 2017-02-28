@@ -65,7 +65,7 @@ public class InstanceScriptRestTest {
 
         when(instanceScriptService.executeScriptOnInstance(Mockito.anyString(),
                                                            Mockito.anyString(),
-                                                           Mockito.any(InstanceScript.class))).thenReturn(scriptResult);
+                                                           Mockito.any(InstanceScript.class))).thenReturn(Lists.newArrayList(scriptResult));
 
         assertThat(instanceScriptRest.executeScript("infrastructureId",
                                                     "instanceId",

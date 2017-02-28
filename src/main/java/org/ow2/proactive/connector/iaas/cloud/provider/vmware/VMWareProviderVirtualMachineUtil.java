@@ -29,12 +29,12 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -64,23 +64,30 @@ public class VMWareProviderVirtualMachineUtil {
         private final String value;
     }
 
-    public VirtualMachine searchVirtualMachineByName(String name, Folder rootFolder) throws RemoteException {
-        return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.VM.getValue(), name);
-    }
-
-    public VirtualMachine searchVirtualMachineByUUID(String uuid, Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine"))
-                    .stream()
-                    .map(virtualMachine -> (VirtualMachine) virtualMachine)
-                    .filter(virtualMachine -> virtualMachine.getConfig() != null)
-                    .filter(virtualMachine -> virtualMachine.getConfig().getUuid().equals(uuid))
-                    .findFirst()
-                    .orElse(null);
-    }
-
-    public Set<VirtualMachine> getAllVirtualMachinesByInfrastructure(Folder rootFolder, Infrastructure infrastructure) {
+    public Optional<VirtualMachine> searchVirtualMachineByName(String name, Folder rootFolder) {
         try {
+            return Optional.ofNullable((VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.VM.getValue(),
+                                                                                                               name));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare virtual machine with name: " + name, e);
+        }
+    }
 
+    public Optional<VirtualMachine> searchVirtualMachineByUUID(String uuid, Folder rootFolder) {
+        try {
+            return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.VM.getValue()))
+                        .stream()
+                        .map(virtualMachine -> (VirtualMachine) virtualMachine)
+                        .filter(virtualMachine -> virtualMachine.getConfig() != null)
+                        .filter(virtualMachine -> virtualMachine.getConfig().getUuid().equals(uuid))
+                        .findFirst();
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare virtual machines" + uuid, e);
+        }
+    }
+
+    public Set<VirtualMachine> getAllVirtualMachines(Folder rootFolder) {
+        try {
             ManagedEntity[] managedEntities = new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.VM.getValue());
 
             return IntStream.range(0, managedEntities.length)
@@ -88,67 +95,99 @@ public class VMWareProviderVirtualMachineUtil {
                             .collect(Collectors.toSet());
 
         } catch (RemoteException e) {
-            throw new RuntimeException("ERROR when retrieving VMWare instances for infrastructure : " + infrastructure,
-                                       e);
+            throw new RuntimeException("ERROR when retrieving VMWare virtual machines", e);
         }
     }
 
-    public Folder searchFolderByName(String name, Folder rootFolder) throws RemoteException {
-        return (Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getValue(), name);
-    }
-
-    public HostSystem searchHostByName(String name, Folder rootFolder) throws RemoteException {
-        return (HostSystem) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.HOST.getValue(), name);
-    }
-
-    public Folder searchVMFolderFromVMName(String name, Folder rootFolder) throws RemoteException {
-        ManagedEntity current = searchVirtualMachineByName(name, rootFolder).getParent();
-        while (!(current instanceof Folder)) {
-            current = current.getParent();
+    public Optional<HostSystem> searchHostByName(String name, Folder rootFolder) {
+        try {
+            return Optional.ofNullable((HostSystem) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.HOST.getValue(),
+                                                                                                           name));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare host with name: " + name, e);
         }
-        return (Folder) current;
     }
 
-    public Folder searchVMFolderByHostname(String name, Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.FOLDER.getValue()))
-                    .stream()
-                    .map(folder -> (Folder) folder)
-                    .filter(folder -> folder.getName().toLowerCase().contains("vm") &&
-                                      folder.getName().toLowerCase().contains(name.toLowerCase()))
-                    .findAny()
-                    .orElse(null);
+    public Optional<Folder> searchFolderByName(String name, Folder rootFolder) {
+        try {
+            return Optional.ofNullable((Folder) new InventoryNavigator(rootFolder).searchManagedEntity(EntityType.FOLDER.getValue(),
+                                                                                                       name));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare folder with name: " + name, e);
+        }
     }
 
-    public ResourcePool searchResourcePoolByHostname(String hostname, Folder rootFolder) throws RemoteException {
-        return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getValue()))
-                    .stream()
-                    .map(resourcePool -> (ResourcePool) resourcePool)
-                    .filter(resourcePool -> resourcePool.getParent().getName().equals(hostname))
-                    .findAny()
-                    .orElse(null);
+    public Optional<Folder> searchVMFolderFromVMName(String name, Folder rootFolder) {
+        ManagedEntity vmFolder = null;
+        Optional<VirtualMachine> vm = searchVirtualMachineByName(name, rootFolder);
+        if (vm.isPresent()) {
+            ManagedEntity current = vm.get().getParent();
+            while (current != null && !(current instanceof Folder)) {
+                current = current.getParent();
+            }
+            vmFolder = current;
+        }
+        return Optional.ofNullable((Folder) vmFolder);
     }
 
-    public Datastore getDatastoreWithMostSpaceFromHost(HostSystem host) throws RemoteException {
-        return Lists.newArrayList(host.getDatastores())
-                    .stream()
-                    .filter(datastore -> datastore.getSummary().isAccessible())
-                    .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()))
-                    .orElseGet(null);
+    public Optional<Folder> searchVMFolderByHostname(String hostname, Folder rootFolder) {
+        try {
+            return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.FOLDER.getValue()))
+                        .stream()
+                        .map(folder -> (Folder) folder)
+                        .filter(folder -> folder.getName().toLowerCase().contains("vm") &&
+                                          folder.getName().toLowerCase().contains(hostname.toLowerCase()))
+                        .findAny();
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare folders", e);
+        }
     }
 
-    public Datastore getDatastoreWithMostSpaceFromPool(ResourcePool resourcePool) throws RemoteException {
-        return Lists.newArrayList(resourcePool.getOwner().getDatastores())
-                    .stream()
-                    .filter(datastore -> datastore.getSummary().isAccessible())
-                    .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()))
-                    .orElseGet(null);
+    public Optional<ResourcePool> searchResourcePoolByHostname(String hostname, Folder rootFolder) {
+        try {
+            return Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getValue()))
+                        .stream()
+                        .map(resourcePool -> (ResourcePool) resourcePool)
+                        .filter(resourcePool -> resourcePool.getParent().getName().equals(hostname))
+                        .findAny();
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare resource pools", e);
+        }
     }
 
-    public ResourcePool getRandomResourcePool(Folder rootFolder) throws RemoteException {
-        List<ResourcePool> resourcePools = Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getValue()))
-                                                .stream()
-                                                .map(resourcePool -> (ResourcePool) resourcePool)
-                                                .collect(Collectors.toCollection(ArrayList::new));
-        return resourcePools.isEmpty() ? null : resourcePools.get(new Random().nextInt(resourcePools.size()));
+    public Optional<Datastore> getDatastoreWithMostSpaceFromHost(HostSystem host) {
+        try {
+            return Lists.newArrayList(host.getDatastores())
+                        .stream()
+                        .filter(datastore -> datastore.getSummary().isAccessible())
+                        .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare datastores from host: " + host.getName(), e);
+        }
+    }
+
+    public Optional<Datastore> getDatastoreWithMostSpaceFromPool(ResourcePool resourcePool) {
+        try {
+            return Lists.newArrayList(resourcePool.getOwner().getDatastores())
+                        .stream()
+                        .filter(datastore -> datastore.getSummary().isAccessible())
+                        .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare resource pool's owner from: " +
+                                       resourcePool.getName(), e);
+        }
+    }
+
+    public Optional<ResourcePool> getRandomResourcePool(Folder rootFolder) {
+        List<ResourcePool> resourcePools = null;
+        try {
+            resourcePools = Lists.newArrayList(new InventoryNavigator(rootFolder).searchManagedEntities(EntityType.POOL.getValue()))
+                                 .stream()
+                                 .map(resourcePool -> (ResourcePool) resourcePool)
+                                 .collect(Collectors.toCollection(ArrayList::new));
+        } catch (RemoteException e) {
+            throw new RuntimeException("ERROR when retrieving VMWare resource pool", e);
+        }
+        return Optional.ofNullable(resourcePools.get(new Random().nextInt(resourcePools.size())));
     }
 }

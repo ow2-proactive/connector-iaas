@@ -46,7 +46,7 @@ public class InstanceScriptService {
     @Autowired
     private CloudManager cloudManager;
 
-    public ScriptResult executeScriptOnInstance(String infrastructureId, String instanceId,
+    public List<ScriptResult> executeScriptOnInstance(String infrastructureId, String instanceId,
             InstanceScript instanceScript) {
 
         return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))

@@ -68,7 +68,7 @@ public class CloudManager {
         return cloudProviderPerType.get(infrastructure.getType()).getAllInfrastructureInstances(infrastructure);
     }
 
-    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
         return cloudProviderPerType.get(infrastructure.getType()).executeScriptOnInstanceId(infrastructure,
                                                                                             instanceId,

@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -587,13 +588,14 @@ public class AWSEC2JCloudsProviderTest {
                                             Mockito.anyString(),
                                             Mockito.any(RunScriptOptions.class))).thenReturn(execResponse);
 
-        ScriptResult scriptResult = jcloudsProvider.executeScriptOnInstanceId(infrastructure,
-                                                                              "instanceId",
-                                                                              InstanceScriptFixture.simpleInstanceScriptNoscripts());
+        List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceId(infrastructure,
+                                                                                     "instanceId",
+                                                                                     InstanceScriptFixture.simpleInstanceScriptNoscripts());
 
-        assertThat(scriptResult.getInstanceId(), is("instanceId"));
-        assertThat(scriptResult.getOutput(), is("output"));
-        assertThat(scriptResult.getError(), is("error"));
+        assertTrue(scriptResults.size() == 1);
+        assertThat(scriptResults.get(0).getInstanceId(), is("instanceId"));
+        assertThat(scriptResults.get(0).getOutput(), is("output"));
+        assertThat(scriptResults.get(0).getError(), is("error"));
 
     }
 
