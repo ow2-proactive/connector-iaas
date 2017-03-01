@@ -34,7 +34,8 @@ import lombok.ToString;
 import lombok.experimental.Wither;
 
 
-@EqualsAndHashCode(exclude = { "image", "number", "hardware", "status", "credentials", "initScript" })
+@EqualsAndHashCode(exclude = { "image", "number", "status", "hardware", "network", "credentials", "options",
+                               "initScript" })
 @Getter
 @AllArgsConstructor
 @ToString
