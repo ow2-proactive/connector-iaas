@@ -309,10 +309,9 @@ public class InstanceServiceTest {
         Set<Instance> created = instanceService.getCreatedInstances(infrastructure.getId());
 
         assertThat(created.size(), is(1));
-        InOrder inOrder = inOrder(cloudManager, instanceCache);
-        inOrder.verify(cloudManager, times(0)).getAllInfrastructureInstances(infrastructure);
+        InOrder inOrder = inOrder(instanceCache, cloudManager);
         inOrder.verify(instanceCache, times(1)).getCreatedInstances();
-
+        inOrder.verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
     }
 
     @Test(expected = javax.ws.rs.NotFoundException.class)

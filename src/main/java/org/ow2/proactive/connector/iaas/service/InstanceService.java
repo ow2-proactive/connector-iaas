@@ -126,11 +126,11 @@ public class InstanceService {
                        .map(infrastructure -> cloudManager.getAllInfrastructureInstances(infrastructure))
                        .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
                                                                 " does not exists"));
-
     }
 
     public Set<Instance> getCreatedInstances(String infrastructureId) {
-        return instanceCache.getCreatedInstances().get(infrastructureId);
+        Set<Instance> cachedInstances = instanceCache.getCreatedInstances().get(infrastructureId);
+        return getAllInstances(infrastructureId).stream().filter(cachedInstances::contains).collect(Collectors.toSet());
     }
 
     public String addToInstancePublicIp(String infrastructureId, String instanceId) {
