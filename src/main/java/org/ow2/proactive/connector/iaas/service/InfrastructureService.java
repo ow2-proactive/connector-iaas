@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.HashSet;
 import java.util.Map;
 
 import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
@@ -56,6 +57,7 @@ public class InfrastructureService {
 
     public Infrastructure registerInfrastructure(Infrastructure infrastructure) {
         infrastructureCache.registerInfrastructure(infrastructure);
+        instanceCache.registerInfrastructureInstances(infrastructure, new HashSet<>());
         return infrastructure;
     }
 
