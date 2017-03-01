@@ -191,7 +191,7 @@ public class OpenstackJCloudsProviderTest {
 
         assertThat(created.size(), is(1));
 
-        assertThat(created.stream().findAny().get().getId(), is("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
+        assertThat(created.stream().findAny().get().getId(), is("RegionOne/1cde5a56-27a6-46ce-bdb7-8b01b8fe2592"));
 
     }
 

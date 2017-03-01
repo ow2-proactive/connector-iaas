@@ -171,7 +171,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
             infrastructureId) -> {
 
         return Instance.builder()
-                       .id(server.getId())
+                       .id(region + "/" + server.getId())
                        .tag(server.getName())
                        .image(server.getImage().getName())
                        .number("1")
