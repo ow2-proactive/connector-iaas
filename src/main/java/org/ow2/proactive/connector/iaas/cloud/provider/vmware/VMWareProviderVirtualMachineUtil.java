@@ -160,7 +160,7 @@ public class VMWareProviderVirtualMachineUtil {
             return Lists.newArrayList(host.getDatastores())
                         .stream()
                         .filter(datastore -> datastore.getSummary().isAccessible())
-                        .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()));
+                        .max(Comparator.comparingLong(datastore -> datastore.getSummary().getFreeSpace()));
         } catch (RemoteException e) {
             throw new RuntimeException("ERROR when retrieving VMWare datastores from host: " + host.getName(), e);
         }
@@ -171,7 +171,7 @@ public class VMWareProviderVirtualMachineUtil {
             return Lists.newArrayList(resourcePool.getOwner().getDatastores())
                         .stream()
                         .filter(datastore -> datastore.getSummary().isAccessible())
-                        .max(Comparator.comparing(datastore -> (int) datastore.getSummary().getFreeSpace()));
+                        .max(Comparator.comparingLong(datastore -> datastore.getSummary().getFreeSpace()));
         } catch (RemoteException e) {
             throw new RuntimeException("ERROR when retrieving VMWare resource pool's owner from: " +
                                        resourcePool.getName(), e);
