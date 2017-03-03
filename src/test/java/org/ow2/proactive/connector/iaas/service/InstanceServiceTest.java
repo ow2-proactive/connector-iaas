@@ -189,6 +189,7 @@ public class InstanceServiceTest {
 
         instanceService.deleteInstanceByTag(infrastructure.getId(), "tag1");
 
+        verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(0)).deleteInstance(infrastructure, "id2");
         verify(instanceCache, times(1)).deleteInfrastructureInstance(infrastructure, instance1);
@@ -217,6 +218,7 @@ public class InstanceServiceTest {
 
         instanceService.deleteCreatedInstances(infrastructure.getId());
 
+        verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(0)).deleteInstance(infrastructure, "id3");
@@ -246,6 +248,7 @@ public class InstanceServiceTest {
 
         instanceService.deleteAllInstances(infrastructure.getId());
 
+        verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id3");

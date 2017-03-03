@@ -69,10 +69,15 @@ public class InstanceService {
 
     public void deleteCreatedInstances(String infrastructureId) {
         Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
-            instanceCache.getCreatedInstances().get(infrastructure.getId()).forEach(instance -> {
-                cloudManager.deleteInstance(infrastructure, instance.getId());
-                instanceCache.deleteInfrastructureInstance(infrastructure, instance);
-            });
+            cloudManager.getAllInfrastructureInstances(infrastructure)
+                        .stream()
+                        .filter(instance -> instanceCache.getCreatedInstances()
+                                                         .get(infrastructureId)
+                                                         .contains(instance))
+                        .forEach(instance -> {
+                            cloudManager.deleteInstance(infrastructure, instance.getId());
+                            instanceCache.deleteInfrastructureInstance(infrastructure, instance);
+                        });
         });
     }
 
