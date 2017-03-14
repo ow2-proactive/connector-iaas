@@ -21,6 +21,13 @@ install {
 }
 
 repositories {
+    // Needed by Microsoft Azure Java SDK
+    maven {
+        url "http://repository.springsource.com/maven/bundles/release"
+    }
+    maven {
+        url "http://repository.springsource.com/maven/bundles/external"
+    }
     mavenCentral()
     jcenter()
 }
@@ -131,6 +138,9 @@ dependencies {
 
     // VMware dependency
     compile 'com.toastcoders:yavijava:6.0.03'
+
+    // Microsoft Azure (1.0 beta 5 is a developer preview that supports major parts of SDK)
+    compile 'com.microsoft.azure:azure:1.0.0-beta5'
 
     // Json project
     compile 'org.json:json:20151123'
