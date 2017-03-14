@@ -38,9 +38,9 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
-import org.ow2.proactive.connector.iaas.model.Credentials;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.springframework.stereotype.Component;
 
@@ -90,7 +90,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     }
 
-    private void addCredential(Template template, Credentials credentials) {
+    private void addCredential(Template template, InstanceCredentials credentials) {
         Optional.ofNullable(credentials.getPublicKeyName())
                 .filter(keyName -> !keyName.isEmpty())
                 .ifPresent(keyName -> template.getOptions()

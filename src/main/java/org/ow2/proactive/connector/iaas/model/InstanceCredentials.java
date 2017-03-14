@@ -37,11 +37,13 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
-public class Credentials {
+public class InstanceCredentials {
 
     private String username;
 
     private String password;
 
     private String publicKeyName;
+
+    private String publicKey;
 }

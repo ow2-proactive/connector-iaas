@@ -26,18 +26,24 @@
 package org.ow2.proactive.connector.iaas.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 
+@EqualsAndHashCode
 @Getter
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
-public class InstanceScript {
+public class InfrastructureCredentials {
 
-    private InstanceCredentials credentials;
+    private String username;
 
-    private String[] scripts;
+    private String password;
+
+    private String domain;
+
+    private String subscriptionId;
 }
