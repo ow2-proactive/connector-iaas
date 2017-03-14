@@ -39,14 +39,63 @@ public class InfrastructureFixture {
 
     public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
             String password) {
-        return new Infrastructure(name, type, endPoint, CredentialsFixtures.getCredentials(username, password), false);
+        return new Infrastructure(name,
+                                  type,
+                                  endPoint,
+                                  CredentialsFixtures.getInfrastructureCredentials(username, password),
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  false);
+    }
+
+    public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,
+            String secret, String domain, String subscriptionId, String resourceGroup, String authenticationEndpoint,
+            String managementEndpoint, String resourceManagerEndpoint, String graphEndpoint) {
+        return new Infrastructure(name,
+                                  type,
+                                  null,
+                                  CredentialsFixtures.getInfrastructureCredentials(clientId,
+                                                                                   secret,
+                                                                                   domain,
+                                                                                   subscriptionId),
+                                  resourceGroup,
+                                  authenticationEndpoint,
+                                  managementEndpoint,
+                                  resourceManagerEndpoint,
+                                  graphEndpoint,
+                                  false);
+    }
+
+    public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String secret,
+            String domain, String subscriptionId, String resourceGroup) {
+        return new Infrastructure(name,
+                                  type,
+                                  null,
+                                  CredentialsFixtures.getInfrastructureCredentials(clientId,
+                                                                                   secret,
+                                                                                   domain,
+                                                                                   subscriptionId),
+                                  resourceGroup,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  false);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type) {
         return new Infrastructure("id-" + type,
                                   type,
                                   "endPoint",
-                                  CredentialsFixtures.getCredentials("userName", "password"),
+                                  CredentialsFixtures.getInfrastructureCredentials("userName", "password"),
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
                                   false);
     }
 
@@ -54,7 +103,12 @@ public class InfrastructureFixture {
         return new Infrastructure("id-" + type,
                                   type,
                                   "endPoint",
-                                  CredentialsFixtures.getCredentials("userName", "password"),
+                                  CredentialsFixtures.getInfrastructureCredentials("userName", "password"),
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  null,
                                   removeOnShutdown);
     }
 

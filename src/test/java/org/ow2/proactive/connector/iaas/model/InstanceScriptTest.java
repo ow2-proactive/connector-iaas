@@ -47,7 +47,8 @@ public class InstanceScriptTest {
     @Test
     public void testConstructor() {
         String[] scripts = new String[] { "script 1", "script 2" };
-        InstanceScript instanceScript = new InstanceScript(CredentialsFixtures.getCredentials("username", "password"),
+        InstanceScript instanceScript = new InstanceScript(CredentialsFixtures.getInstanceCredentials("username",
+                                                                                                      "password"),
                                                            scripts);
         assertThat(instanceScript.getScripts(), is(scripts));
         assertThat(instanceScript.getCredentials().getUsername(), is("username"));
@@ -59,9 +60,11 @@ public class InstanceScriptTest {
     public void testEqualsAndHashcode() {
         String[] scripts = new String[] { "script 1", "script 2" };
 
-        InstanceScript instanceScript1 = new InstanceScript(CredentialsFixtures.getCredentials("username", "password"),
+        InstanceScript instanceScript1 = new InstanceScript(CredentialsFixtures.getInstanceCredentials("username",
+                                                                                                       "password"),
                                                             scripts);
-        InstanceScript instanceScript2 = new InstanceScript(CredentialsFixtures.getCredentials("username", "password"),
+        InstanceScript instanceScript2 = new InstanceScript(CredentialsFixtures.getInstanceCredentials("username",
+                                                                                                       "password"),
                                                             scripts);
 
         Set<InstanceScript> instanceScripts = Sets.newHashSet(instanceScript1, instanceScript2);

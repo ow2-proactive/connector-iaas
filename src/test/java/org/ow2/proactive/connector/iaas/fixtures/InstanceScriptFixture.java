@@ -46,7 +46,7 @@ public class InstanceScriptFixture {
     }
 
     public static InstanceScript getInstanceScriptUserAndPassword(String username, String pasword, String[] scripts) {
-        return new InstanceScript(CredentialsFixtures.getCredentials(username, pasword), scripts);
+        return new InstanceScript(CredentialsFixtures.getInstanceCredentials(username, pasword), scripts);
     }
 
 }

@@ -50,6 +50,34 @@ public class InstanceFixture {
         return getInstance("", tag, image, "1", "512", "1", "172.168.1.248", "1.0.0.2", "RUNNING");
     }
 
+    public static Instance simpleInstanceWithPublicKey(String tag, String image, String publicKey) {
+        return new Instance("instanceId",
+                            tag,
+                            image,
+                            "1",
+                            null,
+                            HardwareFixtures.getHardware("type"),
+                            null,
+                            null,
+                            CredentialsFixtures.getInstanceCredentialsWithKey(publicKey),
+                            null,
+                            null);
+    }
+
+    public static Instance simpleInstanceWithInitScripts(String tag, String image, String[] scripts) {
+        return new Instance("instanceId",
+                            tag,
+                            image,
+                            "1",
+                            null,
+                            HardwareFixtures.getHardware("type"),
+                            null,
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
+                            null,
+                            InstanceScriptFixture.getInstanceScript(scripts));
+    }
+
     public static Instance simpleInstanceWithMacAddress(String tag, String image, List<String> macAddresses) {
 
         return getInstanceWithMacAddress(tag,
@@ -87,7 +115,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             null,
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
@@ -101,7 +130,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             null,
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
@@ -115,7 +145,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().spotPrice("0.05").build(),
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
@@ -134,7 +165,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().securityGroupNames(securityGroupNames).build(),
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
@@ -148,7 +180,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().subnetId("127.0.0.1").build(),
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }
@@ -162,7 +195,8 @@ public class InstanceFixture {
                             status,
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
-                            CredentialsFixtures.getCredentials("username", "password"),
+                            null,
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().macAddresses(macAddresses).build(),
                             InstanceScriptFixture.simpleInstanceScriptNoscripts());
     }

@@ -39,25 +39,32 @@ import jersey.repackaged.com.google.common.collect.Sets;
 public class CredentialsTest {
     @Test
     public void testEmptyConstructor() {
-        Credentials credentials = new Credentials();
+        InstanceCredentials credentials = new InstanceCredentials();
         assertThat(credentials.getUsername(), is(nullValue()));
         assertThat(credentials.getPassword(), is(nullValue()));
     }
 
     @Test
     public void testConstructor() {
-        Credentials credentials = new Credentials("username", "password", "publicKeyName");
+        InstanceCredentials credentials = new InstanceCredentials("username", "password", "publicKeyName", "publicKey");
         assertThat(credentials.getUsername(), is("username"));
         assertThat(credentials.getPassword(), is("password"));
         assertThat(credentials.getPublicKeyName(), is("publicKeyName"));
+        assertThat(credentials.getPublicKey(), is("publicKey"));
     }
 
     @Test
     public void testEqualsAndHashcode() {
-        Credentials credentials1 = new Credentials("username", "password", "publicKeyName");
-        Credentials credentials2 = new Credentials("username", "password", "publicKeyName");
+        InstanceCredentials credentials1 = new InstanceCredentials("username",
+                                                                   "password",
+                                                                   "publicKeyName",
+                                                                   "publicKey");
+        InstanceCredentials credentials2 = new InstanceCredentials("username",
+                                                                   "password",
+                                                                   "publicKeyName",
+                                                                   "publicKey");
 
-        Set<Credentials> credentialss = Sets.newHashSet(credentials1, credentials2);
+        Set<InstanceCredentials> credentialss = Sets.newHashSet(credentials1, credentials2);
 
         assertThat(credentialss.size(), is(1));
         assertThat(credentials1.equals(credentials2), is(true));

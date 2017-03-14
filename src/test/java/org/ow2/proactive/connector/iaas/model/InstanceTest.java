@@ -61,7 +61,8 @@ public class InstanceTest {
                                          "running",
                                          HardwareFixtures.getHardware("1", "512"),
                                          NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
-                                         CredentialsFixtures.getCredentials("publicKeyName"),
+                                         "region",
+                                         CredentialsFixtures.getInstanceCredentialsWithKeyName("publicKeyName"),
                                          Options.builder()
                                                 .spotPrice("0.05f")
                                                 .securityGroupNames(securityGroupNames)
@@ -84,7 +85,8 @@ public class InstanceTest {
                                           "running",
                                           HardwareFixtures.getHardware("1", "512"),
                                           NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
-                                          CredentialsFixtures.getCredentials("publicKeyName"),
+                                          "region",
+                                          CredentialsFixtures.getInstanceCredentialsWithKeyName("publicKeyName"),
                                           Options.builder()
                                                  .spotPrice("0.05f")
                                                  .securityGroupNames(securityGroupNames)
@@ -98,7 +100,8 @@ public class InstanceTest {
                                           "running",
                                           HardwareFixtures.getHardware("1", "512"),
                                           NetworkFixtures.getNetwork("77.154.227.148", "1.0.0.2"),
-                                          CredentialsFixtures.getCredentials("publicKeyName"),
+                                          "region",
+                                          CredentialsFixtures.getInstanceCredentialsWithKeyName("publicKeyName"),
                                           Options.builder()
                                                  .spotPrice("0.05f")
                                                  .securityGroupNames(securityGroupNames)
