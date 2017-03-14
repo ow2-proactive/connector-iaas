@@ -33,17 +33,16 @@ import org.json.JSONObject;
 
 
 @Provider
-public class ServerErrorExceptionMapper implements ExceptionMapper<RuntimeException> {
+public class ServerErrorExceptionMapper implements ExceptionMapper<Exception> {
     @Override
-    public Response toResponse(RuntimeException ex) {
+    public Response toResponse(Exception ex) {
 
         JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", ex.getMessage().replace("\"", "\\\""));
+        errorEntity.put("error", ex.getMessage() == null ? "" : ex.getMessage().replace("\"", "\\\""));
 
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                        .entity(errorEntity.toString())
                        .type("application/json")
                        .build();
-
     }
 }
