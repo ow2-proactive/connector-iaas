@@ -25,6 +25,9 @@
  */
 package org.ow2.proactive.connector.iaas.app.exception;
 
+import java.util.Objects;
+
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -38,11 +41,11 @@ public class ServerErrorExceptionMapper implements ExceptionMapper<Exception> {
     public Response toResponse(Exception ex) {
 
         JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", ex.getMessage() == null ? "" : ex.getMessage().replace("\"", "\\\""));
+        errorEntity.put("error", Objects.toString(ex.getMessage(), "").replace("\"", "\\\""));
 
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                        .entity(errorEntity.toString())
-                       .type("application/json")
+                       .type(MediaType.APPLICATION_JSON)
                        .build();
     }
 }

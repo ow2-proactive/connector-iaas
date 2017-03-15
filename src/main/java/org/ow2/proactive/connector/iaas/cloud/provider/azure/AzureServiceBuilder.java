@@ -33,6 +33,7 @@ import org.ow2.proactive.connector.iaas.model.InfrastructureCredentials;
 import org.springframework.stereotype.Component;
 
 import com.microsoft.azure.AzureEnvironment;
+import com.microsoft.azure.CloudException;
 import com.microsoft.azure.credentials.ApplicationTokenCredentials;
 import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.Azure;
@@ -63,41 +64,46 @@ public class AzureServiceBuilder {
                                                                         infrastructure));
         Optional<String> optionalSubscription = Optional.ofNullable(infrastructureCredentials.getSubscriptionId());
 
+        AzureEnvironment environment = getAzureEnvironment(infrastructure);
+
+        AzureTokenCredentials credentials = new ApplicationTokenCredentials(clientId, domain, secret, environment);
+        Azure azure;
+        try {
+            Azure.Authenticated authenticatedAzureService = Azure.configure()
+                                                                 .withLogLevel(LogLevel.NONE)
+                                                                 .authenticate(credentials);
+            if (optionalSubscription.isPresent()) {
+                azure = authenticatedAzureService.withSubscription(optionalSubscription.get());
+            } else {
+                try {
+                    azure = authenticatedAzureService.withDefaultSubscription();
+                } catch (CloudException | IOException e) {
+                    throw new RuntimeException("ERROR trying to create Azure service with default subscription ID: " +
+                                               infrastructure, e);
+                }
+            }
+        } catch (Throwable throwable) {
+            throw new RuntimeException("ERROR something goes wrong while trying to create Azure service from infrastructure: " +
+                                       infrastructure, throwable);
+        }
+
+        return azure;
+    }
+
+    private AzureEnvironment getAzureEnvironment(Infrastructure infrastructure) {
         // Get custom environment endpoints or get default public Azure environment
-        AzureEnvironment environment;
         Optional<String> optionalAuthenticationEndpoint = Optional.ofNullable(infrastructure.getAuthenticationEndpoint());
         Optional<String> optionalManagementEndpoint = Optional.ofNullable(infrastructure.getManagementEndpoint());
         Optional<String> optionalResourceManagerEndpoint = Optional.ofNullable(infrastructure.getResourceManagerEndpoint());
         Optional<String> optionalGraphEndpoint = Optional.ofNullable(infrastructure.getGraphEndpoint());
         if (optionalAuthenticationEndpoint.isPresent() && optionalManagementEndpoint.isPresent() &&
             optionalResourceManagerEndpoint.isPresent() && optionalGraphEndpoint.isPresent()) {
-            environment = new AzureEnvironment(optionalAuthenticationEndpoint.get(),
-                                               optionalManagementEndpoint.get(),
-                                               optionalResourceManagerEndpoint.get(),
-                                               optionalGraphEndpoint.get());
+            return new AzureEnvironment(optionalAuthenticationEndpoint.get(),
+                                        optionalManagementEndpoint.get(),
+                                        optionalResourceManagerEndpoint.get(),
+                                        optionalGraphEndpoint.get());
         } else {
-            environment = AzureEnvironment.AZURE;
+            return AzureEnvironment.AZURE;
         }
-
-        AzureTokenCredentials credentials = new ApplicationTokenCredentials(clientId, domain, secret, environment);
-        Azure azure;
-        try {
-            if (optionalSubscription.isPresent()) {
-                azure = Azure.configure()
-                             .withLogLevel(LogLevel.NONE)
-                             .authenticate(credentials)
-                             .withSubscription(optionalSubscription.get());
-            } else {
-                azure = Azure.configure()
-                             .withLogLevel(LogLevel.NONE)
-                             .authenticate(credentials)
-                             .withDefaultSubscription();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("ERROR trying to create Azure service with default subscription ID: " +
-                                       infrastructure, e);
-        }
-
-        return azure;
     }
 }

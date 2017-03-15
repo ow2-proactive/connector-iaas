@@ -29,6 +29,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.service.ImageService;
@@ -45,7 +46,7 @@ public class ImageRest {
 
     @GET
     @Path("{infrastructureId}/images")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
         return Response.ok(imageService.getAllImages(infrastructureId)).build();
 

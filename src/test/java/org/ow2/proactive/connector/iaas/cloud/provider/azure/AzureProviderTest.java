@@ -293,34 +293,19 @@ public class AzureProviderTest {
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = new PagedList<VirtualMachineCustomImage>() {
-            @Override
-            public Page<VirtualMachineCustomImage> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = new PagedList<VirtualMachine>() {
-            @Override
-            public Page<VirtualMachine> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = new PagedList<ResourceGroup>() {
-            @Override
-            public Page<ResourceGroup> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
@@ -439,35 +424,20 @@ public class AzureProviderTest {
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = new PagedList<VirtualMachineCustomImage>() {
-            @Override
-            public Page<VirtualMachineCustomImage> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = new PagedList<VirtualMachine>() {
-            @Override
-            public Page<VirtualMachine> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
         pagedListVirtualMachine.add(virtualMachine);
         pagedListVirtualMachine.add(virtualMachine2);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = new PagedList<ResourceGroup>() {
-            @Override
-            public Page<ResourceGroup> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
@@ -537,23 +507,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = new PagedList<VirtualMachine>() {
-            @Override
-            public Page<VirtualMachine> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = new PagedList<NetworkInterface>() {
-            @Override
-            public Page<NetworkInterface> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
 
@@ -606,23 +566,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = new PagedList<VirtualMachine>() {
-            @Override
-            public Page<VirtualMachine> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = new PagedList<NetworkInterface>() {
-            @Override
-            public Page<NetworkInterface> nextPage(String nextPageLink) throws RestException, IOException {
-                return null;
-            }
-        };
+        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
         pagedListNetworkInterface.add(networkInterface);
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
@@ -952,5 +902,14 @@ public class AzureProviderTest {
         when(azureProviderUtils.getAllVirtualMachines(azureService)).thenReturn(Sets.newHashSet(virtualMachine));
         azureProvider.deleteInfrastructure(infrastructure);
         verify(azureServiceCache).removeService(infrastructure);
+    }
+
+    private <T> PagedList<T> getVirtualMachineCustomImages() {
+        return new PagedList<T>() {
+            @Override
+            public Page<T> nextPage(String nextPageLink) throws RestException, IOException {
+                return null;
+            }
+        };
     }
 }

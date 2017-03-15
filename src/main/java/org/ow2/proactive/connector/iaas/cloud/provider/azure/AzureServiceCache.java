@@ -48,8 +48,10 @@ public class AzureServiceCache {
 
     private Map<Infrastructure, Azure> serviceCache;
 
+    private Function<Infrastructure, Azure> buildComputeService = memoise(infrastructure -> serviceBuilder.buildServiceFromInfrastructure(infrastructure));
+
     public AzureServiceCache() {
-        serviceCache = new ConcurrentHashMap<Infrastructure, Azure>();
+        serviceCache = new ConcurrentHashMap<>();
     }
 
     public Azure getService(Infrastructure infrastructure) {
@@ -59,10 +61,6 @@ public class AzureServiceCache {
     public void removeService(Infrastructure infrastructure) {
         serviceCache.remove(infrastructure);
     }
-
-    private Function<Infrastructure, Azure> buildComputeService = memoise(infrastructure -> {
-        return serviceBuilder.buildServiceFromInfrastructure(infrastructure);
-    });
 
     private Function<Infrastructure, Azure> memoise(Function<Infrastructure, Azure> fn) {
         return (a) -> serviceCache.computeIfAbsent(a, fn);

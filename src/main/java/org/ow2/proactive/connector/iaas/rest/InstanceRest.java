@@ -38,6 +38,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -56,7 +57,7 @@ public class InstanceRest {
     private InstanceService instanceService;
 
     @POST
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
@@ -66,7 +67,7 @@ public class InstanceRest {
 
     @GET
     @Path("{infrastructureId}/instances")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getInstances(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allInstances") Boolean allInstances) {
@@ -84,7 +85,7 @@ public class InstanceRest {
 
     @DELETE
     @Path("{infrastructureId}/instances")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allCreatedInstances") Boolean allCreatedInstances) {
@@ -102,7 +103,7 @@ public class InstanceRest {
 
     @POST
     @Path("{infrastructureId}/instances/publicIp")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createPublicIp(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
         Map<String, String> response = new HashMap<String, String>();
@@ -119,7 +120,7 @@ public class InstanceRest {
 
     @DELETE
     @Path("{infrastructureId}/instances/publicIp")
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag) {
 

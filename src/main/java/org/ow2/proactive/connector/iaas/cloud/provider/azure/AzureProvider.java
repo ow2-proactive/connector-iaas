@@ -25,7 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,13 +50,13 @@ import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.OperatingSystemTypes;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.compute.VirtualMachineCustomImage;
-import com.microsoft.azure.management.compute.VirtualMachineDataDisk;
 import com.microsoft.azure.management.compute.VirtualMachineExtension;
 import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.PublicIpAddress;
+import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
@@ -77,37 +77,41 @@ public class AzureProvider implements CloudProvider {
     @Getter
     private final String type = "azure";
 
-    private static final Region defaultRegion = Region.US_EAST;
+    private static final Region DEFAULT_REGION = Region.US_EAST;
 
-    private static final VirtualMachineSizeTypes defaultVMSize = VirtualMachineSizeTypes.STANDARD_D1_V2;
+    private static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
 
-    private static final int resourcesNameExtraChars = 5;
+    private static final int RESOURCES_NAME_EXTRA_CHARS = 10;
 
-    private static final String virtualNetworkNameBase = "vnet";
+    private static final String VIRTUAL_NETWORK_NAME_BASE = "vnet";
 
-    private static final String publicIPAddressNameBase = "ip";
+    private static final String PUBLIC_IP_ADDRESS_NAME_BASE = "ip";
 
-    private static final String networkSecurityGroupNameBase = "sg";
+    private static final String NETWORK_SECURITY_GROUP_NAME_BASE = "sg";
 
-    private static final String networkInterfaceNameBase = "if";
+    private static final String NETWORK_INTERFACE_NAME_BASE = "if";
 
-    private static final String osDiskNameBase = "os";
+    private static final String OS_DISK_NAME_BASE = "os";
 
-    private static final String defaultUsername = "activeeon";
+    private static final String DEFAULT_USERNAME = "activeeon";
 
-    private static final String defaultPassword = "Act1v€0N";
+    private static final String DEFAULT_PASSWORD = "Act1v€0N";
 
-    private static final String defaultPrivateNetworkCIDR = "10.0.0.0/24";
+    private static final String DEFAULT_PRIVATE_NETWORK_CIDR = "10.0.0.0/24";
 
-    private static final Boolean defaultStaticPublicIP = true;
+    private static final Boolean DEFAULT_STATIC_PUBLIC_IP = true;
 
-    private static final String scriptExtensionPublisher = "Microsoft.Azure.Extensions";
+    private static final String SCRIPT_EXTENSION_PUBLISHER = "Microsoft.Azure.Extensions";
 
-    private static final String scriptExtensionType = "CustomScript";
+    private static final String SCRIPT_EXTENSION_TYPE = "CustomScript";
 
-    private static final String scriptExtensionVersion = "2.0";
+    private static final String SCRIPT_EXTENSION_VERSION = "2.0";
 
-    private static final String scriptExtensionCmdKey = "commandToExecute";
+    private static final String SCRIPT_EXTENSION_CMD_KEY = "commandToExecute";
+
+    private static final String SCRIPT_SEPARATOR = "&&";
+
+    private static final String SINGLE_INSTANCE_NUMBER = "1";
 
     @Autowired
     private AzureServiceCache azureServiceCache;
@@ -128,20 +132,21 @@ public class AzureProvider implements CloudProvider {
                                                                                                              infrastructure +
                                                                                                              "'")));
 
-        // Chek for Image by name first and then by key
+        // Check for Image by name first and then by key
         String imageNameOrKey = Optional.ofNullable(instance.getImage())
                                         .orElseThrow(() -> new RuntimeException("ERROR missing Image name (or key) from instance: '" +
                                                                                 instance + "'"));
-        VirtualMachineCustomImage image = getImageByNameOrKey(azureService,
-                                                              imageNameOrKey).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
-                                                                                                                     instance.getImage() +
-                                                                                                                     "'"));
+        VirtualMachineCustomImage image = getImageByName(azureService,
+                                                         imageNameOrKey).orElseGet(() -> getImageByKey(azureService,
+                                                                                                       imageNameOrKey).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
+                                                                                                                                                              instance.getImage() +
+                                                                                                                                                              "'")));
 
         // Get options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
 
         // Get region
-        Region region = Optional.ofNullable(Region.findByLabelOrName(instance.getRegion())).orElse(defaultRegion);
+        Region region = Optional.ofNullable(Region.findByLabelOrName(instance.getRegion())).orElse(DEFAULT_REGION);
 
         // Prepare a new virtual private network (same for all VMs)
         Optional<String> optionalPrivateNetworkCIDR = options.isPresent() ? Optional.ofNullable(options.get()
@@ -150,14 +155,14 @@ public class AzureProvider implements CloudProvider {
         Creatable<Network> creatableVirtualNetwork = azureProviderUtils.prepareVirtualNetwork(azureService,
                                                                                               region,
                                                                                               resourceGroup,
-                                                                                              createUniqVirtualNetworkName(instanceTag),
-                                                                                              optionalPrivateNetworkCIDR.orElse(defaultPrivateNetworkCIDR));
+                                                                                              createUniqueVirtualNetworkName(instanceTag),
+                                                                                              optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
 
         // Prepare a new  security group (same for all VMs)
         Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareSSHNetworkSecurityGroup(azureService,
                                                                                                                           region,
                                                                                                                           resourceGroup,
-                                                                                                                          createUniqSecurityGroupName(instance.getTag()));
+                                                                                                                          createUniqueSecurityGroupName(instance.getTag()));
 
         // Prepare the VM(s)
         Optional<Boolean> optionalStaticPublicIP = options.isPresent() ? Optional.ofNullable(instance.getOptions()
@@ -165,20 +170,20 @@ public class AzureProvider implements CloudProvider {
                                                                        : Optional.empty();
         List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
                                                                                          Integer.valueOf(Optional.ofNullable(instance.getNumber())
-                                                                                                                 .orElse("1")))
+                                                                                                                 .orElse(SINGLE_INSTANCE_NUMBER)))
                                                                             .mapToObj(instanceNumber -> {
                                                                                 // Create a new public IP address (one per VM)
-                                                                                String publicIPAddressName = createUniqPublicIPName(createUniqInstanceTag(instanceTag,
-                                                                                                                                                          instanceNumber));
+                                                                                String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
+                                                                                                                                                              instanceNumber));
                                                                                 Creatable<PublicIpAddress> creatablePublicIPAddress = azureProviderUtils.preparePublicIPAddress(azureService,
                                                                                                                                                                                 region,
                                                                                                                                                                                 resourceGroup,
                                                                                                                                                                                 publicIPAddressName,
-                                                                                                                                                                                optionalStaticPublicIP.orElse(defaultStaticPublicIP));
+                                                                                                                                                                                optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
 
                                                                                 // Prepare a new network interface (one per VM)
-                                                                                String networkInterfaceName = createUniqNetworkInterfaceName(createUniqInstanceTag(instanceTag,
-                                                                                                                                                                   instanceNumber));
+                                                                                String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
+                                                                                                                                                                       instanceNumber));
                                                                                 Creatable<NetworkInterface> creatableNetworkInterface = azureProviderUtils.prepareNetworkInterfaceFromScratch(azureService,
                                                                                                                                                                                               region,
                                                                                                                                                                                               resourceGroup,
@@ -191,8 +196,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                              azureService,
                                                                                                              resourceGroup,
                                                                                                              region,
-                                                                                                             createUniqInstanceTag(instanceTag,
-                                                                                                                                   instanceNumber),
+                                                                                                             createUniqueInstanceTag(instanceTag,
+                                                                                                                                     instanceNumber),
                                                                                                              image,
                                                                                                              creatableNetworkInterface);
                                                                             })
@@ -203,23 +208,24 @@ public class AzureProvider implements CloudProvider {
                            .create(creatableVirtualMachines)
                            .values()
                            .stream()
-                           .map(vm -> instance.withTag(vm.name()).withId(vm.vmId()).withNumber("1"))
+                           .map(vm -> instance.withTag(vm.name()).withId(vm.vmId()).withNumber(SINGLE_INSTANCE_NUMBER))
                            .collect(Collectors.toSet());
     }
 
-    private Optional<VirtualMachineCustomImage> getImageByNameOrKey(Azure azureService, String nameOrKey) {
-        return Optional.ofNullable(azureService.virtualMachineCustomImages()
-                                               .list()
-                                               .stream()
-                                               .filter(customImage -> customImage.name().equals(nameOrKey))
-                                               .findAny()
-                                               .orElseGet(() -> azureService.virtualMachineCustomImages()
-                                                                            .list()
-                                                                            .stream()
-                                                                            .filter(customImage -> customImage.key()
-                                                                                                              .equals(nameOrKey))
-                                                                            .findAny()
-                                                                            .get()));
+    private Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String name) {
+        return azureService.virtualMachineCustomImages()
+                           .list()
+                           .stream()
+                           .filter(customImage -> customImage.name().equals(name))
+                           .findAny();
+    }
+
+    private Optional<VirtualMachineCustomImage> getImageByKey(Azure azureService, String key) {
+        return azureService.virtualMachineCustomImages()
+                           .list()
+                           .stream()
+                           .filter(customImage -> customImage.key().equals(key))
+                           .findAny();
     }
 
     private Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
@@ -255,7 +261,7 @@ public class AzureProvider implements CloudProvider {
                                                         .isPresent() ? Optional.ofNullable(instance.getHardware()
                                                                                                    .getType())
                                                                      : Optional.empty();
-        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(new VirtualMachineSizeTypes(optionalHardwareType.orElse(defaultVMSize.toString())))
+        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(new VirtualMachineSizeTypes(optionalHardwareType.orElse(DEFAULT_VM_SIZE.toString())))
                                                                                                          .withOsDiskName(createUniqOSDiskName(instanceTag));
 
         // Add init script(s) using dedicated Microsoft extension
@@ -263,13 +269,14 @@ public class AzureProvider implements CloudProvider {
             Optional.ofNullable(initScript.getScripts()).ifPresent(scripts -> {
                 if (scripts.length > 0) {
                     StringBuilder concatenatedScripts = new StringBuilder();
-                    Lists.newArrayList(scripts).forEach(script -> concatenatedScripts.append(script).append(';'));
-                    creatableVMWithSize.defineNewExtension(createUniqScriptName(instanceTag))
-                                       .withPublisher(scriptExtensionPublisher)
-                                       .withType(scriptExtensionType)
-                                       .withVersion(scriptExtensionVersion)
+                    Lists.newArrayList(scripts)
+                         .forEach(script -> concatenatedScripts.append(script).append(SCRIPT_SEPARATOR));
+                    creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
+                                       .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
+                                       .withType(SCRIPT_EXTENSION_TYPE)
+                                       .withVersion(SCRIPT_EXTENSION_VERSION)
                                        .withMinorVersionAutoUpgrade()
-                                       .withPublicSetting(scriptExtensionCmdKey, concatenatedScripts.toString())
+                                       .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
                                        .attach();
                 }
             });
@@ -281,16 +288,12 @@ public class AzureProvider implements CloudProvider {
             String instanceTag, Region region, ResourceGroup resourceGroup, InstanceCredentials instanceCredentials,
             VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
-        Optional<InstanceCredentials> optionalInstanceCredentials = Optional.ofNullable(instanceCredentials);
-        Optional<String> optionalUsername = optionalInstanceCredentials.isPresent() ? Optional.ofNullable(optionalInstanceCredentials.get()
-                                                                                                                                     .getUsername())
-                                                                                    : Optional.empty();
-        Optional<String> optionalPassword = optionalInstanceCredentials.isPresent() ? Optional.ofNullable(optionalInstanceCredentials.get()
-                                                                                                                                     .getPassword())
-                                                                                    : Optional.empty();
-        Optional<String> optionalPublicKey = optionalInstanceCredentials.isPresent() ? Optional.ofNullable(optionalInstanceCredentials.get()
-                                                                                                                                      .getPublicKey())
-                                                                                     : Optional.empty();
+        Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getUsername);
+        Optional<String> optionalPassword = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getPassword);
+        Optional<String> optionalPublicKey = Optional.ofNullable(instanceCredentials)
+                                                     .map(InstanceCredentials::getPublicKey);
 
         // Prepare the VM without credentials
         VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManaged creatableVMWithoutCredentials = azureService.virtualMachines()
@@ -299,24 +302,21 @@ public class AzureProvider implements CloudProvider {
                                                                                                                             .withExistingResourceGroup(resourceGroup)
                                                                                                                             .withNewPrimaryNetworkInterface(creatableNetworkInterface)
                                                                                                                             .withLinuxCustomImage(image.id())
-                                                                                                                            .withRootUsername(optionalUsername.orElse(defaultUsername));
+                                                                                                                            .withRootUsername(optionalUsername.orElse(DEFAULT_USERNAME));
 
         // Set the credentials (whether password or SSH key)
         return optionalPublicKey.map(creatableVMWithoutCredentials::withSsh)
-                                .orElseGet(() -> creatableVMWithoutCredentials.withRootPassword(optionalPassword.orElse(defaultPassword)));
+                                .orElseGet(() -> creatableVMWithoutCredentials.withRootPassword(optionalPassword.orElse(DEFAULT_PASSWORD)));
     }
 
     private VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(Azure azureService,
             String instanceTag, Region region, ResourceGroup resourceGroup, InstanceCredentials instanceCredentials,
             VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
-        Optional<InstanceCredentials> optionalInstanceCredentials = Optional.ofNullable(instanceCredentials);
-        Optional<String> optionalUsername = optionalInstanceCredentials.isPresent() ? Optional.ofNullable(optionalInstanceCredentials.get()
-                                                                                                                                     .getUsername())
-                                                                                    : Optional.empty();
-        Optional<String> optionalPassword = optionalInstanceCredentials.isPresent() ? Optional.ofNullable(optionalInstanceCredentials.get()
-                                                                                                                                     .getPassword())
-                                                                                    : Optional.empty();
+        Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getUsername);
+        Optional<String> optionalPassword = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getPassword);
 
         // Prepare the VM with credentials
         return azureService.virtualMachines()
@@ -325,56 +325,51 @@ public class AzureProvider implements CloudProvider {
                            .withExistingResourceGroup(resourceGroup)
                            .withNewPrimaryNetworkInterface(creatableNetworkInterface)
                            .withWindowsCustomImage(image.id())
-                           .withAdminUsername(optionalUsername.orElse(defaultUsername))
-                           .withAdminPassword(optionalPassword.orElse(defaultPassword));
+                           .withAdminUsername(optionalUsername.orElse(DEFAULT_USERNAME))
+                           .withAdminPassword(optionalPassword.orElse(DEFAULT_PASSWORD));
     }
 
     /**
-     * Create a uniq tag for a VM based on the original tag provided and the instance index
+     * Create a unique tag for a VM based on the original tag provided and the instance index
      *
      * @param tagBase       the tag base
      * @param instanceIndex the instance index
-     * @return a uniq VM tag
+     * @return a unique VM tag
      */
-    private static String createUniqInstanceTag(String tagBase, int instanceIndex) {
+    private static String createUniqueInstanceTag(String tagBase, int instanceIndex) {
         if (instanceIndex > 1) {
             return tagBase + String.valueOf(instanceIndex);
         }
         return tagBase;
     }
 
-    private static String createUniqSecurityGroupName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag + '-' + networkSecurityGroupNameBase,
-                                             instanceTag.length() + networkSecurityGroupNameBase.length() + 1 +
-                                                                                               resourcesNameExtraChars);
+    private static String createUniqueSecurityGroupName(String instanceTag) {
+        return createUniqueName(instanceTag, NETWORK_SECURITY_GROUP_NAME_BASE);
     }
 
-    private static String createUniqVirtualNetworkName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag + '-' + virtualNetworkNameBase,
-                                             instanceTag.length() + virtualNetworkNameBase.length() + 1 +
-                                                                                         resourcesNameExtraChars);
+    private static String createUniqueVirtualNetworkName(String instanceTag) {
+        return createUniqueName(instanceTag, VIRTUAL_NETWORK_NAME_BASE);
     }
 
-    private static String createUniqNetworkInterfaceName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag + '-' + networkInterfaceNameBase,
-                                             instanceTag.length() + networkInterfaceNameBase.length() + 1 +
-                                                                                           resourcesNameExtraChars);
+    private static String createUniqueNetworkInterfaceName(String instanceTag) {
+        return createUniqueName(instanceTag, NETWORK_INTERFACE_NAME_BASE);
     }
 
-    private static String createUniqPublicIPName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag + '-' + publicIPAddressNameBase,
-                                             instanceTag.length() + publicIPAddressNameBase.length() + 1 +
-                                                                                          resourcesNameExtraChars);
+    private static String createUniquePublicIPName(String instanceTag) {
+        return createUniqueName(instanceTag, PUBLIC_IP_ADDRESS_NAME_BASE);
     }
 
     private static String createUniqOSDiskName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag + '-' + osDiskNameBase,
-                                             instanceTag.length() + osDiskNameBase.length() + 1 +
-                                                                                 resourcesNameExtraChars);
+        return createUniqueName(instanceTag, OS_DISK_NAME_BASE);
     }
 
-    private static String createUniqScriptName(String instanceTag) {
-        return SdkContext.randomResourceName(instanceTag, instanceTag.length() + resourcesNameExtraChars);
+    private static String createUniqueScriptName(String instanceTag) {
+        return createUniqueName(instanceTag, "");
+    }
+
+    private static String createUniqueName(String customPart, String basePart) {
+        return SdkContext.randomResourceName(customPart + '-' + basePart,
+                                             customPart.length() + basePart.length() + 1 + RESOURCES_NAME_EXTRA_CHARS);
     }
 
     @Override
@@ -390,7 +385,6 @@ public class AzureProvider implements CloudProvider {
         com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
         NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
         Optional<PublicIpAddress> optionalPublicIPAddress = Optional.ofNullable(vm.getPrimaryPublicIpAddress());
-        Collection<VirtualMachineDataDisk> dataDisks = vm.dataDisks().values();
         String osDiskID = vm.osDiskId();
 
         // Delete the VM first
@@ -404,7 +398,6 @@ public class AzureProvider implements CloudProvider {
 
         // Delete its main disk (OS), and keep data disks
         azureService.disks().deleteById(osDiskID);
-        //dataDisks.forEach(disk -> azureService.disks().deleteById(disk.id()));
 
         // Delete the security group if present and not attached to any network interface
         if (azureService.networkInterfaces()
@@ -431,20 +424,30 @@ public class AzureProvider implements CloudProvider {
                                  .map(vm -> Instance.builder()
                                                     .id(vm.vmId())
                                                     .tag(vm.name())
-                                                    .number("1")
+                                                    .number(SINGLE_INSTANCE_NUMBER)
                                                     .hardware(Hardware.builder().type(vm.size().toString()).build())
                                                     .network(org.ow2.proactive.connector.iaas.model.Network.builder()
                                                                                                            .publicAddresses(vm.networkInterfaceIds()
                                                                                                                               .stream()
                                                                                                                               .map(networkInterfaceId -> azureService.networkInterfaces()
                                                                                                                                                                      .getById(networkInterfaceId))
-                                                                                                                              //.flatMap(networkInterface -> networkInterface.ipConfigurations().values().stream())
                                                                                                                               .map(NetworkInterface::primaryIpConfiguration)
                                                                                                                               .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.getPublicIpAddress())
                                                                                                                                                                     .isPresent())
                                                                                                                               .map(nicIpConfiguration -> nicIpConfiguration.getPublicIpAddress()
                                                                                                                                                                            .ipAddress())
                                                                                                                               .collect(Collectors.toList()))
+                                                                                                           .privateAddresses(vm.networkInterfaceIds()
+                                                                                                                               .stream()
+                                                                                                                               .map(networkInterfaceId -> azureService.networkInterfaces()
+                                                                                                                                                                      .getById(networkInterfaceId))
+                                                                                                                               .flatMap(networkInterface -> networkInterface.ipConfigurations()
+                                                                                                                                                                            .values()
+                                                                                                                                                                            .stream())
+                                                                                                                               .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.privateIpAddress())
+                                                                                                                                                                     .isPresent())
+                                                                                                                               .map(HasPrivateIpAddress::privateIpAddress)
+                                                                                                                               .collect(Collectors.toList()))
                                                                                                            .build())
                                                     .status(String.valueOf(vm.powerState().toString()))
                                                     .build())
@@ -475,32 +478,32 @@ public class AzureProvider implements CloudProvider {
 
         // Concatenate all provided scripts in one (Multiple VMExtensions per handler not supported)
         StringBuilder concatenatedScripts = new StringBuilder();
-        Lists.newArrayList(instanceScript.getScripts()).forEach(script -> {
-            concatenatedScripts.append(script).append(';');
+        Arrays.stream(instanceScript.getScripts()).forEach(script -> {
+            concatenatedScripts.append(script).append(SCRIPT_SEPARATOR);
         });
 
         Optional<VirtualMachineExtension> vmExtension = vm.extensions()
                                                           .values()
                                                           .stream()
                                                           .filter(extension -> extension.publisherName()
-                                                                                        .equals(scriptExtensionPublisher) &&
+                                                                                        .equals(SCRIPT_EXTENSION_PUBLISHER) &&
                                                                                extension.typeName()
-                                                                                        .equals(scriptExtensionType))
+                                                                                        .equals(SCRIPT_EXTENSION_TYPE))
                                                           .findAny();
         if (vmExtension.isPresent()) {
             vm.update()
               .updateExtension(vmExtension.get().name())
-              .withPublicSetting(scriptExtensionCmdKey, concatenatedScripts.toString())
+              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
               .parent()
               .apply();
         } else {
             vm.update()
-              .defineNewExtension(createUniqScriptName(vm.name()))
-              .withPublisher(scriptExtensionPublisher)
-              .withType(scriptExtensionType)
-              .withVersion(scriptExtensionVersion)
+              .defineNewExtension(createUniqueScriptName(vm.name()))
+              .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
+              .withType(SCRIPT_EXTENSION_TYPE)
+              .withVersion(SCRIPT_EXTENSION_VERSION)
               .withMinorVersionAutoUpgrade()
-              .withPublicSetting(scriptExtensionCmdKey, concatenatedScripts.toString())
+              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
               .attach()
               .apply();
         }
@@ -544,8 +547,8 @@ public class AzureProvider implements CloudProvider {
         PublicIpAddress newPublicIPAddress = azureProviderUtils.preparePublicIPAddress(azureService,
                                                                                        vm.region(),
                                                                                        resourceGroup,
-                                                                                       createUniqPublicIPName(vm.name()),
-                                                                                       defaultStaticPublicIP)
+                                                                                       createUniquePublicIPName(vm.name()),
+                                                                                       DEFAULT_STATIC_PUBLIC_IP)
                                                                .create();
 
         // If primary network interface already has a public IP, then create a new/secondary network interface
@@ -554,7 +557,7 @@ public class AzureProvider implements CloudProvider {
               .withNewSecondaryNetworkInterface(azureProviderUtils.prepareNetworkInterface(azureService,
                                                                                            vm.region(),
                                                                                            resourceGroup,
-                                                                                           createUniqNetworkInterfaceName(vm.name()),
+                                                                                           createUniqueNetworkInterfaceName(vm.name()),
                                                                                            network,
                                                                                            networkSecurityGroup,
                                                                                            newPublicIPAddress))
