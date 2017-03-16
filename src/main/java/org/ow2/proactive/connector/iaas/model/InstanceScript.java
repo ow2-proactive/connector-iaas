@@ -37,7 +37,7 @@ import lombok.ToString;
 @NoArgsConstructor
 public class InstanceScript {
 
-    private Credentials credentials;
+    private InstanceCredentials credentials;
 
     private String[] scripts;
 }

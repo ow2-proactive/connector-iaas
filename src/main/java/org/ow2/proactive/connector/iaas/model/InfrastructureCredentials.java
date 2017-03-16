@@ -23,29 +23,27 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.app.exception;
+package org.ow2.proactive.connector.iaas.model;
 
-import java.util.Objects;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
-import org.json.JSONObject;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 
-@Provider
-public class ServerErrorExceptionMapper implements ExceptionMapper<Exception> {
-    @Override
-    public Response toResponse(Exception ex) {
+@EqualsAndHashCode
+@Getter
+@AllArgsConstructor
+@ToString
+@NoArgsConstructor
+public class InfrastructureCredentials {
 
-        JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", Objects.toString(ex.getMessage(), "").replace("\"", "\\\""));
+    private String username;
 
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                       .entity(errorEntity.toString())
-                       .type(MediaType.APPLICATION_JSON)
-                       .build();
-    }
+    private String password;
+
+    private String domain;
+
+    private String subscriptionId;
 }

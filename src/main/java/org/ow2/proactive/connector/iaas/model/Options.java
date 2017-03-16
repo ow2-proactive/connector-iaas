@@ -49,4 +49,8 @@ public class Options {
     private String subnetId;
 
     private List<String> macAddresses;
+
+    private String privateNetworkCIDR;
+
+    private Boolean staticPublicIP;
 }

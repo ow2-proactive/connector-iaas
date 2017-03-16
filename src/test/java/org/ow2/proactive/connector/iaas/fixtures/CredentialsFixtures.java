@@ -25,17 +25,30 @@
  */
 package org.ow2.proactive.connector.iaas.fixtures;
 
-import org.ow2.proactive.connector.iaas.model.Credentials;
+import org.ow2.proactive.connector.iaas.model.InfrastructureCredentials;
+import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 
 
 public class CredentialsFixtures {
 
-    public static Credentials getCredentials(String username, String password) {
-        return new Credentials(username, password, "");
+    public static InstanceCredentials getInstanceCredentials(String username, String password) {
+        return new InstanceCredentials(username, password, null, null);
     }
 
-    public static Credentials getCredentials(String publicKeyName) {
-        return new Credentials("", "", publicKeyName);
+    public static InstanceCredentials getInstanceCredentialsWithKeyName(String publicKeyName) {
+        return new InstanceCredentials(null, null, publicKeyName, null);
     }
 
+    public static InstanceCredentials getInstanceCredentialsWithKey(String publicKey) {
+        return new InstanceCredentials(null, null, null, publicKey);
+    }
+
+    public static InfrastructureCredentials getInfrastructureCredentials(String username, String password) {
+        return new InfrastructureCredentials(username, password, null, null);
+    }
+
+    public static InfrastructureCredentials getInfrastructureCredentials(String clientId, String secret, String domain,
+            String subscriptionId) {
+        return new InfrastructureCredentials(clientId, secret, domain, subscriptionId);
+    }
 }

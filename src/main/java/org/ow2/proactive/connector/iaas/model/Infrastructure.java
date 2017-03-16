@@ -32,7 +32,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 
-@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "toBeRemovedOnShutdown" })
+@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "resourceGroup", "authenticationEndpoint",
+                               "managementEndpoint", "resourceManagerEndpoint", "graphEndpoint",
+                               "toBeRemovedOnShutdown" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -45,8 +47,17 @@ public class Infrastructure {
 
     private String endpoint;
 
-    private Credentials credentials;
+    private InfrastructureCredentials credentials;
+
+    private String resourceGroup;
+
+    private String authenticationEndpoint;
+
+    private String managementEndpoint;
+
+    private String resourceManagerEndpoint;
+
+    private String graphEndpoint;
 
     private boolean toBeRemovedOnShutdown;
-
 }

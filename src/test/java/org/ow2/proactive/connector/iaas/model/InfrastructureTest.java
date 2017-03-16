@@ -49,8 +49,13 @@ public class InfrastructureTest {
         Infrastructure infrastructure = new Infrastructure("id-openstack",
                                                            "openstack",
                                                            "openstackEndpoint",
-                                                           CredentialsFixtures.getCredentials("openstackUserName",
-                                                                                              "openstackCredential"),
+                                                           CredentialsFixtures.getInfrastructureCredentials("openstackUserName",
+                                                                                                            "openstackCredential"),
+                                                           null,
+                                                           null,
+                                                           null,
+                                                           null,
+                                                           null,
                                                            false);
         assertThat(infrastructure.getId(), is("id-openstack"));
     }
@@ -60,14 +65,24 @@ public class InfrastructureTest {
         Infrastructure infrastructure1 = new Infrastructure("id-openstack",
                                                             "openstack",
                                                             "openstackEndpoint",
-                                                            CredentialsFixtures.getCredentials("openstackUserName",
-                                                                                               "openstackCredential1"),
+                                                            CredentialsFixtures.getInfrastructureCredentials("openstackUserName",
+                                                                                                             "openstackCredential1"),
+                                                            null,
+                                                            null,
+                                                            null,
+                                                            null,
+                                                            null,
                                                             false);
         Infrastructure infrastructure2 = new Infrastructure("id-openstack",
                                                             "openstack",
                                                             "openstackEndpoint",
-                                                            CredentialsFixtures.getCredentials("openstackUserName",
-                                                                                               "openstackCredential2"),
+                                                            CredentialsFixtures.getInfrastructureCredentials("openstackUserName",
+                                                                                                             "openstackCredential2"),
+                                                            null,
+                                                            null,
+                                                            null,
+                                                            null,
+                                                            null,
                                                             false);
 
         Set<Infrastructure> infrastructures = Sets.newHashSet(infrastructure1, infrastructure2);

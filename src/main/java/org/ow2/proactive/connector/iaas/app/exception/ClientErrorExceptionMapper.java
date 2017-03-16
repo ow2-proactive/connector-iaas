@@ -25,7 +25,10 @@
  */
 package org.ow2.proactive.connector.iaas.app.exception;
 
+import java.util.Objects;
+
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -39,11 +42,11 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
     public Response toResponse(ClientErrorException ex) {
 
         JSONObject errorEntity = new JSONObject();
-        errorEntity.put("error", ex.getMessage().replace("\"", "\\\""));
+        errorEntity.put("error", Objects.toString(ex.getMessage(), "").replace("\"", "\\\""));
 
         return Response.status(Response.Status.BAD_REQUEST)
                        .entity(errorEntity.toString())
-                       .type("application/json")
+                       .type(MediaType.APPLICATION_JSON)
                        .build();
     }
 }

@@ -23,33 +23,46 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.rest;
+package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
-import org.ow2.proactive.connector.iaas.service.ImageService;
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.microsoft.azure.management.Azure;
 
-@Path("/infrastructures")
+
+/**
+ * @author ActiveEon Team
+ * @since 07/03/17
+ */
 @Component
-public class ImageRest {
+public class AzureServiceCache {
 
     @Autowired
-    private ImageService imageService;
+    private AzureServiceBuilder serviceBuilder;
 
-    @GET
-    @Path("{infrastructureId}/images")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        return Response.ok(imageService.getAllImages(infrastructureId)).build();
+    private Map<Infrastructure, Azure> serviceCache;
 
+    private Function<Infrastructure, Azure> buildComputeService = memoise(infrastructure -> serviceBuilder.buildServiceFromInfrastructure(infrastructure));
+
+    public AzureServiceCache() {
+        serviceCache = new ConcurrentHashMap<>();
     }
 
+    public Azure getService(Infrastructure infrastructure) {
+        return buildComputeService.apply(infrastructure);
+    }
+
+    public void removeService(Infrastructure infrastructure) {
+        serviceCache.remove(infrastructure);
+    }
+
+    private Function<Infrastructure, Azure> memoise(Function<Infrastructure, Azure> fn) {
+        return (a) -> serviceCache.computeIfAbsent(a, fn);
+    }
 }

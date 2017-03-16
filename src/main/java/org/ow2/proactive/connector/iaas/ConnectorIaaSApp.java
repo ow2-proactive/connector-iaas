@@ -35,6 +35,10 @@ import lombok.NoArgsConstructor;
 @SpringBootApplication
 public class ConnectorIaaSApp {
     public static void main(String[] args) throws InterruptedException {
+
+        //System.setProperty("socksProxyPort", "3128");
+        //System.setProperty("socksProxyHost", "127.0.0.1");
+
         SpringApplication.run(ConnectorIaaSApp.class, args);
     }
 }
