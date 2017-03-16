@@ -66,6 +66,15 @@ import lombok.Getter;
 
 
 /**
+ * Provides Microsoft Azure clouds' management using the official java SDK.
+ *
+ * This class has been tested by ActiveEon to be thread safe (using Azure SDK release version 1.0.0-beta5).
+ * However this need to be carefully double-checked after every SDK upgrades, as mentioned by Microsoft:
+ * ------------------------------------------------------------------------------------------------------------
+ * We do not make any thread-safety guarantees about our libraries. We also do not test them for thread-safety.
+ * Methods that are currently thread-safe may be thread-unsafe in future versions.
+ * ------------------------------------------------------------------------------------------------------------
+ *
  * @author ActiveEon Team
  * @since 01/03/17
  */
