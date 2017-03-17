@@ -47,12 +47,11 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  null,
                                   false);
     }
 
     public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,
-            String secret, String domain, String subscriptionId, String resourceGroup, String authenticationEndpoint,
+            String secret, String domain, String subscriptionId, String authenticationEndpoint,
             String managementEndpoint, String resourceManagerEndpoint, String graphEndpoint) {
         return new Infrastructure(name,
                                   type,
@@ -61,7 +60,6 @@ public class InfrastructureFixture {
                                                                                    secret,
                                                                                    domain,
                                                                                    subscriptionId),
-                                  resourceGroup,
                                   authenticationEndpoint,
                                   managementEndpoint,
                                   resourceManagerEndpoint,
@@ -70,7 +68,7 @@ public class InfrastructureFixture {
     }
 
     public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String secret,
-            String domain, String subscriptionId, String resourceGroup) {
+            String domain, String subscriptionId) {
         return new Infrastructure(name,
                                   type,
                                   null,
@@ -78,7 +76,6 @@ public class InfrastructureFixture {
                                                                                    secret,
                                                                                    domain,
                                                                                    subscriptionId),
-                                  resourceGroup,
                                   null,
                                   null,
                                   null,
@@ -95,7 +92,6 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  null,
                                   false);
     }
 
@@ -104,7 +100,6 @@ public class InfrastructureFixture {
                                   type,
                                   "endPoint",
                                   CredentialsFixtures.getInfrastructureCredentials("userName", "password"),
-                                  null,
                                   null,
                                   null,
                                   null,

@@ -51,7 +51,6 @@ public class AzureServiceBuilderTest {
                                                                                                                        "secret",
                                                                                                                        "domain",
                                                                                                                        "subscriptionId",
-                                                                                                                       "resourceGroup",
                                                                                                                        "authenticationEndpoint",
                                                                                                                        "managementEndpoint",
                                                                                                                        "resourceManagerEndpoint",

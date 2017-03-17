@@ -55,7 +55,6 @@ public class InfrastructureTest {
                                                            null,
                                                            null,
                                                            null,
-                                                           null,
                                                            false);
         assertThat(infrastructure.getId(), is("id-openstack"));
     }
@@ -71,14 +70,12 @@ public class InfrastructureTest {
                                                             null,
                                                             null,
                                                             null,
-                                                            null,
                                                             false);
         Infrastructure infrastructure2 = new Infrastructure("id-openstack",
                                                             "openstack",
                                                             "openstackEndpoint",
                                                             CredentialsFixtures.getInfrastructureCredentials("openstackUserName",
                                                                                                              "openstackCredential2"),
-                                                            null,
                                                             null,
                                                             null,
                                                             null,

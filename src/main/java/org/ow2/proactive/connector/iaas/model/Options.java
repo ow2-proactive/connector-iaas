@@ -50,6 +50,10 @@ public class Options {
 
     private List<String> macAddresses;
 
+    private String resourceGroup;
+
+    private String region;
+
     private String privateNetworkCIDR;
 
     private Boolean staticPublicIP;

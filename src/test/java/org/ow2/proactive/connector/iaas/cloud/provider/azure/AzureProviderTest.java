@@ -262,6 +262,8 @@ public class AzureProviderTest {
         when(virtualMachine.name()).thenReturn("vmTag");
         when(virtualMachine.vmId()).thenReturn("vmId");
         when(resourceGroup.name()).thenReturn("resourceGroup");
+        when(virtualMachineCustomImage.resourceGroupName()).thenReturn("resourceGroup");
+        when(virtualMachineCustomImage.region()).thenReturn(Region.US_EAST);
         when(virtualMachineCustomImage.name()).thenReturn("imageName");
         when(virtualMachineCustomImage.id()).thenReturn("imageId");
         when(virtualMachineCustomImage.osDiskImage()).thenReturn(imageOSDisk);
@@ -291,6 +293,8 @@ public class AzureProviderTest {
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderUtils.searchResourceGroupByName(azureService,
+                                                          "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
         // Images
         PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
@@ -343,41 +347,49 @@ public class AzureProviderTest {
         Instance instance;
         List<Instance> createdInstances;
 
-        // Simple instance creation
         infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                       "azure",
                                                                       "clientId",
                                                                       "secret",
                                                                       "domain",
-                                                                      "subscriptionId",
-                                                                      "resourceGroup");
+                                                                      "subscriptionId");
+
+        // Simple instance creation
         instance = InstanceFixture.simpleInstanceWithTagAndImage("vmTag", "imageName");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
 
         // Instance with public key
-        infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
-                                                                      "azure",
-                                                                      "clientId",
-                                                                      "secret",
-                                                                      "domain",
-                                                                      "subscriptionId",
-                                                                      "resourceGroup");
         instance = InstanceFixture.simpleInstanceWithPublicKey("vmTag", "imageName", "ssh-public-key");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
 
         // Instance with initScript
-        infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
-                                                                      "azure",
-                                                                      "clientId",
-                                                                      "secret",
-                                                                      "domain",
-                                                                      "subscriptionId",
-                                                                      "resourceGroup");
         instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        assertThat(createdInstances.size(), is(1));
+        assertThat(createdInstances.get(0).getId(), is("vmId"));
+
+        // Instance with initScript
+        instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        assertThat(createdInstances.size(), is(1));
+        assertThat(createdInstances.get(0).getId(), is("vmId"));
+
+        // Instance with resourceGroup and region
+        instance = InstanceFixture.getInstanceWithResourceGroupAndRegion("vmId",
+                                                                         "vmTag",
+                                                                         "imageName",
+                                                                         "1",
+                                                                         null,
+                                                                         null,
+                                                                         null,
+                                                                         null,
+                                                                         null,
+                                                                         "resourceGroup",
+                                                                         "eastus");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
@@ -391,6 +403,8 @@ public class AzureProviderTest {
         when(virtualMachine2.name()).thenReturn("vmTag2");
         when(virtualMachine2.vmId()).thenReturn("vmId2");
         when(resourceGroup.name()).thenReturn("resourceGroup");
+        when(virtualMachineCustomImage.resourceGroupName()).thenReturn("resourceGroup");
+        when(virtualMachineCustomImage.region()).thenReturn(Region.US_EAST);
         when(virtualMachineCustomImage.name()).thenReturn("imageName");
         when(virtualMachineCustomImage.id()).thenReturn("imageId");
         when(virtualMachineCustomImage.osDiskImage()).thenReturn(imageOSDisk);
@@ -422,6 +436,8 @@ public class AzureProviderTest {
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderUtils.searchResourceGroupByName(azureService,
+                                                          "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
         // Images
         PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
@@ -470,8 +486,7 @@ public class AzureProviderTest {
                                                                       "clientId",
                                                                       "secret",
                                                                       "domain",
-                                                                      "subscriptionId",
-                                                                      "resourceGroup");
+                                                                      "subscriptionId");
         instance = InstanceFixture.simpleInstanceWithTagAndImage("vmTag", "imageName");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(2));
@@ -487,8 +502,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.id()).thenReturn("vmId");
@@ -546,8 +560,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.id()).thenReturn("vmId");
@@ -606,8 +619,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByName(azureService,
                                                            "vmTag")).thenReturn(Optional.of(virtualMachine));
@@ -643,8 +655,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.id()).thenReturn("vmId");
@@ -680,8 +691,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.id()).thenReturn("vmId");
@@ -718,8 +728,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.name()).thenReturn("vmTag");
@@ -764,8 +773,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.name()).thenReturn("vmTag");
@@ -825,8 +833,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.name()).thenReturn("vmTag");
@@ -864,8 +871,7 @@ public class AzureProviderTest {
                                                                                      "clientId",
                                                                                      "secret",
                                                                                      "domain",
-                                                                                     "subscriptionId",
-                                                                                     "resourceGroup");
+                                                                                     "subscriptionId");
 
         when(azureProviderUtils.searchVirtualMachineByID(azureService, "vmId")).thenReturn(Optional.of(virtualMachine));
         when(virtualMachine.name()).thenReturn("vmTag");

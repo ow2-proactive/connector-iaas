@@ -65,6 +65,14 @@ public class AzureProviderUtils {
                            .findAny();
     }
 
+    public Optional<ResourceGroup> searchResourceGroupByName(Azure azureService, String name) {
+        return azureService.resourceGroups()
+                           .list()
+                           .stream()
+                           .filter(resourceGroup -> resourceGroup.name().equals(name))
+                           .findAny();
+    }
+
     public Set<VirtualMachine> getAllVirtualMachines(Azure azureService) {
 
         return azureService.virtualMachines().list().stream().collect(Collectors.toSet());

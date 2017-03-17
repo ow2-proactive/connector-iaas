@@ -86,8 +86,6 @@ public class AzureProvider implements CloudProvider {
     @Getter
     private final String type = "azure";
 
-    private static final Region DEFAULT_REGION = Region.US_EAST;
-
     private static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
 
     private static final int RESOURCES_NAME_EXTRA_CHARS = 10;
@@ -135,11 +133,6 @@ public class AzureProvider implements CloudProvider {
         String instanceTag = Optional.ofNullable(instance.getTag())
                                      .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
                                                                              instance + "'"));
-        ResourceGroup resourceGroup = azureService.resourceGroups()
-                                                  .getByName(Optional.ofNullable(infrastructure.getResourceGroup())
-                                                                     .orElseThrow(() -> new RuntimeException("ERROR missing resourceGroup from infrastructure: '" +
-                                                                                                             infrastructure +
-                                                                                                             "'")));
 
         // Check for Image by name first and then by key
         String imageNameOrKey = Optional.ofNullable(instance.getImage())
@@ -151,16 +144,22 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                               instance.getImage() +
                                                                                                                                                               "'")));
 
-        // Get options (Optional by design)
+        // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
 
-        // Get region
-        Region region = Optional.ofNullable(Region.findByLabelOrName(instance.getRegion())).orElse(DEFAULT_REGION);
+        // Try to retrieve the resourceGroup from provided name, otherwise get it from image
+        ResourceGroup resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
+                                                                                   options.map(Options::getResourceGroup)
+                                                                                          .orElseGet(image::resourceGroupName))
+                                                        .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resourceGroup from instance: '" +
+                                                                                                instance + "'"));
+
+        // Try to get region from provided name, otherwise get it from image
+        Region region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion()))
+                               .orElseGet(image::region);
 
         // Prepare a new virtual private network (same for all VMs)
-        Optional<String> optionalPrivateNetworkCIDR = options.isPresent() ? Optional.ofNullable(options.get()
-                                                                                                       .getPrivateNetworkCIDR())
-                                                                          : Optional.empty();
+        Optional<String> optionalPrivateNetworkCIDR = options.map(Options::getPrivateNetworkCIDR);
         Creatable<Network> creatableVirtualNetwork = azureProviderUtils.prepareVirtualNetwork(azureService,
                                                                                               region,
                                                                                               resourceGroup,
@@ -174,9 +173,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                           createUniqueSecurityGroupName(instance.getTag()));
 
         // Prepare the VM(s)
-        Optional<Boolean> optionalStaticPublicIP = options.isPresent() ? Optional.ofNullable(instance.getOptions()
-                                                                                                     .getStaticPublicIP())
-                                                                       : Optional.empty();
+        Optional<Boolean> optionalStaticPublicIP = options.map(Options::getStaticPublicIP);
         List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
                                                                                          Integer.valueOf(Optional.ofNullable(instance.getNumber())
                                                                                                                  .orElse(SINGLE_INSTANCE_NUMBER)))
@@ -266,29 +263,24 @@ public class AzureProvider implements CloudProvider {
         }
 
         // Set VM size (or type) and name of OS' disk
-        Optional<String> optionalHardwareType = Optional.ofNullable(instance.getHardware())
-                                                        .isPresent() ? Optional.ofNullable(instance.getHardware()
-                                                                                                   .getType())
-                                                                     : Optional.empty();
+        Optional<String> optionalHardwareType = Optional.ofNullable(instance.getHardware()).map(Hardware::getType);
         VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(new VirtualMachineSizeTypes(optionalHardwareType.orElse(DEFAULT_VM_SIZE.toString())))
                                                                                                          .withOsDiskName(createUniqOSDiskName(instanceTag));
 
         // Add init script(s) using dedicated Microsoft extension
-        Optional.ofNullable(instance.getInitScript()).ifPresent(initScript -> {
-            Optional.ofNullable(initScript.getScripts()).ifPresent(scripts -> {
-                if (scripts.length > 0) {
-                    StringBuilder concatenatedScripts = new StringBuilder();
-                    Lists.newArrayList(scripts)
-                         .forEach(script -> concatenatedScripts.append(script).append(SCRIPT_SEPARATOR));
-                    creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
-                                       .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
-                                       .withType(SCRIPT_EXTENSION_TYPE)
-                                       .withVersion(SCRIPT_EXTENSION_VERSION)
-                                       .withMinorVersionAutoUpgrade()
-                                       .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
-                                       .attach();
-                }
-            });
+        Optional.ofNullable(instance.getInitScript()).map(InstanceScript::getScripts).ifPresent(scripts -> {
+            if (scripts.length > 0) {
+                StringBuilder concatenatedScripts = new StringBuilder();
+                Lists.newArrayList(scripts)
+                     .forEach(script -> concatenatedScripts.append(script).append(SCRIPT_SEPARATOR));
+                creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
+                                   .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
+                                   .withType(SCRIPT_EXTENSION_TYPE)
+                                   .withVersion(SCRIPT_EXTENSION_VERSION)
+                                   .withMinorVersionAutoUpgrade()
+                                   .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
+                                   .attach();
+            }
         });
         return creatableVMWithSize;
     }

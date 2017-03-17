@@ -34,7 +34,7 @@ import lombok.ToString;
 import lombok.experimental.Wither;
 
 
-@EqualsAndHashCode(exclude = { "image", "number", "status", "hardware", "network", "region", "credentials", "options",
+@EqualsAndHashCode(exclude = { "image", "number", "status", "hardware", "network", "credentials", "options",
                                "initScript" })
 @Getter
 @AllArgsConstructor
@@ -57,8 +57,6 @@ public class Instance {
     private Hardware hardware;
 
     private Network network;
-
-    private String region;
 
     private InstanceCredentials credentials;
 
