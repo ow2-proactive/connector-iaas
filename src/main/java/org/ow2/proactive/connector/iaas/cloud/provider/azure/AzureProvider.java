@@ -55,6 +55,7 @@ import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
+import com.microsoft.azure.management.network.NicIpConfiguration;
 import com.microsoft.azure.management.network.PublicIpAddress;
 import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
@@ -404,7 +405,9 @@ public class AzureProvider implements CloudProvider {
         if (azureService.networkInterfaces()
                         .list()
                         .stream()
-                        .noneMatch(netIf -> netIf.getNetworkSecurityGroup().id().equals(networkSecurityGroup.id()))) {
+                        .map(NetworkInterface::getNetworkSecurityGroup)
+                        .filter(netSecGrp -> Optional.ofNullable(netSecGrp).isPresent())
+                        .noneMatch(netSecGrp -> netSecGrp.id().equals(networkSecurityGroup.id()))) {
             azureService.networkSecurityGroups().deleteById(networkSecurityGroup.id());
         }
 
@@ -412,7 +415,11 @@ public class AzureProvider implements CloudProvider {
         if (azureService.networkInterfaces()
                         .list()
                         .stream()
-                        .noneMatch(netIf -> netIf.primaryIpConfiguration().getNetwork().id().equals(network.id()))) {
+                        .map(NetworkInterface::primaryIpConfiguration)
+                        .filter(ipConf -> Optional.ofNullable(ipConf).isPresent())
+                        .map(NicIpConfiguration::getNetwork)
+                        .filter(net -> Optional.ofNullable(net).isPresent())
+                        .noneMatch(net -> net.id().equals(network.id()))) {
             azureService.networks().deleteById(network.id());
         }
     }
