@@ -135,15 +135,15 @@ public class AzureProvider implements CloudProvider {
                                      .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
                                                                              instance + "'"));
 
-        // Check for Image by name first and then by key
-        String imageNameOrKey = Optional.ofNullable(instance.getImage())
-                                        .orElseThrow(() -> new RuntimeException("ERROR missing Image name (or key) from instance: '" +
-                                                                                instance + "'"));
+        // Check for Image by name first and then by id
+        String imageNameOrId = Optional.ofNullable(instance.getImage())
+                                       .orElseThrow(() -> new RuntimeException("ERROR missing Image name/id from instance: '" +
+                                                                               instance + "'"));
         VirtualMachineCustomImage image = getImageByName(azureService,
-                                                         imageNameOrKey).orElseGet(() -> getImageByKey(azureService,
-                                                                                                       imageNameOrKey).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
-                                                                                                                                                              instance.getImage() +
-                                                                                                                                                              "'")));
+                                                         imageNameOrId).orElseGet(() -> getImageById(azureService,
+                                                                                                     imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
+                                                                                                                                                           instance.getImage() +
+                                                                                                                                                           "'")));
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -227,11 +227,11 @@ public class AzureProvider implements CloudProvider {
                            .findAny();
     }
 
-    private Optional<VirtualMachineCustomImage> getImageByKey(Azure azureService, String key) {
+    private Optional<VirtualMachineCustomImage> getImageById(Azure azureService, String id) {
         return azureService.virtualMachineCustomImages()
                            .list()
                            .stream()
-                           .filter(customImage -> customImage.key().equals(key))
+                           .filter(customImage -> customImage.id().equals(id))
                            .findAny();
     }
 
