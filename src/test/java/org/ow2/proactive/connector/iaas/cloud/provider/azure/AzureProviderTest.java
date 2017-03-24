@@ -212,9 +212,6 @@ public class AzureProviderTest {
     private NicIpConfiguration nicIpConfiguration;
 
     @Mock
-    private Creatable<NetworkInterface> creatableNetworkInterface;
-
-    @Mock
     private ImageOSDisk imageOSDisk;
 
     @Mock
@@ -233,6 +230,9 @@ public class AzureProviderTest {
     private Disks disks;
 
     @Mock
+    private Creatable<NetworkInterface> creatableNetworkInterface;
+
+    @Mock
     private NetworkInterface networkInterface;
 
     @Mock
@@ -240,6 +240,21 @@ public class AzureProviderTest {
 
     @Mock
     private NetworkInterfaces networkInterfaces;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.Blank defineNetworkInterface;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithGroup networkInterfaceWithRegion;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithPrimaryNetwork networkInterfaceWithResourceGroup;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithPrimaryPrivateIp networkInterfaceWithPrimaryPrivateIp;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithCreate networkInterfaceWithCreate;
 
     @Mock
     private VirtualMachineExtension virtualMachineExtension;
@@ -297,29 +312,42 @@ public class AzureProviderTest {
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getPagedList();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
+        PagedList<ResourceGroup> pagedListResourceGroup = getPagedList();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
         when(resourceGroups.getByName("resourceGroup")).thenReturn(resourceGroup);
 
+        // NetworkInterfaces
+        PagedList<NetworkInterface> pagedListNetworkInterfaces = getPagedList();
+        pagedListNetworkInterfaces.add(networkInterface);
+        when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
+        when(networkInterfaces.define(anyString())).thenReturn(defineNetworkInterface);
+        when(defineNetworkInterface.withRegion(any(Region.class))).thenReturn(networkInterfaceWithRegion);
+        when(networkInterfaceWithRegion.withExistingResourceGroup(any(ResourceGroup.class))).thenReturn(networkInterfaceWithResourceGroup);
+        when(networkInterfaceWithResourceGroup.withNewPrimaryNetwork(creatableVirtualNetwork)).thenReturn(networkInterfaceWithPrimaryPrivateIp);
+        when(networkInterfaceWithPrimaryPrivateIp.withPrimaryPrivateIpAddressDynamic()).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withExistingNetworkSecurityGroup(networkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withNewPrimaryPublicIpAddress(creatablePublicIpAddress)).thenReturn(networkInterfaceWithCreate);
+
         // Prepare Linux VirtualMachine
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(networkInterfaceWithCreate)).thenReturn(virtualMachineWithOS);
         when(virtualMachineWithOS.withLinuxCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithLinuxRootUsername);
         when(virtualMachineWithLinuxRootUsername.withRootUsername(anyString())).thenReturn(creatableLinuxVMWithoutCredentials);
         when(creatableLinuxVMWithoutCredentials.withRootPassword(anyString())).thenReturn(creatableLinuxVMWithImage);
@@ -440,30 +468,43 @@ public class AzureProviderTest {
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getPagedList();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         pagedListVirtualMachine.add(virtualMachine2);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
+        PagedList<ResourceGroup> pagedListResourceGroup = getPagedList();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
         when(resourceGroups.getByName("resourceGroup")).thenReturn(resourceGroup);
 
+        // NetworkInterfaces
+        PagedList<NetworkInterface> pagedListNetworkInterfaces = getPagedList();
+        pagedListNetworkInterfaces.add(networkInterface);
+        when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
+        when(networkInterfaces.define(anyString())).thenReturn(defineNetworkInterface);
+        when(defineNetworkInterface.withRegion(any(Region.class))).thenReturn(networkInterfaceWithRegion);
+        when(networkInterfaceWithRegion.withExistingResourceGroup(any(ResourceGroup.class))).thenReturn(networkInterfaceWithResourceGroup);
+        when(networkInterfaceWithResourceGroup.withNewPrimaryNetwork(creatableVirtualNetwork)).thenReturn(networkInterfaceWithPrimaryPrivateIp);
+        when(networkInterfaceWithPrimaryPrivateIp.withPrimaryPrivateIpAddressDynamic()).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withExistingNetworkSecurityGroup(networkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
+        when(networkInterfaceWithCreate.withNewPrimaryPublicIpAddress(creatablePublicIpAddress)).thenReturn(networkInterfaceWithCreate);
+
         // Prepare Windows VirtualMachine
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(networkInterfaceWithCreate)).thenReturn(virtualMachineWithOS);
         when(virtualMachineWithOS.withWindowsCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithWindowsAdminUsername);
         when(virtualMachineWithWindowsAdminUsername.withAdminUsername(anyString())).thenReturn(creatableWindowsVMWithoutCredentials);
         when(creatableWindowsVMWithoutCredentials.withAdminPassword(anyString())).thenReturn(creatableWindowsVMWithImage);
@@ -521,13 +562,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
+        PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
 
@@ -579,13 +620,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
+        PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         pagedListNetworkInterface.add(networkInterface);
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
@@ -910,7 +951,7 @@ public class AzureProviderTest {
         verify(azureServiceCache).removeService(infrastructure);
     }
 
-    private <T> PagedList<T> getVirtualMachineCustomImages() {
+    private <T> PagedList<T> getPagedList() {
         return new PagedList<T>() {
             @Override
             public Page<T> nextPage(String nextPageLink) throws RestException, IOException {
