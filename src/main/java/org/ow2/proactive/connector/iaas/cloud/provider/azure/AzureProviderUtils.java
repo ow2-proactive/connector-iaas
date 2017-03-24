@@ -73,6 +73,14 @@ public class AzureProviderUtils {
                            .findAny();
     }
 
+    public Optional<NetworkSecurityGroup> searchNetworkSecurityGroupByName(Azure azureService, String name) {
+        return azureService.networkSecurityGroups()
+                           .list()
+                           .stream()
+                           .filter(networkSecurityGroups -> networkSecurityGroups.name().equals(name))
+                           .findAny();
+    }
+
     public Set<VirtualMachine> getAllVirtualMachines(Azure azureService) {
 
         return azureService.virtualMachines().list().stream().collect(Collectors.toSet());
