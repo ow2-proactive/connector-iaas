@@ -240,17 +240,22 @@ public class AzureProviderUtils {
                            .withExistingPrimaryPublicIpAddress(publicIpAddress);
     }
 
-    public Creatable<NetworkInterface> prepareNetworkInterfaceFromScratch(Azure azureService, Region region,
+    public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
             ResourceGroup resourceGroup, String name, Creatable<Network> creatableVirtualNetwork,
             Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
-            Creatable<PublicIpAddress> creatablePublicIpAddress) {
-        return azureService.networkInterfaces()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .withNewPrimaryNetwork(creatableVirtualNetwork)
-                           .withPrimaryPrivateIpAddressDynamic()
-                           .withNewNetworkSecurityGroup(creatableNetworkSecurityGroup)
-                           .withNewPrimaryPublicIpAddress(creatablePublicIpAddress);
+            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIpAddress> creatablePublicIpAddress) {
+
+        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage1 = azureService.networkInterfaces()
+                                                                                                  .define(name)
+                                                                                                  .withRegion(region)
+                                                                                                  .withExistingResourceGroup(resourceGroup)
+                                                                                                  .withNewPrimaryNetwork(creatableVirtualNetwork)
+                                                                                                  .withPrimaryPrivateIpAddressDynamic();
+
+        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage2 = Optional.ofNullable(optionalNetworkSecurityGroup)
+                                                                                              .map(networkInterfaceCreationStage1::withExistingNetworkSecurityGroup)
+                                                                                              .orElseGet(() -> networkInterfaceCreationStage1.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup));
+
+        return networkInterfaceCreationStage2.withNewPrimaryPublicIpAddress(creatablePublicIpAddress);
     }
 }
