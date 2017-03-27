@@ -29,6 +29,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -297,19 +298,22 @@ public class AzureProviderTest {
                                                        any(ResourceGroup.class),
                                                        anyString(),
                                                        anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterfaceFromScratch(any(Azure.class),
-                                                                   any(Region.class),
-                                                                   any(ResourceGroup.class),
-                                                                   anyString(),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
+                                                        any(Region.class),
+                                                        any(ResourceGroup.class),
+                                                        anyString(),
+                                                        any(Creatable.class),
+                                                        any(Creatable.class),
+                                                        nullable(NetworkSecurityGroup.class),
+                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
         when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
+        when(azureProviderUtils.searchNetworkSecurityGroupByName(any(Azure.class),
+                                                                 anyString())).thenReturn(Optional.of(networkSecurityGroup));
 
         // Images
         PagedList<VirtualMachineCustomImage> pagedListCustomImage = getPagedList();
@@ -330,24 +334,11 @@ public class AzureProviderTest {
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
         when(resourceGroups.getByName("resourceGroup")).thenReturn(resourceGroup);
 
-        // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterfaces = getPagedList();
-        pagedListNetworkInterfaces.add(networkInterface);
-        when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
-        when(networkInterfaces.define(anyString())).thenReturn(defineNetworkInterface);
-        when(defineNetworkInterface.withRegion(any(Region.class))).thenReturn(networkInterfaceWithRegion);
-        when(networkInterfaceWithRegion.withExistingResourceGroup(any(ResourceGroup.class))).thenReturn(networkInterfaceWithResourceGroup);
-        when(networkInterfaceWithResourceGroup.withNewPrimaryNetwork(creatableVirtualNetwork)).thenReturn(networkInterfaceWithPrimaryPrivateIp);
-        when(networkInterfaceWithPrimaryPrivateIp.withPrimaryPrivateIpAddressDynamic()).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withExistingNetworkSecurityGroup(networkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withNewPrimaryPublicIpAddress(creatablePublicIpAddress)).thenReturn(networkInterfaceWithCreate);
-
         // Prepare Linux VirtualMachine
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(networkInterfaceWithCreate)).thenReturn(virtualMachineWithOS);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
         when(virtualMachineWithOS.withLinuxCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithLinuxRootUsername);
         when(virtualMachineWithLinuxRootUsername.withRootUsername(anyString())).thenReturn(creatableLinuxVMWithoutCredentials);
         when(creatableLinuxVMWithoutCredentials.withRootPassword(anyString())).thenReturn(creatableLinuxVMWithImage);
@@ -387,24 +378,20 @@ public class AzureProviderTest {
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getTag(), is("vmTag"));
+        assertThat(createdInstances.get(0).getImage(), is("imageName"));
 
         // Instance with public key
         instance = InstanceFixture.simpleInstanceWithPublicKey("vmTag", "imageName", "ssh-public-key");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getCredentials().getPublicKey(), is("ssh-public-key"));
 
         // Instance with initScript
         instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
-
-        // Instance with initScript
-        instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
-        assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getInitScript().getScripts().length, is(2));
 
         // Instance with resourceGroup and region
         instance = InstanceFixture.getInstanceWithResourceGroupAndRegion("vmId",
@@ -420,7 +407,23 @@ public class AzureProviderTest {
                                                                          "eastus");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getOptions().getResourceGroup(), is("resourceGroup"));
+        assertThat(createdInstances.get(0).getOptions().getRegion(), is("eastus"));
+
+        // Instance with security group
+        instance = InstanceFixture.getInstanceWithSecurityGroup("vmId",
+                                                                "vmTag",
+                                                                "imageName",
+                                                                "1",
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                "securityGroup");
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        assertThat(createdInstances.size(), is(1));
+        assertThat(createdInstances.get(0).getOptions().getSecurityGroupNames().get(0), is("securityGroup"));
     }
 
     @Test
@@ -453,13 +456,14 @@ public class AzureProviderTest {
                                                        any(ResourceGroup.class),
                                                        anyString(),
                                                        anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterfaceFromScratch(any(Azure.class),
-                                                                   any(Region.class),
-                                                                   any(ResourceGroup.class),
-                                                                   anyString(),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
+                                                        any(Region.class),
+                                                        any(ResourceGroup.class),
+                                                        anyString(),
+                                                        any(Creatable.class),
+                                                        any(Creatable.class),
+                                                        nullable(NetworkSecurityGroup.class),
+                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
         when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
@@ -487,24 +491,11 @@ public class AzureProviderTest {
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
         when(resourceGroups.getByName("resourceGroup")).thenReturn(resourceGroup);
 
-        // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterfaces = getPagedList();
-        pagedListNetworkInterfaces.add(networkInterface);
-        when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
-        when(networkInterfaces.define(anyString())).thenReturn(defineNetworkInterface);
-        when(defineNetworkInterface.withRegion(any(Region.class))).thenReturn(networkInterfaceWithRegion);
-        when(networkInterfaceWithRegion.withExistingResourceGroup(any(ResourceGroup.class))).thenReturn(networkInterfaceWithResourceGroup);
-        when(networkInterfaceWithResourceGroup.withNewPrimaryNetwork(creatableVirtualNetwork)).thenReturn(networkInterfaceWithPrimaryPrivateIp);
-        when(networkInterfaceWithPrimaryPrivateIp.withPrimaryPrivateIpAddressDynamic()).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withExistingNetworkSecurityGroup(networkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup)).thenReturn(networkInterfaceWithCreate);
-        when(networkInterfaceWithCreate.withNewPrimaryPublicIpAddress(creatablePublicIpAddress)).thenReturn(networkInterfaceWithCreate);
-
         // Prepare Windows VirtualMachine
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(networkInterfaceWithCreate)).thenReturn(virtualMachineWithOS);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
         when(virtualMachineWithOS.withWindowsCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithWindowsAdminUsername);
         when(virtualMachineWithWindowsAdminUsername.withAdminUsername(anyString())).thenReturn(creatableWindowsVMWithoutCredentials);
         when(creatableWindowsVMWithoutCredentials.withAdminPassword(anyString())).thenReturn(creatableWindowsVMWithImage);
