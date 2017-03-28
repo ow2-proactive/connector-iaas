@@ -173,6 +173,13 @@ public class AzureProvider implements CloudProvider {
                                                                                                                           resourceGroup,
                                                                                                                           createUniqueSecurityGroupName(instance.getTag()));
 
+        // Get existing security group if specified
+        Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)
+                                                                             .map(secGrpNames -> secGrpNames.get(0))
+                                                                             .map(secGrpName -> azureProviderUtils.searchNetworkSecurityGroupByName(azureService,
+                                                                                                                                                    secGrpName)
+                                                                                                                  .get());
+
         // Prepare the VM(s)
         Optional<Boolean> optionalStaticPublicIP = options.map(Options::getStaticPublicIP);
         List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
@@ -182,7 +189,7 @@ public class AzureProvider implements CloudProvider {
                                                                                 // Create a new public IP address (one per VM)
                                                                                 String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                               instanceNumber));
-                                                                                Creatable<PublicIpAddress> creatablePublicIPAddress = azureProviderUtils.preparePublicIPAddress(azureService,
+                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderUtils.preparePublicIPAddress(azureService,
                                                                                                                                                                                 region,
                                                                                                                                                                                 resourceGroup,
                                                                                                                                                                                 publicIPAddressName,
@@ -191,13 +198,14 @@ public class AzureProvider implements CloudProvider {
                                                                                 // Prepare a new network interface (one per VM)
                                                                                 String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                                        instanceNumber));
-                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderUtils.prepareNetworkInterfaceFromScratch(azureService,
-                                                                                                                                                                                              region,
-                                                                                                                                                                                              resourceGroup,
-                                                                                                                                                                                              networkInterfaceName,
-                                                                                                                                                                                              creatableVirtualNetwork,
-                                                                                                                                                                                              creatableNetworkSecurityGroup,
-                                                                                                                                                                                              creatablePublicIPAddress);
+                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
+                                                                                                                                                                                   region,
+                                                                                                                                                                                   resourceGroup,
+                                                                                                                                                                                   networkInterfaceName,
+                                                                                                                                                                                   creatableVirtualNetwork,
+                                                                                                                                                                                   creatableNetworkSecurityGroup,
+                                                                                                                                                                                   optionalNetworkSecurityGroup.orElse(null),
+                                                                                                                                                                                   creatablePublicIpAddress);
 
                                                                                 return prepareVirtualMachine(instance,
                                                                                                              azureService,

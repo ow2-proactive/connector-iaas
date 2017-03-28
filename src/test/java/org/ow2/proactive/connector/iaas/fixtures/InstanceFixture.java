@@ -151,7 +151,7 @@ public class InstanceFixture {
             String securityGroup) {
 
         List<String> securityGroupNames = new ArrayList<String>();
-        securityGroupNames.add("default1");
+        securityGroupNames.add(securityGroup);
         securityGroupNames.add("default2");
         return new Instance(id,
                             tag,

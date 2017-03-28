@@ -29,6 +29,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
@@ -212,9 +213,6 @@ public class AzureProviderTest {
     private NicIpConfiguration nicIpConfiguration;
 
     @Mock
-    private Creatable<NetworkInterface> creatableNetworkInterface;
-
-    @Mock
     private ImageOSDisk imageOSDisk;
 
     @Mock
@@ -233,6 +231,9 @@ public class AzureProviderTest {
     private Disks disks;
 
     @Mock
+    private Creatable<NetworkInterface> creatableNetworkInterface;
+
+    @Mock
     private NetworkInterface networkInterface;
 
     @Mock
@@ -240,6 +241,21 @@ public class AzureProviderTest {
 
     @Mock
     private NetworkInterfaces networkInterfaces;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.Blank defineNetworkInterface;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithGroup networkInterfaceWithRegion;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithPrimaryNetwork networkInterfaceWithResourceGroup;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithPrimaryPrivateIp networkInterfaceWithPrimaryPrivateIp;
+
+    @Mock
+    private NetworkInterface.DefinitionStages.WithCreate networkInterfaceWithCreate;
 
     @Mock
     private VirtualMachineExtension virtualMachineExtension;
@@ -282,34 +298,37 @@ public class AzureProviderTest {
                                                        any(ResourceGroup.class),
                                                        anyString(),
                                                        anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterfaceFromScratch(any(Azure.class),
-                                                                   any(Region.class),
-                                                                   any(ResourceGroup.class),
-                                                                   anyString(),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
+                                                        any(Region.class),
+                                                        any(ResourceGroup.class),
+                                                        anyString(),
+                                                        any(Creatable.class),
+                                                        any(Creatable.class),
+                                                        nullable(NetworkSecurityGroup.class),
+                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
         when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
                                                                anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
+        when(azureProviderUtils.searchNetworkSecurityGroupByName(any(Azure.class),
+                                                                 anyString())).thenReturn(Optional.of(networkSecurityGroup));
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getPagedList();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
+        PagedList<ResourceGroup> pagedListResourceGroup = getPagedList();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
@@ -359,24 +378,20 @@ public class AzureProviderTest {
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getTag(), is("vmTag"));
+        assertThat(createdInstances.get(0).getImage(), is("imageName"));
 
         // Instance with public key
         instance = InstanceFixture.simpleInstanceWithPublicKey("vmTag", "imageName", "ssh-public-key");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getCredentials().getPublicKey(), is("ssh-public-key"));
 
         // Instance with initScript
         instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
-
-        // Instance with initScript
-        instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
-        assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getInitScript().getScripts().length, is(2));
 
         // Instance with resourceGroup and region
         instance = InstanceFixture.getInstanceWithResourceGroupAndRegion("vmId",
@@ -392,7 +407,23 @@ public class AzureProviderTest {
                                                                          "eastus");
         createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
         assertThat(createdInstances.size(), is(1));
-        assertThat(createdInstances.get(0).getId(), is("vmId"));
+        assertThat(createdInstances.get(0).getOptions().getResourceGroup(), is("resourceGroup"));
+        assertThat(createdInstances.get(0).getOptions().getRegion(), is("eastus"));
+
+        // Instance with security group
+        instance = InstanceFixture.getInstanceWithSecurityGroup("vmId",
+                                                                "vmTag",
+                                                                "imageName",
+                                                                "1",
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                "securityGroup");
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        assertThat(createdInstances.size(), is(1));
+        assertThat(createdInstances.get(0).getOptions().getSecurityGroupNames().get(0), is("securityGroup"));
     }
 
     @Test
@@ -425,13 +456,14 @@ public class AzureProviderTest {
                                                        any(ResourceGroup.class),
                                                        anyString(),
                                                        anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterfaceFromScratch(any(Azure.class),
-                                                                   any(Region.class),
-                                                                   any(ResourceGroup.class),
-                                                                   anyString(),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class),
-                                                                   any(Creatable.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
+                                                        any(Region.class),
+                                                        any(ResourceGroup.class),
+                                                        anyString(),
+                                                        any(Creatable.class),
+                                                        any(Creatable.class),
+                                                        nullable(NetworkSecurityGroup.class),
+                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
         when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
                                                                any(Region.class),
                                                                any(ResourceGroup.class),
@@ -440,20 +472,20 @@ public class AzureProviderTest {
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
         // Images
-        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getVirtualMachineCustomImages();
+        PagedList<VirtualMachineCustomImage> pagedListCustomImage = getPagedList();
         pagedListCustomImage.add(virtualMachineCustomImage);
         when(virtualMachineCustomImages.list()).thenReturn(pagedListCustomImage);
         when(azureService.virtualMachineCustomImages()).thenReturn(virtualMachineCustomImages);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         pagedListVirtualMachine.add(virtualMachine2);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // ResourceGroups
-        PagedList<ResourceGroup> pagedListResourceGroup = getVirtualMachineCustomImages();
+        PagedList<ResourceGroup> pagedListResourceGroup = getPagedList();
         pagedListResourceGroup.add(resourceGroup);
         when(resourceGroups.list()).thenReturn(pagedListResourceGroup);
         when(azureService.resourceGroups()).thenReturn(resourceGroups);
@@ -521,13 +553,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
+        PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
 
@@ -579,13 +611,13 @@ public class AzureProviderTest {
         when(dataDisksMap.values()).thenReturn(dataDisks);
 
         // VirtualMachines
-        PagedList<VirtualMachine> pagedListVirtualMachine = getVirtualMachineCustomImages();
+        PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
-        PagedList<NetworkInterface> pagedListNetworkInterface = getVirtualMachineCustomImages();
+        PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         pagedListNetworkInterface.add(networkInterface);
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
@@ -910,7 +942,7 @@ public class AzureProviderTest {
         verify(azureServiceCache).removeService(infrastructure);
     }
 
-    private <T> PagedList<T> getVirtualMachineCustomImages() {
+    private <T> PagedList<T> getPagedList() {
         return new PagedList<T>() {
             @Override
             public Page<T> nextPage(String nextPageLink) throws RestException, IOException {
