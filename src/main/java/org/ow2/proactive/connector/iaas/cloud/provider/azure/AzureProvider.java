@@ -117,7 +117,7 @@ public class AzureProvider implements CloudProvider {
 
     private static final String SCRIPT_EXTENSION_CMD_KEY = "commandToExecute";
 
-    private static final String SCRIPT_SEPARATOR = "&&";
+    private static final String SCRIPT_SEPARATOR = ";";
 
     private static final String SINGLE_INSTANCE_NUMBER = "1";
 
