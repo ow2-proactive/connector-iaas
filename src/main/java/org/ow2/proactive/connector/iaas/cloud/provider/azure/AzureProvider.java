@@ -168,10 +168,10 @@ public class AzureProvider implements CloudProvider {
                                                                                               optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
 
         // Prepare a new  security group (same for all VMs)
-        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareSSHNetworkSecurityGroup(azureService,
-                                                                                                                          region,
-                                                                                                                          resourceGroup,
-                                                                                                                          createUniqueSecurityGroupName(instance.getTag()));
+        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareProactiveNetworkSecurityGroup(azureService,
+                                                                                                                                region,
+                                                                                                                                resourceGroup,
+                                                                                                                                createUniqueSecurityGroupName(instance.getTag()));
 
         // Get existing security group if specified
         Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)

@@ -306,10 +306,10 @@ public class AzureProviderTest {
                                                         any(Creatable.class),
                                                         nullable(NetworkSecurityGroup.class),
                                                         any(Creatable.class))).thenReturn(creatableNetworkInterface);
-        when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
-                                                               any(Region.class),
-                                                               any(ResourceGroup.class),
-                                                               anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
+                                                                     any(Region.class),
+                                                                     any(ResourceGroup.class),
+                                                                     anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
         when(azureProviderUtils.searchNetworkSecurityGroupByName(any(Azure.class),
@@ -464,10 +464,10 @@ public class AzureProviderTest {
                                                         any(Creatable.class),
                                                         nullable(NetworkSecurityGroup.class),
                                                         any(Creatable.class))).thenReturn(creatableNetworkInterface);
-        when(azureProviderUtils.prepareSSHNetworkSecurityGroup(any(Azure.class),
-                                                               any(Region.class),
-                                                               any(ResourceGroup.class),
-                                                               anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
+                                                                     any(Region.class),
+                                                                     any(ResourceGroup.class),
+                                                                     anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
