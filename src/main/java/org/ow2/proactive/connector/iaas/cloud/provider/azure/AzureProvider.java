@@ -401,45 +401,78 @@ public class AzureProvider implements CloudProvider {
                                                                                       instanceId + "'"));
 
         // Retrieve all resources attached to the instance
-        NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
-        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
-        NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
-        Optional<PublicIpAddress> optionalPublicIPAddress = Optional.ofNullable(vm.getPrimaryPublicIpAddress());
+        List<NetworkInterface> networkInterfaces = vm.networkInterfaceIds()
+                                                     .stream()
+                                                     .map(id -> azureService.networkInterfaces().getById(id))
+                                                     .collect(Collectors.toList());
+        List<com.microsoft.azure.management.network.Network> networks = networkInterfaces.stream()
+                                                                                         .flatMap(networkInterface -> networkInterface.ipConfigurations()
+                                                                                                                                      .values()
+                                                                                                                                      .stream())
+                                                                                         .map(NicIpConfigurationBase::getNetwork)
+                                                                                         .filter(network -> Optional.ofNullable(network)
+                                                                                                                    .isPresent())
+                                                                                         .distinct()
+                                                                                         .collect(Collectors.toList());
+        List<NetworkSecurityGroup> networkSecurityGroups = networkInterfaces.stream()
+                                                                            .map(NetworkInterfaceBase::getNetworkSecurityGroup)
+                                                                            .filter(networkSecurityGroup -> Optional.ofNullable(networkSecurityGroup)
+                                                                                                                    .isPresent())
+                                                                            .distinct()
+                                                                            .collect(Collectors.toList());
+        List<PublicIpAddress> publicIPAddresses = networkInterfaces.stream()
+                                                                   .map(NetworkInterface::primaryIpConfiguration)
+                                                                   .filter(ipConfiguration -> Optional.ofNullable(ipConfiguration)
+                                                                                                      .isPresent())
+                                                                   .map(NicIpConfiguration::getPublicIpAddress)
+                                                                   .filter(publicIpAddress -> Optional.ofNullable(publicIpAddress)
+                                                                                                      .isPresent())
+                                                                   .collect(Collectors.toList());
         String osDiskID = vm.osDiskId();
 
         // Delete the VM first
         azureService.virtualMachines().deleteById(vm.id());
 
-        // Then delete its network interface
-        azureService.networkInterfaces().deleteById(networkInterface.id());
+        // Then delete all network interfaces attached
+        vm.networkInterfaceIds().forEach(id -> azureService.networkInterfaces().deleteById(id));
 
-        // Delete its public IP address if present
-        optionalPublicIPAddress.ifPresent(pubIPAddr -> azureService.publicIpAddresses().deleteById(pubIPAddr.id()));
+        // Delete all public IP addresses
+        publicIPAddresses.stream()
+                         .map(PublicIpAddress::id)
+                         .forEach(id -> azureService.publicIpAddresses().deleteById(id));
 
-        // Delete its main disk (OS), and keep data disks
+        // Delete its main disk (OS), *and keep data disks*
         azureService.disks().deleteById(osDiskID);
 
-        // Delete the security group if present and not attached to any network interface
-        if (azureService.networkInterfaces()
-                        .list()
-                        .stream()
-                        .map(NetworkInterface::getNetworkSecurityGroup)
-                        .filter(netSecGrp -> Optional.ofNullable(netSecGrp).isPresent())
-                        .noneMatch(netSecGrp -> netSecGrp.id().equals(networkSecurityGroup.id()))) {
-            azureService.networkSecurityGroups().deleteById(networkSecurityGroup.id());
-        }
+        // Delete the security groups if not attached to any remaining network interface
+        networkSecurityGroups.stream()
+                             .map(NetworkSecurityGroup::id)
+                             .filter(id -> azureService.networkInterfaces()
+                                                       .list()
+                                                       .stream()
+                                                       .map(NetworkInterface::getNetworkSecurityGroup)
+                                                       .filter(networkSecurityGroup -> Optional.ofNullable(networkSecurityGroup)
+                                                                                               .isPresent())
+                                                       .noneMatch(networkSecurityGroup -> networkSecurityGroup.id()
+                                                                                                              .equals(id)))
+                             .forEach(id -> azureService.networkSecurityGroups().deleteById(id));
 
-        // Delete the virtual network if not attached to any network interface
-        if (azureService.networkInterfaces()
-                        .list()
-                        .stream()
-                        .map(NetworkInterface::primaryIpConfiguration)
-                        .filter(ipConf -> Optional.ofNullable(ipConf).isPresent())
-                        .map(NicIpConfiguration::getNetwork)
-                        .filter(net -> Optional.ofNullable(net).isPresent())
-                        .noneMatch(net -> net.id().equals(network.id()))) {
-            azureService.networks().deleteById(network.id());
-        }
+        // Delete the virtual networks if not attached to any remaining network interface
+        networks.stream()
+                .map(Network::id)
+                .filter(id -> azureService.networkInterfaces()
+                                          .list()
+                                          .stream()
+                                          .flatMap(networkInterface -> networkInterface.ipConfigurations()
+                                                                                       .values()
+                                                                                       .stream())
+                                          .filter(ipConfiguration -> Optional.ofNullable(ipConfiguration)
+                                                                             .isPresent())
+                                          .map(NicIpConfiguration::getNetwork)
+                                          .filter(network -> Optional.ofNullable(network)
+                                                                     .isPresent())
+                                          .noneMatch(network -> network.id().equals(id)))
+                .forEach(id -> azureService.networks().deleteById(id));
     }
 
     @Override
