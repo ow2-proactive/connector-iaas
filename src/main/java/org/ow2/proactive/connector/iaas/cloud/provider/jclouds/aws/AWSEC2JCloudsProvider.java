@@ -88,8 +88,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
         return createdNodeMetaData.stream()
                                   .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
-                                  .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                                                                                                 infrastructure.getId()))
+                                  .map(this::createInstanceFromNode)
                                   .collect(Collectors.toSet());
 
     }

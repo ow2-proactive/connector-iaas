@@ -28,7 +28,6 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -75,7 +74,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                         .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
-                        .map(server -> instanceCreatorFromNodeMetadata.apply(server, infrastructure.getId()))
+                        .map(this::createInstanceFromNode)
                         .collect(Collectors.toSet());
 
     }
@@ -188,9 +187,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         return serverApi.get(serverCreated.getId());
     }
 
-    protected final BiFunction<Server, String, Instance> instanceCreatorFromNodeMetadata = (server,
-            infrastructureId) -> {
-
+    private final Instance createInstanceFromNode(Server server) {
         return Instance.builder()
                        .id(region + "/" + server.getId())
                        .tag(server.getName())
@@ -199,6 +196,6 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                        .hardware(Hardware.builder().type(server.getFlavor().getName()).build())
                        .status(server.getStatus().name())
                        .build();
-    };
+    }
 
 }
