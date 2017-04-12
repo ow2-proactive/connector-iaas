@@ -81,6 +81,14 @@ public class AzureProviderUtils {
                            .findAny();
     }
 
+    public Optional<Network> searchVirtualNetworkByName(Azure azureService, String name) {
+        return azureService.networks()
+                           .list()
+                           .stream()
+                           .filter(virtualNetwork -> virtualNetwork.name().equals(name))
+                           .findAny();
+    }
+
     public Set<VirtualMachine> getAllVirtualMachines(Azure azureService) {
 
         return azureService.virtualMachines().list().stream().collect(Collectors.toSet());
@@ -247,20 +255,37 @@ public class AzureProviderUtils {
 
     public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
             ResourceGroup resourceGroup, String name, Creatable<Network> creatableVirtualNetwork,
-            Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
-            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIpAddress> creatablePublicIpAddress) {
+            Network optionalVirtualNetwork, Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
+            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIpAddress> creatablePublicIpAddress,
+            PublicIpAddress optionalPublicIpAddress) {
 
-        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage1 = azureService.networkInterfaces()
-                                                                                                  .define(name)
-                                                                                                  .withRegion(region)
-                                                                                                  .withExistingResourceGroup(resourceGroup)
-                                                                                                  .withNewPrimaryNetwork(creatableVirtualNetwork)
-                                                                                                  .withPrimaryPrivateIpAddressDynamic();
+        // Initialize configuration
+        NetworkInterface.DefinitionStages.WithPrimaryNetwork networkInterfaceCreationStage1 = azureService.networkInterfaces()
+                                                                                                          .define(name)
+                                                                                                          .withRegion(region)
+                                                                                                          .withExistingResourceGroup(resourceGroup);
 
-        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage2 = Optional.ofNullable(optionalNetworkSecurityGroup)
-                                                                                              .map(networkInterfaceCreationStage1::withExistingNetworkSecurityGroup)
-                                                                                              .orElseGet(() -> networkInterfaceCreationStage1.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup));
+        // Configure virtual network
+        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage2 = Optional.ofNullable(optionalVirtualNetwork)
+                                                                                              .map(networkInterfaceCreationStage1::withExistingPrimaryNetwork)
+                                                                                              .map(existingNetwork -> existingNetwork.withSubnet(optionalVirtualNetwork.subnets()
+                                                                                                                                                                       .keySet()
+                                                                                                                                                                       .stream()
+                                                                                                                                                                       .findFirst()
+                                                                                                                                                                       .get()))
+                                                                                              .orElseGet(() -> networkInterfaceCreationStage1.withNewPrimaryNetwork(creatableVirtualNetwork))
+                                                                                              .withPrimaryPrivateIpAddressDynamic();
 
-        return networkInterfaceCreationStage2.withNewPrimaryPublicIpAddress(creatablePublicIpAddress);
+        // Configure network security group
+        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage3 = Optional.ofNullable(optionalNetworkSecurityGroup)
+                                                                                              .map(networkInterfaceCreationStage2::withExistingNetworkSecurityGroup)
+                                                                                              .orElseGet(() -> networkInterfaceCreationStage2.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup));
+
+        // Configure public IP address
+        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage4 = Optional.ofNullable(optionalPublicIpAddress)
+                                                                                              .map(networkInterfaceCreationStage3::withExistingPrimaryPublicIpAddress)
+                                                                                              .orElseGet(() -> networkInterfaceCreationStage3.withNewPrimaryPublicIpAddress(creatablePublicIpAddress));
+
+        return networkInterfaceCreationStage4;
     }
 }

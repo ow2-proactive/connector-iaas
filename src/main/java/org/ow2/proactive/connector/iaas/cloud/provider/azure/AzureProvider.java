@@ -54,8 +54,10 @@ import com.microsoft.azure.management.compute.VirtualMachineExtension;
 import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
+import com.microsoft.azure.management.network.NetworkInterfaceBase;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.NicIpConfiguration;
+import com.microsoft.azure.management.network.NicIpConfigurationBase;
 import com.microsoft.azure.management.network.PublicIpAddress;
 import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
@@ -167,6 +169,12 @@ public class AzureProvider implements CloudProvider {
                                                                                               createUniqueVirtualNetworkName(instanceTag),
                                                                                               optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
 
+        // Get existing virtual private network if specified
+        Optional<Network> optionalVirtualNetwork = options.map(Options::getSubnetId)
+                                                          .map(subnetId -> azureProviderUtils.searchVirtualNetworkByName(azureService,
+                                                                                                                         subnetId)
+                                                                                             .get());
+
         // Prepare a new  security group (same for all VMs)
         Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareProactiveNetworkSecurityGroup(azureService,
                                                                                                                                 region,
@@ -203,9 +211,11 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                                                    resourceGroup,
                                                                                                                                                                                    networkInterfaceName,
                                                                                                                                                                                    creatableVirtualNetwork,
+                                                                                                                                                                                   optionalVirtualNetwork.orElse(null),
                                                                                                                                                                                    creatableNetworkSecurityGroup,
                                                                                                                                                                                    optionalNetworkSecurityGroup.orElse(null),
-                                                                                                                                                                                   creatablePublicIpAddress);
+                                                                                                                                                                                   creatablePublicIpAddress,
+                                                                                                                                                                                   null);
 
                                                                                 return prepareVirtualMachine(instance,
                                                                                                              azureService,
