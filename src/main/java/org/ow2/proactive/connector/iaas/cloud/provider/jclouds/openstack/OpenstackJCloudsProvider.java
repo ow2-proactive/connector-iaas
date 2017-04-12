@@ -25,6 +25,8 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -96,7 +98,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -106,13 +108,24 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
-        FloatingIP ip = api.list()
-                           .toList()
-                           .stream()
-                           .filter(floatingIP -> floatingIP.getFixedIp() == null)
-                           .findFirst()
-                           .orElseThrow(() -> new ClientErrorException("No floating IP available in the floating IP pool",
-                                                                       Response.Status.BAD_REQUEST));
+        // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
+        List<FloatingIP> floatingIPs = api.list().toList();
+        Optional<FloatingIP> optionalDesiredFloatingIp = Optional.ofNullable(optionalDesiredIp)
+                                                                 .map(desiredIp -> floatingIPs.stream()
+                                                                                              .filter(floatingIP -> floatingIP.getFixedIp() == null &&
+                                                                                                                    floatingIP.getIp()
+                                                                                                                              .equals(desiredIp))
+                                                                                              .findAny()
+                                                                                              .orElse(null));
+        FloatingIP ip = optionalDesiredFloatingIp.orElseGet(() -> floatingIPs.stream()
+                                                                             .filter(floatingIP -> floatingIP.getFixedIp() == null)
+                                                                             .filter(floatingIP -> !Optional.ofNullable(optionalDesiredIp)
+                                                                                                            .isPresent() ||
+                                                                                                   floatingIP.getIp()
+                                                                                                             .equals(optionalDesiredIp))
+                                                                             .findFirst()
+                                                                             .orElseThrow(() -> new ClientErrorException("No floating IP available in the floating IP pool",
+                                                                                                                         Response.Status.BAD_REQUEST)));
 
         try {
             api.addToServer(ip.getIp(), instanceId);
@@ -130,20 +143,28 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
         FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
-        FloatingIP ip = api.list()
-                           .toList()
-                           .stream()
-                           .filter(floatingIP -> instanceId.equals(floatingIP.getInstanceId()))
-                           .findFirst()
-                           .orElseThrow(() -> new ClientErrorException("No floating IP associated with this instance",
-                                                                       Response.Status.BAD_REQUEST));
+        // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
+        List<FloatingIP> floatingIPs = api.list().toList();
+        Optional<FloatingIP> optionalDesiredFloatingIp = Optional.ofNullable(optionalDesiredIp)
+                                                                 .map(desiredIp -> floatingIPs.stream()
+                                                                                              .filter(floatingIP -> instanceId.equals(floatingIP.getInstanceId()))
+                                                                                              .filter(floatingIP -> floatingIP.getIp()
+                                                                                                                              .equals(desiredIp))
+                                                                                              .findAny()
+                                                                                              .orElse(null));
+
+        FloatingIP ip = optionalDesiredFloatingIp.orElseGet(() -> floatingIPs.stream()
+                                                                             .filter(floatingIP -> instanceId.equals(floatingIP.getInstanceId()))
+                                                                             .findFirst()
+                                                                             .orElseThrow(() -> new ClientErrorException("No floating IP associated with this instance",
+                                                                                                                         Response.Status.BAD_REQUEST)));
 
         try {
             api.removeFromServer(ip.getIp(), instanceId);

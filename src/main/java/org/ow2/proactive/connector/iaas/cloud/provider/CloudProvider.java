@@ -55,7 +55,7 @@ public interface CloudProvider {
 
     public void deleteInfrastructure(Infrastructure infrastructure);
 
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId);
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId);
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 }

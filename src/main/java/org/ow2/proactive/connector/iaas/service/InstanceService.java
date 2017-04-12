@@ -138,28 +138,34 @@ public class InstanceService {
         return getAllInstances(infrastructureId).stream().filter(cachedInstances::contains).collect(Collectors.toSet());
     }
 
-    public String addToInstancePublicIp(String infrastructureId, String instanceId) {
+    public String addToInstancePublicIp(String infrastructureId, String instanceId, String optionalDesiredIp) {
         return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                       .map(infrastructure -> cloudManager.addToInstancePublicIp(infrastructure, instanceId))
+                       .map(infrastructure -> cloudManager.addToInstancePublicIp(infrastructure,
+                                                                                 instanceId,
+                                                                                 optionalDesiredIp))
                        .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
                                                                 "does not exists"));
     }
 
-    public void addInstancePublicIpByTag(String infrastructureId, String instanceTag) {
+    public void addInstancePublicIpByTag(String infrastructureId, String instanceTag, String optionalDesiredIp) {
         getInstanceByTag(infrastructureId,
-                         instanceTag).forEach(instance -> addToInstancePublicIp(infrastructureId, instance.getId()));
+                         instanceTag).forEach(instance -> addToInstancePublicIp(infrastructureId,
+                                                                                instance.getId(),
+                                                                                optionalDesiredIp));
     }
 
-    public void removeInstancePublicIp(String infrastructureId, String instanceId) {
+    public void removeInstancePublicIp(String infrastructureId, String instanceId, String optionalDesiredIp) {
         Infrastructure infrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
                                                 .orElseThrow(() -> new NotFoundException("infrastructure id  : " +
                                                                                          infrastructureId +
                                                                                          "does not exists"));
-        cloudManager.removeInstancePublicIp(infrastructure, instanceId);
+        cloudManager.removeInstancePublicIp(infrastructure, instanceId, optionalDesiredIp);
     }
 
-    public void removeInstancePublicIpByTag(String infrastructureId, String instanceTag) {
+    public void removeInstancePublicIpByTag(String infrastructureId, String instanceTag, String optionalDesiredIp) {
         getInstanceByTag(infrastructureId,
-                         instanceTag).forEach(instance -> removeInstancePublicIp(infrastructureId, instance.getId()));
+                         instanceTag).forEach(instance -> removeInstancePublicIp(infrastructureId,
+                                                                                 instance.getId(),
+                                                                                 optionalDesiredIp));
     }
 }
