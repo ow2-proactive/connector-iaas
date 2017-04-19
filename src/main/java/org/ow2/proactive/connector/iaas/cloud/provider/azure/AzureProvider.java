@@ -626,29 +626,8 @@ public class AzureProvider implements CloudProvider {
                                                 Optional.ofNullable(netIf.primaryIpConfiguration().getPublicIpAddress())
                                                         .isPresent())) {
             // Reuse the network configuration (virtual private network & security group) of the primary network interface
-            NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
-            NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
-            com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration()
-                                                                                     .getNetwork();
-            NetworkInterface newSecondaryNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
-                                                                                                       vm.region(),
-                                                                                                       resourceGroup,
-                                                                                                       createUniqueNetworkInterfaceName(vm.name()),
-                                                                                                       network,
-                                                                                                       networkSecurityGroup,
-                                                                                                       publicIpAddress)
-                                                                              .create();
-            try {
-                vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
-            } catch (RuntimeException ex) {
-                // Cannot add new network interface, remove it and modify the primary network interface instead
-                newSecondaryNetworkInterface.update().withoutPrimaryPublicIpAddress().apply();
-                azureService.networkInterfaces().deleteById(newSecondaryNetworkInterface.id());
-                PublicIpAddress existingPublicIPAddress = vm.getPrimaryPublicIpAddress();
-                vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
-                azureService.publicIpAddresses().deleteById(existingPublicIPAddress.id());
-                vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIpAddress(publicIpAddress).apply();
-            }
+            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, publicIpAddress);
+
             // Otherwise add the public address to the first network interface without public IP
         } else {
             networkInterfaces.stream()
@@ -662,6 +641,50 @@ public class AzureProvider implements CloudProvider {
         }
 
         return publicIpAddress.ipAddress();
+    }
+
+    private void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
+            ResourceGroup resourceGroup, PublicIpAddress publicIpAddress) {
+        // Reuse the network configuration (virtual private network & security group) of the primary network interface
+        NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
+        NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
+        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
+        NetworkInterface newSecondaryNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
+                                                                                                   vm.region(),
+                                                                                                   resourceGroup,
+                                                                                                   createUniqueNetworkInterfaceName(vm.name()),
+                                                                                                   network,
+                                                                                                   networkSecurityGroup,
+                                                                                                   publicIpAddress)
+                                                                          .create();
+        try {
+            vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
+        } catch (RuntimeException ex) {
+            // Cannot add new network interface, remove it and modify the primary network interface instead
+            handleAddPublicIpWithNewSecondaryNetworkInterfaceException(azureService,
+                                                                       vm,
+                                                                       publicIpAddress,
+                                                                       newSecondaryNetworkInterface);
+        }
+    }
+
+    private void handleAddPublicIpWithNewSecondaryNetworkInterfaceException(Azure azureService, VirtualMachine vm,
+            PublicIpAddress publicIpAddress, NetworkInterface newSecondaryNetworkInterface) {
+        removePublicIpFromNetworkInterface(azureService, newSecondaryNetworkInterface);
+        replaceVMPrimaryPublicIpAddress(azureService, vm, publicIpAddress);
+    }
+
+    private void removePublicIpFromNetworkInterface(Azure azureService, NetworkInterface networkInterface) {
+        networkInterface.update().withoutPrimaryPublicIpAddress().apply();
+        azureService.networkInterfaces().deleteById(networkInterface.id());
+    }
+
+    private void replaceVMPrimaryPublicIpAddress(Azure azureService, VirtualMachine vm,
+            PublicIpAddress newPublicIpAddress) {
+        PublicIpAddress existingPublicIPAddress = vm.getPrimaryPublicIpAddress();
+        vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
+        azureService.publicIpAddresses().deleteById(existingPublicIPAddress.id());
+        vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIpAddress(newPublicIpAddress).apply();
     }
 
     @Override
