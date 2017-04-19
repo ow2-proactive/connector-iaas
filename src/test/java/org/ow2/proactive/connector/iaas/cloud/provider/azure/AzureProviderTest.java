@@ -58,6 +58,7 @@ import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -274,6 +275,8 @@ public class AzureProviderTest {
     @Mock
     private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
 
+    private Tag connectorIaasTag = Tag.builder().key("default-key").value("random-value").build();
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -385,7 +388,9 @@ public class AzureProviderTest {
 
         // Simple instance creation
         instance = InstanceFixture.simpleInstanceWithTagAndImage("vmTag", "imageName");
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getId(), is("vmId"));
         assertThat(createdInstances.get(0).getTag(), is("vmTag"));
@@ -393,13 +398,17 @@ public class AzureProviderTest {
 
         // Instance with public key
         instance = InstanceFixture.simpleInstanceWithPublicKey("vmTag", "imageName", "ssh-public-key");
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getCredentials().getPublicKey(), is("ssh-public-key"));
 
         // Instance with initScript
         instance = InstanceFixture.simpleInstanceWithInitScripts("vmTag", "imageName", new String[] { "id", "pwd" });
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getInitScript().getScripts().length, is(2));
 
@@ -415,7 +424,9 @@ public class AzureProviderTest {
                                                                          null,
                                                                          "resourceGroup",
                                                                          "eastus");
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getOptions().getResourceGroup(), is("resourceGroup"));
         assertThat(createdInstances.get(0).getOptions().getRegion(), is("eastus"));
@@ -431,7 +442,9 @@ public class AzureProviderTest {
                                                                 null,
                                                                 null,
                                                                 "securityGroup");
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.get(0).getOptions().getSecurityGroupNames().get(0), is("securityGroup"));
     }
@@ -532,7 +545,9 @@ public class AzureProviderTest {
                                                                       "domain",
                                                                       "subscriptionId");
         instance = InstanceFixture.simpleInstanceWithTagAndImage("vmTag", "imageName");
-        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure, instance));
+        createdInstances = new ArrayList<Instance>(azureProvider.createInstance(infrastructure,
+                                                                                instance,
+                                                                                connectorIaasTag));
         assertThat(createdInstances.size(), is(2));
         assertThat(createdInstances.get(0).getId(), anyOf(is("vmId"), is("vmId2")));
         assertThat(createdInstances.get(1).getId(), anyOf(is("vmId"), is("vmId2")));

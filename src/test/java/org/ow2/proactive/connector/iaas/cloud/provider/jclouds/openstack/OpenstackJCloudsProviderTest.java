@@ -74,6 +74,7 @@ import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -112,6 +113,8 @@ public class OpenstackJCloudsProviderTest {
 
     @Mock
     private Resource resource;
+
+    private Tag connectorIaasTag = Tag.builder().key("default-key").value("random-value").build();
 
     @Before
     public void init() {
@@ -187,7 +190,7 @@ public class OpenstackJCloudsProviderTest {
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
         assertThat(created.size(), is(1));
 
@@ -231,7 +234,7 @@ public class OpenstackJCloudsProviderTest {
 
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenThrow(new RuntimeException());
 
-        jcloudsProvider.createInstance(infratructure, instance);
+        jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
     }
 

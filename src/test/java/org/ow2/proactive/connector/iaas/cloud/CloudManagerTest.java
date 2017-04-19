@@ -40,6 +40,7 @@ import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 
@@ -53,6 +54,11 @@ public class CloudManagerTest {
 
     @Mock
     private CloudProvider anotheroneCloudProvider;
+
+    private final Tag connectorIaasTag = Tag.builder()
+                                            .key(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_KEY)
+                                            .value(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_VALUE)
+                                            .build();
 
     @Before
     public void init() {
@@ -69,7 +75,7 @@ public class CloudManagerTest {
         Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure("sometype");
         Instance instance = InstanceFixture.simpleInstance("id");
         cloudManager.createInstance(infrastructure, instance);
-        verify(defaultCloudProvider, times(1)).createInstance(infrastructure, instance);
+        verify(defaultCloudProvider, times(1)).createInstance(infrastructure, instance, connectorIaasTag);
     }
 
     @Test

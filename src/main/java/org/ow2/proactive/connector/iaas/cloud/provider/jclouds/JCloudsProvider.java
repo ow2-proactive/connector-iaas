@@ -52,6 +52,7 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -75,15 +76,27 @@ public abstract class JCloudsProvider implements CloudProvider {
         return createInstancesFromNodes(getAllNodes(infrastructure));
     }
 
-    private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listNodes();
-    }
-
     private Set<Instance> createInstancesFromNodes(Set<? extends ComputeMetadata> nodes) {
         return nodes.stream()
                     .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
                     .map(this::createInstanceFromNode)
                     .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag) {
+        return createInstancesFromNodes(getAllNodes(infrastructure).stream()
+                                                                   .filter(node -> node.getUserMetadata()
+                                                                                       .keySet()
+                                                                                       .contains(connectorIaasTag.getKey()) &&
+                                                                                   node.getUserMetadata()
+                                                                                       .get(connectorIaasTag.getKey())
+                                                                                       .equals(connectorIaasTag.getValue()))
+                                                                   .collect(Collectors.toSet()));
+    }
+
+    private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listNodes();
     }
 
     @Override

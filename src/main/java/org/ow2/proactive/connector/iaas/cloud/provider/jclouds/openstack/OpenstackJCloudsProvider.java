@@ -48,6 +48,7 @@ import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Network;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -62,7 +63,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     private final String type = "openstack-nova";
 
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -70,7 +71,9 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         ServerApi serverApi = novaApi.getServerApi(region);
 
-        CreateServerOptions serverOptions = createOptions(instance);
+        // Retrieve and add tags to the VM
+        List<Tag> tags = retrieveAllTags(connectorIaasTag, instance.getOptions());
+        CreateServerOptions serverOptions = createOptions(instance, tags);
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                         .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
@@ -79,7 +82,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     }
 
-    private CreateServerOptions createOptions(Instance instance) {
+    private CreateServerOptions createOptions(Instance instance, List<Tag> tags) {
 
         CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(instance.getCredentials()
                                                                                                 .getPublicKeyName())
@@ -89,7 +92,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
             createServerOptions = createServerOptions.networks(instance.getNetwork().getNetworkIds());
         }
 
-        return createServerOptions;
+        // Set tags before returning options
+        return createServerOptions.metadata(tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private boolean isNetworkIdSet(Network network) {

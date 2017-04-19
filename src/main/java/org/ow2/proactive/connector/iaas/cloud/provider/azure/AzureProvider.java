@@ -43,6 +43,7 @@ import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -132,7 +133,7 @@ public class AzureProvider implements CloudProvider {
     private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
 
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
 
         Azure azureService = azureServiceCache.getService(infrastructure);
         String instanceTag = Optional.ofNullable(instance.getTag())
@@ -148,6 +149,9 @@ public class AzureProvider implements CloudProvider {
                                                                                                      imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
                                                                                                                                                            instance.getImage() +
                                                                                                                                                            "'")));
+
+        // Retrieve tags
+        List<Tag> tags = retrieveAllTags(connectorIaasTag, instance.getOptions());
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -233,7 +237,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                              createUniqueInstanceTag(instanceTag,
                                                                                                                                      instanceNumber),
                                                                                                              image,
-                                                                                                             creatableNetworkInterface);
+                                                                                                             creatableNetworkInterface,
+                                                                                                             tags);
                                                                             })
                                                                             .collect(Collectors.toList());
 
@@ -264,7 +269,7 @@ public class AzureProvider implements CloudProvider {
 
     private Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
             ResourceGroup resourceGroup, Region region, String instanceTag, VirtualMachineCustomImage image,
-            Creatable<NetworkInterface> creatableNetworkInterface) {
+            Creatable<NetworkInterface> creatableNetworkInterface, List<Tag> tags) {
 
         // Configure the VM depending on the OS type
         VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged creatableVirtualMachineWithImage;
@@ -310,7 +315,9 @@ public class AzureProvider implements CloudProvider {
                                    .attach();
             }
         });
-        return creatableVMWithSize;
+
+        // Set tags
+        return creatableVMWithSize.withTags(tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private VirtualMachine.DefinitionStages.WithLinuxCreateManaged configureLinuxVirtualMachine(Azure azureService,
@@ -472,6 +479,19 @@ public class AzureProvider implements CloudProvider {
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService));
+    }
+
+    @Override
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag) {
+        Azure azureService = azureServiceCache.getService(infrastructure);
+        return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService)
+                                                                   .stream()
+                                                                   .filter(vm -> vm.tags().keySet().contains(
+                                                                                                             connectorIaasTag.getKey()) &&
+                                                                                 vm.tags()
+                                                                                   .get(connectorIaasTag.getKey())
+                                                                                   .equals(connectorIaasTag.getValue()))
+                                                                   .collect(Collectors.toSet()));
     }
 
     private Set<Instance> getInstancesFromVMs(Azure azureService, Set<VirtualMachine> vms) {

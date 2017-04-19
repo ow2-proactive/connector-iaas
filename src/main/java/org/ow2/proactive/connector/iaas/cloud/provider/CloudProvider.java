@@ -25,25 +25,32 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 
 public interface CloudProvider {
 
     public String getType();
 
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance);
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag);
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId);
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
+
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag);
 
     public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript);
@@ -58,4 +65,22 @@ public interface CloudProvider {
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
+
+    /**
+     * Collect tags and ensure that mandatory connector-iaas tag key is not duplicated
+     *
+     * @param connectorIaasTag  mandatory connector-iaas tag
+     * @param options           instance's options that may contain tags
+     * @return  the list of all tags
+     */
+    public default List<Tag> retrieveAllTags(Tag connectorIaasTag, Options options) {
+        List<Tag> tags = new ArrayList<>();
+        tags.add(connectorIaasTag);
+        Optional.ofNullable(options).map(Options::getTags).ifPresent(optionalTags -> {
+            tags.addAll(optionalTags.stream()
+                                    .filter(optionalTag -> !optionalTag.getKey().equals(connectorIaasTag.getKey()))
+                                    .collect(Collectors.toList()));
+        });
+        return tags;
+    }
 }

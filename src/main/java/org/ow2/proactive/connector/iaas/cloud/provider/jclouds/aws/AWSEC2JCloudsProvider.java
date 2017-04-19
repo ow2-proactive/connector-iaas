@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,6 +45,7 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.Options;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
@@ -60,7 +62,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     private final static String INSTANCE_ID_REGION_SEPARATOR = "/";
 
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -73,6 +75,9 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         Template template = templateBuilder.build();
 
         Optional.ofNullable(instance.getOptions()).ifPresent(options -> addOptions(template, options));
+
+        // Add tags
+        addTags(template, retrieveAllTags(connectorIaasTag, instance.getOptions()));
 
         Optional.ofNullable(instance.getCredentials()).ifPresent(options -> addCredential(template, options));
 
@@ -120,6 +125,12 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                .as(AWSEC2TemplateOptions.class)
                                                .subnetId(options.getSubnetId()));
 
+    }
+
+    private void addTags(Template template, List<Tag> tags) {
+        template.getOptions()
+                .as(AWSEC2TemplateOptions.class)
+                .userMetadata(tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private String getRegionFromNode(ComputeService computeService, NodeMetadata node) {

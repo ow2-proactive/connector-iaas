@@ -23,23 +23,26 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas;
+package org.ow2.proactive.connector.iaas.model;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.PropertySources;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 
+@EqualsAndHashCode
+@Getter
+@AllArgsConstructor
+@ToString
 @NoArgsConstructor
-@SpringBootApplication
-@PropertySources({ @PropertySource(value = "classpath:application.properties"),
-                   @PropertySource(value = "file:${proactive.home}/config/connector-iaas/application.properties", ignoreResourceNotFound = true) })
-public class ConnectorIaaSApp {
-    public static void main(String[] args) throws InterruptedException {
+@Builder
+public class Tag {
 
-        SpringApplication.run(ConnectorIaaSApp.class, args);
-    }
+    private String key;
+
+    private String value;
+
 }

@@ -68,6 +68,7 @@ import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -94,6 +95,8 @@ public class AWSEC2JCloudsProviderTest {
 
     @Mock
     private AWSEC2TemplateOptions awsEC2TemplateOptions;
+
+    private Tag connectorIaasTag = Tag.builder().key("default-key").value("random-value").build();
 
     @Before
     public void init() {
@@ -153,8 +156,9 @@ public class AWSEC2JCloudsProviderTest {
         when(template.getOptions()).thenReturn(templateOptions);
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
+        when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
         assertThat(created.size(), is(1));
 
@@ -222,7 +226,7 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
         assertThat(created.size(), is(1));
 
@@ -277,7 +281,7 @@ public class AWSEC2JCloudsProviderTest {
                                                Integer.parseInt(instance.getNumber()),
                                                template)).thenThrow(new RuntimeException());
 
-        jcloudsProvider.createInstance(infratructure, instance);
+        jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
     }
 
@@ -366,7 +370,7 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
         assertThat(created.size(), is(1));
 
@@ -436,7 +440,7 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance, connectorIaasTag);
 
         assertThat(created.size(), is(1));
 

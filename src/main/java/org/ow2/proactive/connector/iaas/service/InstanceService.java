@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 import javax.ws.rs.NotFoundException;
 
-import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -43,9 +42,6 @@ import org.springframework.stereotype.Service;
 public class InstanceService {
 
     @Autowired
-    private InstanceCache instanceCache;
-
-    @Autowired
     private InfrastructureService infrastructureService;
 
     @Autowired
@@ -53,31 +49,17 @@ public class InstanceService {
 
     public Set<Instance> createInstance(String infrastructureId, Instance instance) {
 
-        Optional<Infrastructure> optionalInfrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId));
-
-        Set<Instance> instancesCreated = optionalInfrastructure.map(infrastructure -> cloudManager.createInstance(infrastructure,
-                                                                                                                  instance))
-                                                               .orElseThrow(() -> new NotFoundException("infrastructure id : " +
-                                                                                                        infrastructureId +
-                                                                                                        " does not exists"));
-
-        optionalInfrastructure.ifPresent(infrastructure -> instanceCache.registerInfrastructureInstances(infrastructure,
-                                                                                                         instancesCreated));
-
-        return instancesCreated;
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.createInstance(infrastructure, instance))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id : " + infrastructureId +
+                                                                " does not exists"));
     }
 
     public void deleteCreatedInstances(String infrastructureId) {
         Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
-            cloudManager.getAllInfrastructureInstances(infrastructure)
-                        .stream()
-                        .filter(instance -> instanceCache.getCreatedInstances()
-                                                         .get(infrastructureId)
-                                                         .contains(instance))
-                        .forEach(instance -> {
-                            cloudManager.deleteInstance(infrastructure, instance.getId());
-                            instanceCache.deleteInfrastructureInstance(infrastructure, instance);
-                        });
+            cloudManager.getCreatedInfrastructureInstances(infrastructure).forEach(instance -> {
+                cloudManager.deleteInstance(infrastructure, instance.getId());
+            });
         });
     }
 
@@ -85,7 +67,6 @@ public class InstanceService {
         Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
             cloudManager.getAllInfrastructureInstances(infrastructure).forEach(instance -> {
                 cloudManager.deleteInstance(infrastructure, instance.getId());
-                instanceCache.deleteInfrastructureInstance(infrastructure, instance);
             });
         });
     }
@@ -93,12 +74,6 @@ public class InstanceService {
     public void deleteInstance(String infrastructureId, String instanceId) {
         Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
             cloudManager.deleteInstance(infrastructure, instanceId);
-            instanceCache.getCreatedInstances()
-                         .get(infrastructure.getId())
-                         .stream()
-                         .filter(instance -> instance.getId().equals(instanceId))
-                         .findAny()
-                         .ifPresent(instance -> instanceCache.deleteInfrastructureInstance(infrastructure, instance));
         });
     }
 
@@ -108,7 +83,6 @@ public class InstanceService {
                                          .forEach(instance -> {
                                              Infrastructure infrastructure = infrastructureService.getInfrastructure(infrastructureId);
                                              cloudManager.deleteInstance(infrastructure, instance.getId());
-                                             instanceCache.deleteInfrastructureInstance(infrastructure, instance);
                                          });
     }
 
@@ -134,8 +108,10 @@ public class InstanceService {
     }
 
     public Set<Instance> getCreatedInstances(String infrastructureId) {
-        Set<Instance> cachedInstances = instanceCache.getCreatedInstances().get(infrastructureId);
-        return getAllInstances(infrastructureId).stream().filter(cachedInstances::contains).collect(Collectors.toSet());
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.getCreatedInfrastructureInstances(infrastructure))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
+                                                                " does not exists"));
     }
 
     public String addToInstancePublicIp(String infrastructureId, String instanceId, String optionalDesiredIp) {

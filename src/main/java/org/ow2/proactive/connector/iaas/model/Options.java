@@ -59,4 +59,6 @@ public class Options {
     private String privateNetworkCIDR;
 
     private Boolean staticPublicIP;
+
+    private List<Tag> tags;
 }

@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.cloud;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,12 +38,28 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import lombok.Getter;
 
 
 @Service
 public class CloudManager {
+
+    @Getter
+    @Value("${connector-iaas-tag.key:proactive-connector-iaas}")
+    private String connectorIaasTagKey;
+
+    public static final String DEFAULT_CONNECTOR_IAAS_TAG_KEY = "proactive-connector-iaas";
+
+    @Getter
+    @Value("${connector-iaas-tag.value:default-tag}")
+    private String connectorIaasTagValue;
+
+    public static final String DEFAULT_CONNECTOR_IAAS_TAG_VALUE = "default-tag";
 
     private Map<String, CloudProvider> cloudProviderPerType;
 
@@ -53,7 +70,14 @@ public class CloudManager {
     }
 
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-        return cloudProviderPerType.get(infrastructure.getType()).createInstance(infrastructure, instance);
+        return cloudProviderPerType.get(infrastructure.getType()).createInstance(infrastructure,
+                                                                                 instance,
+                                                                                 Tag.builder()
+                                                                                    .key(Optional.ofNullable(connectorIaasTagKey)
+                                                                                                 .orElse(DEFAULT_CONNECTOR_IAAS_TAG_KEY))
+                                                                                    .value(Optional.ofNullable(connectorIaasTagValue)
+                                                                                                   .orElse(DEFAULT_CONNECTOR_IAAS_TAG_VALUE))
+                                                                                    .build());
     }
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -66,6 +90,16 @@ public class CloudManager {
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
         return cloudProviderPerType.get(infrastructure.getType()).getAllInfrastructureInstances(infrastructure);
+    }
+
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        return cloudProviderPerType.get(infrastructure.getType()).getCreatedInfrastructureInstances(infrastructure,
+                                                                                                    Tag.builder()
+                                                                                                       .key(Optional.ofNullable(connectorIaasTagKey)
+                                                                                                                    .orElse(DEFAULT_CONNECTOR_IAAS_TAG_KEY))
+                                                                                                       .value(Optional.ofNullable(connectorIaasTagValue)
+                                                                                                                      .orElse(DEFAULT_CONNECTOR_IAAS_TAG_VALUE))
+                                                                                                       .build());
     }
 
     public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
