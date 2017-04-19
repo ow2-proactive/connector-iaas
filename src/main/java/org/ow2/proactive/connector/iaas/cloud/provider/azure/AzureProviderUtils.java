@@ -34,13 +34,9 @@ import org.springframework.stereotype.Component;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.network.Network;
-import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.PublicIpAddress;
-import com.microsoft.azure.management.network.SecurityRuleProtocol;
 import com.microsoft.azure.management.resources.ResourceGroup;
-import com.microsoft.azure.management.resources.fluentcore.arm.Region;
-import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 
 
 @Component
@@ -89,203 +85,17 @@ public class AzureProviderUtils {
                            .findAny();
     }
 
+    public Optional<PublicIpAddress> searchPublicIpAddressByIp(Azure azureService, String ip) {
+        return azureService.publicIpAddresses()
+                           .list()
+                           .stream()
+                           .filter(publicIpAddress -> publicIpAddress.ipAddress().equals(ip))
+                           .findAny();
+    }
+
     public Set<VirtualMachine> getAllVirtualMachines(Azure azureService) {
 
         return azureService.virtualMachines().list().stream().collect(Collectors.toSet());
     }
 
-    public Creatable<Network> prepareVirtualNetwork(Azure azureService, Region region, ResourceGroup resourceGroup,
-            String name, String cidr) {
-        return azureService.networks()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .withAddressSpace(cidr);
-    }
-
-    public Creatable<PublicIpAddress> preparePublicIPAddress(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name, Boolean isStatic) {
-        if (isStatic) {
-            return azureService.publicIpAddresses()
-                               .define(name)
-                               .withRegion(region)
-                               .withExistingResourceGroup(resourceGroup)
-                               .withStaticIp();
-        } else {
-            return azureService.publicIpAddresses()
-                               .define(name)
-                               .withRegion(region)
-                               .withExistingResourceGroup(resourceGroup)
-                               .withDynamicIp();
-        }
-    }
-
-    public Creatable<NetworkSecurityGroup> prepareOpenNetworkSecurityGroup(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name) {
-
-        return azureService.networkSecurityGroups()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .defineRule("All")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toAnyPort()
-                           .withAnyProtocol()
-                           .attach()
-                           .defineRule("All")
-                           .allowOutbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toAnyPort()
-                           .withAnyProtocol()
-                           .attach();
-    }
-
-    public Creatable<NetworkSecurityGroup> prepareSSHNetworkSecurityGroup(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name) {
-
-        return azureService.networkSecurityGroups()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .defineRule("SSH")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(22)
-                           .withProtocol(SecurityRuleProtocol.TCP)
-                           .attach()
-                           .defineRule("All")
-                           .allowOutbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toAnyPort()
-                           .withAnyProtocol()
-                           .attach();
-    }
-
-    public Creatable<NetworkSecurityGroup> prepareProactiveNetworkSecurityGroup(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name) {
-
-        return azureService.networkSecurityGroups()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .defineRule("SSH")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(22)
-                           .withProtocol(SecurityRuleProtocol.TCP)
-                           .withPriority(101)
-                           .attach()
-                           .defineRule("ProActive_portal")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(8080)
-                           .withProtocol(SecurityRuleProtocol.TCP)
-                           .withPriority(102)
-                           .attach()
-                           .defineRule("PNP")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(64738)
-                           .withAnyProtocol()
-                           .withPriority(103)
-                           .attach()
-                           .defineRule("PNPS")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(64739)
-                           .withAnyProtocol()
-                           .withPriority(104)
-                           .attach()
-                           .defineRule("PAMR")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(33647)
-                           .withAnyProtocol()
-                           .withPriority(105)
-                           .attach()
-                           .defineRule("All")
-                           .allowOutbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toAnyPort()
-                           .withAnyProtocol()
-                           .attach();
-    }
-
-    public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name, Network virtualNetwork, NetworkSecurityGroup networkSecurityGroup,
-            PublicIpAddress publicIpAddress) {
-        return azureService.networkInterfaces()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .withExistingPrimaryNetwork(virtualNetwork)
-                           .withSubnet(virtualNetwork.subnets()
-                                                     .values()
-                                                     .stream()
-                                                     .findAny()
-                                                     .orElseThrow(() -> new RuntimeException("ERROR no subnet found in virtual network: '" +
-                                                                                             virtualNetwork.name() +
-                                                                                             "'"))
-                                                     .name())
-                           .withPrimaryPrivateIpAddressDynamic()
-                           .withExistingNetworkSecurityGroup(networkSecurityGroup)
-                           .withExistingPrimaryPublicIpAddress(publicIpAddress);
-    }
-
-    public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name, Creatable<Network> creatableVirtualNetwork,
-            Network optionalVirtualNetwork, Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
-            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIpAddress> creatablePublicIpAddress,
-            PublicIpAddress optionalPublicIpAddress) {
-
-        // Initialize configuration
-        NetworkInterface.DefinitionStages.WithPrimaryNetwork networkInterfaceCreationStage1 = azureService.networkInterfaces()
-                                                                                                          .define(name)
-                                                                                                          .withRegion(region)
-                                                                                                          .withExistingResourceGroup(resourceGroup);
-
-        // Configure virtual network
-        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage2 = Optional.ofNullable(optionalVirtualNetwork)
-                                                                                              .map(networkInterfaceCreationStage1::withExistingPrimaryNetwork)
-                                                                                              .map(existingNetwork -> existingNetwork.withSubnet(optionalVirtualNetwork.subnets()
-                                                                                                                                                                       .keySet()
-                                                                                                                                                                       .stream()
-                                                                                                                                                                       .findFirst()
-                                                                                                                                                                       .get()))
-                                                                                              .orElseGet(() -> networkInterfaceCreationStage1.withNewPrimaryNetwork(creatableVirtualNetwork))
-                                                                                              .withPrimaryPrivateIpAddressDynamic();
-
-        // Configure network security group
-        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage3 = Optional.ofNullable(optionalNetworkSecurityGroup)
-                                                                                              .map(networkInterfaceCreationStage2::withExistingNetworkSecurityGroup)
-                                                                                              .orElseGet(() -> networkInterfaceCreationStage2.withNewNetworkSecurityGroup(creatableNetworkSecurityGroup));
-
-        // Configure public IP address
-        NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage4 = Optional.ofNullable(optionalPublicIpAddress)
-                                                                                              .map(networkInterfaceCreationStage3::withExistingPrimaryPublicIpAddress)
-                                                                                              .orElseGet(() -> networkInterfaceCreationStage3.withNewPrimaryPublicIpAddress(creatablePublicIpAddress));
-
-        return networkInterfaceCreationStage4;
-    }
 }

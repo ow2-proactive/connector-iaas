@@ -55,10 +55,8 @@ import com.microsoft.azure.management.compute.VirtualMachineExtension;
 import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
-import com.microsoft.azure.management.network.NetworkInterfaceBase;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.NicIpConfiguration;
-import com.microsoft.azure.management.network.NicIpConfigurationBase;
 import com.microsoft.azure.management.network.PublicIpAddress;
 import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
@@ -130,6 +128,9 @@ public class AzureProvider implements CloudProvider {
     @Autowired
     private AzureProviderUtils azureProviderUtils;
 
+    @Autowired
+    private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
@@ -164,11 +165,11 @@ public class AzureProvider implements CloudProvider {
 
         // Prepare a new virtual private network (same for all VMs)
         Optional<String> optionalPrivateNetworkCIDR = options.map(Options::getPrivateNetworkCIDR);
-        Creatable<Network> creatableVirtualNetwork = azureProviderUtils.prepareVirtualNetwork(azureService,
-                                                                                              region,
-                                                                                              resourceGroup,
-                                                                                              createUniqueVirtualNetworkName(instanceTag),
-                                                                                              optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
+        Creatable<Network> creatableVirtualNetwork = azureProviderNetworkingUtils.prepareVirtualNetwork(azureService,
+                                                                                                        region,
+                                                                                                        resourceGroup,
+                                                                                                        createUniqueVirtualNetworkName(instanceTag),
+                                                                                                        optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
 
         // Get existing virtual private network if specified
         Optional<Network> optionalVirtualNetwork = options.map(Options::getSubnetId)
@@ -177,10 +178,10 @@ public class AzureProvider implements CloudProvider {
                                                                                              .get());
 
         // Prepare a new  security group (same for all VMs)
-        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareProactiveNetworkSecurityGroup(azureService,
-                                                                                                                                region,
-                                                                                                                                resourceGroup,
-                                                                                                                                createUniqueSecurityGroupName(instance.getTag()));
+        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(azureService,
+                                                                                                                                          region,
+                                                                                                                                          resourceGroup,
+                                                                                                                                          createUniqueSecurityGroupName(instance.getTag()));
 
         // Get existing security group if specified
         Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)
@@ -198,25 +199,25 @@ public class AzureProvider implements CloudProvider {
                                                                                 // Create a new public IP address (one per VM)
                                                                                 String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                               instanceNumber));
-                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderUtils.preparePublicIPAddress(azureService,
-                                                                                                                                                                                region,
-                                                                                                                                                                                resourceGroup,
-                                                                                                                                                                                publicIPAddressName,
-                                                                                                                                                                                optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
+                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                                                                                          region,
+                                                                                                                                                                                          resourceGroup,
+                                                                                                                                                                                          publicIPAddressName,
+                                                                                                                                                                                          optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
 
                                                                                 // Prepare a new network interface (one per VM)
                                                                                 String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                                        instanceNumber));
-                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
-                                                                                                                                                                                   region,
-                                                                                                                                                                                   resourceGroup,
-                                                                                                                                                                                   networkInterfaceName,
-                                                                                                                                                                                   creatableVirtualNetwork,
-                                                                                                                                                                                   optionalVirtualNetwork.orElse(null),
-                                                                                                                                                                                   creatableNetworkSecurityGroup,
-                                                                                                                                                                                   optionalNetworkSecurityGroup.orElse(null),
-                                                                                                                                                                                   creatablePublicIpAddress,
-                                                                                                                                                                                   null);
+                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
+                                                                                                                                                                                             region,
+                                                                                                                                                                                             resourceGroup,
+                                                                                                                                                                                             networkInterfaceName,
+                                                                                                                                                                                             creatableVirtualNetwork,
+                                                                                                                                                                                             optionalVirtualNetwork.orElse(null),
+                                                                                                                                                                                             creatableNetworkSecurityGroup,
+                                                                                                                                                                                             optionalNetworkSecurityGroup.orElse(null),
+                                                                                                                                                                                             creatablePublicIpAddress,
+                                                                                                                                                                                             null);
 
                                                                                 return prepareVirtualMachine(instance,
                                                                                                              azureService,
@@ -402,29 +403,11 @@ public class AzureProvider implements CloudProvider {
                                                                                       instanceId + "'"));
 
         // Retrieve all resources attached to the instance
-        List<NetworkInterface> networkInterfaces = vm.networkInterfaceIds()
-                                                     .stream()
-                                                     .map(id -> azureService.networkInterfaces().getById(id))
-                                                     .collect(Collectors.toList());
-        List<com.microsoft.azure.management.network.Network> networks = networkInterfaces.stream()
-                                                                                         .flatMap(networkInterface -> networkInterface.ipConfigurations()
-                                                                                                                                      .values()
-                                                                                                                                      .stream())
-                                                                                         .map(NicIpConfigurationBase::getNetwork)
-                                                                                         .filter(Objects::nonNull)
-                                                                                         .distinct()
-                                                                                         .collect(Collectors.toList());
-        List<NetworkSecurityGroup> networkSecurityGroups = networkInterfaces.stream()
-                                                                            .map(NetworkInterfaceBase::getNetworkSecurityGroup)
-                                                                            .filter(Objects::nonNull)
-                                                                            .distinct()
-                                                                            .collect(Collectors.toList());
-        List<PublicIpAddress> publicIPAddresses = networkInterfaces.stream()
-                                                                   .map(NetworkInterface::primaryIpConfiguration)
-                                                                   .filter(Objects::nonNull)
-                                                                   .map(NicIpConfiguration::getPublicIpAddress)
-                                                                   .filter(Objects::nonNull)
-                                                                   .collect(Collectors.toList());
+        List<com.microsoft.azure.management.network.Network> networks = azureProviderNetworkingUtils.getVMNetworks(azureService,
+                                                                                                                   vm);
+        List<NetworkSecurityGroup> networkSecurityGroups = azureProviderNetworkingUtils.getVMSecurityGroups(azureService,
+                                                                                                            vm);
+        List<PublicIpAddress> publicIPAddresses = azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService, vm);
         String osDiskID = vm.osDiskId();
 
         // Delete the VM first
@@ -609,12 +592,12 @@ public class AzureProvider implements CloudProvider {
                                                                                                                         .equals(opt))
                                                                           .findAny()
                                                                           .get())
-                                                  .orElseGet((() -> azureProviderUtils.preparePublicIPAddress(azureService,
-                                                                                                              vm.region(),
-                                                                                                              resourceGroup,
-                                                                                                              createUniquePublicIPName(vm.name()),
-                                                                                                              DEFAULT_STATIC_PUBLIC_IP)
-                                                                                      .create()));
+                                                  .orElseGet((() -> azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                        vm.region(),
+                                                                                                                        resourceGroup,
+                                                                                                                        createUniquePublicIPName(vm.name()),
+                                                                                                                        DEFAULT_STATIC_PUBLIC_IP)
+                                                                                                .create()));
 
         List<NetworkInterface> networkInterfaces = vm.networkInterfaceIds()
                                                      .stream()
@@ -649,14 +632,14 @@ public class AzureProvider implements CloudProvider {
         NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
         NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
         com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
-        NetworkInterface newSecondaryNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
-                                                                                                   vm.region(),
-                                                                                                   resourceGroup,
-                                                                                                   createUniqueNetworkInterfaceName(vm.name()),
-                                                                                                   network,
-                                                                                                   networkSecurityGroup,
-                                                                                                   publicIpAddress)
-                                                                          .create();
+        NetworkInterface newSecondaryNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
+                                                                                                             vm.region(),
+                                                                                                             resourceGroup,
+                                                                                                             createUniqueNetworkInterfaceName(vm.name()),
+                                                                                                             network,
+                                                                                                             networkSecurityGroup,
+                                                                                                             publicIpAddress)
+                                                                                    .create();
         try {
             vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
         } catch (RuntimeException ex) {
