@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -410,23 +411,19 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                       .values()
                                                                                                                                       .stream())
                                                                                          .map(NicIpConfigurationBase::getNetwork)
-                                                                                         .filter(network -> Optional.ofNullable(network)
-                                                                                                                    .isPresent())
+                                                                                         .filter(Objects::nonNull)
                                                                                          .distinct()
                                                                                          .collect(Collectors.toList());
         List<NetworkSecurityGroup> networkSecurityGroups = networkInterfaces.stream()
                                                                             .map(NetworkInterfaceBase::getNetworkSecurityGroup)
-                                                                            .filter(networkSecurityGroup -> Optional.ofNullable(networkSecurityGroup)
-                                                                                                                    .isPresent())
+                                                                            .filter(Objects::nonNull)
                                                                             .distinct()
                                                                             .collect(Collectors.toList());
         List<PublicIpAddress> publicIPAddresses = networkInterfaces.stream()
                                                                    .map(NetworkInterface::primaryIpConfiguration)
-                                                                   .filter(ipConfiguration -> Optional.ofNullable(ipConfiguration)
-                                                                                                      .isPresent())
+                                                                   .filter(Objects::nonNull)
                                                                    .map(NicIpConfiguration::getPublicIpAddress)
-                                                                   .filter(publicIpAddress -> Optional.ofNullable(publicIpAddress)
-                                                                                                      .isPresent())
+                                                                   .filter(Objects::nonNull)
                                                                    .collect(Collectors.toList());
         String osDiskID = vm.osDiskId();
 
@@ -445,19 +442,27 @@ public class AzureProvider implements CloudProvider {
         azureService.disks().deleteById(osDiskID);
 
         // Delete the security groups if not attached to any remaining network interface
+        deleteSecurityGroups(azureService, networkSecurityGroups);
+
+        // Delete the virtual networks if not attached to any remaining network interface
+        deleteNetworks(azureService, networks);
+    }
+
+    private void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
+        // Delete the security groups if not attached to any remaining network interface
         networkSecurityGroups.stream()
                              .map(NetworkSecurityGroup::id)
                              .filter(id -> azureService.networkInterfaces()
                                                        .list()
                                                        .stream()
                                                        .map(NetworkInterface::getNetworkSecurityGroup)
-                                                       .filter(networkSecurityGroup -> Optional.ofNullable(networkSecurityGroup)
-                                                                                               .isPresent())
+                                                       .filter(Objects::nonNull)
                                                        .noneMatch(networkSecurityGroup -> networkSecurityGroup.id()
                                                                                                               .equals(id)))
                              .forEach(id -> azureService.networkSecurityGroups().deleteById(id));
+    }
 
-        // Delete the virtual networks if not attached to any remaining network interface
+    private void deleteNetworks(Azure azureService, List<com.microsoft.azure.management.network.Network> networks) {
         networks.stream()
                 .map(Network::id)
                 .filter(id -> azureService.networkInterfaces()
@@ -466,11 +471,9 @@ public class AzureProvider implements CloudProvider {
                                           .flatMap(networkInterface -> networkInterface.ipConfigurations()
                                                                                        .values()
                                                                                        .stream())
-                                          .filter(ipConfiguration -> Optional.ofNullable(ipConfiguration)
-                                                                             .isPresent())
+                                          .filter(Objects::nonNull)
                                           .map(NicIpConfiguration::getNetwork)
-                                          .filter(network -> Optional.ofNullable(network)
-                                                                     .isPresent())
+                                          .filter(Objects::nonNull)
                                           .noneMatch(network -> network.id().equals(id)))
                 .forEach(id -> azureService.networks().deleteById(id));
     }
@@ -494,8 +497,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                .map(networkInterfaceId -> azureService.networkInterfaces()
                                                                                                                                                       .getById(networkInterfaceId))
                                                                                                                .map(NetworkInterface::primaryIpConfiguration)
-                                                                                                               .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.getPublicIpAddress())
-                                                                                                                                                     .isPresent())
+                                                                                                               .filter(Objects::nonNull)
                                                                                                                .map(nicIpConfiguration -> nicIpConfiguration.getPublicIpAddress()
                                                                                                                                                             .ipAddress())
                                                                                                                .collect(Collectors.toList()))
@@ -506,8 +508,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                 .flatMap(networkInterface -> networkInterface.ipConfigurations()
                                                                                                                                                              .values()
                                                                                                                                                              .stream())
-                                                                                                                .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.privateIpAddress())
-                                                                                                                                                      .isPresent())
+                                                                                                                .filter(Objects::nonNull)
                                                                                                                 .map(HasPrivateIpAddress::privateIpAddress)
                                                                                                                 .collect(Collectors.toList()))
                                                                                             .build())
@@ -627,7 +628,6 @@ public class AzureProvider implements CloudProvider {
                                                         .isPresent())) {
             // Reuse the network configuration (virtual private network & security group) of the primary network interface
             addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, publicIpAddress);
-
             // Otherwise add the public address to the first network interface without public IP
         } else {
             networkInterfaces.stream()
