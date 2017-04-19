@@ -231,34 +231,35 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
+        return getInstancesFromVMs(vmWareProviderVirtualMachineUtil.getAllVirtualMachines(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
+                                                                                                                    .getRootFolder()));
+    }
 
-        return vmWareProviderVirtualMachineUtil.getAllVirtualMachines(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
-                                                                                                .getRootFolder())
-                                               .stream()
-                                               .filter(vm -> vm.getConfig() != null)
-                                               .map(vm -> Instance.builder()
-                                                                  .id(vm.getConfig().getUuid())
-                                                                  .tag(vm.getName())
-                                                                  .number("1")
-                                                                  .hardware(Hardware.builder()
-                                                                                    .minCores(String.valueOf(vm.getConfig()
-                                                                                                               .getHardware()
-                                                                                                               .getNumCPU()))
-                                                                                    .minRam((String.valueOf(vm.getConfig()
-                                                                                                              .getHardware()
-                                                                                                              .getMemoryMB())))
-                                                                                    .build())
+    private Set<Instance> getInstancesFromVMs(Set<VirtualMachine> vms) {
+        return vms.stream()
+                  .filter(vm -> vm.getConfig() != null)
+                  .map(vm -> Instance.builder()
+                                     .id(vm.getConfig().getUuid())
+                                     .tag(vm.getName())
+                                     .number("1")
+                                     .hardware(Hardware.builder()
+                                                       .minCores(String.valueOf(vm.getConfig()
+                                                                                  .getHardware()
+                                                                                  .getNumCPU()))
+                                                       .minRam((String.valueOf(vm.getConfig()
+                                                                                 .getHardware()
+                                                                                 .getMemoryMB())))
+                                                       .build())
 
-                                                                  .network(Network.builder()
-                                                                                  .publicAddresses(Lists.newArrayList(vm.getGuest()
-                                                                                                                        .getIpAddress()))
-                                                                                  .build())
+                                     .network(Network.builder()
+                                                     .publicAddresses(Lists.newArrayList(vm.getGuest()
+                                                                                           .getIpAddress()))
+                                                     .build())
 
-                                                                  .status(String.valueOf(vm.getSummary()
-                                                                                           .getOverallStatus()))
-                                                                  .build())
-                                               .collect(Collectors.toSet());
-
+                                     .status(String.valueOf(vm.getSummary()
+                                                              .getOverallStatus()))
+                                     .build())
+                  .collect(Collectors.toSet());
     }
 
     @Override
