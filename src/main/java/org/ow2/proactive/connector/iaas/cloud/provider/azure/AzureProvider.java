@@ -190,6 +190,12 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                     secGrpName)
                                                                                                                   .get());
 
+        // Get existing public IP address if specified
+        Optional<PublicIpAddress> optionalPublicIpAddress = options.map(Options::getPublicIpAddress)
+                                                                   .map(publicIpAddress -> azureProviderUtils.searchPublicIpAddressByIp(azureService,
+                                                                                                                                        publicIpAddress)
+                                                                                                             .get());
+
         // Prepare the VM(s)
         Optional<Boolean> optionalStaticPublicIP = options.map(Options::getStaticPublicIP);
         List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
@@ -217,7 +223,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                                                              creatableNetworkSecurityGroup,
                                                                                                                                                                                              optionalNetworkSecurityGroup.orElse(null),
                                                                                                                                                                                              creatablePublicIpAddress,
-                                                                                                                                                                                             null);
+                                                                                                                                                                                             instanceNumber == 1 ? optionalPublicIpAddress.orElse(null)
+                                                                                                                                                                                                                 : null);
 
                                                                                 return prepareVirtualMachine(instance,
                                                                                                              azureService,

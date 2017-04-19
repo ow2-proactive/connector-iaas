@@ -54,6 +54,8 @@ public class Options {
 
     private String region;
 
+    private String publicIpAddress;
+
     private String privateNetworkCIDR;
 
     private Boolean staticPublicIP;
