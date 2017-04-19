@@ -97,19 +97,19 @@ public class VMWareProvider implements CloudProvider {
         Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
         VirtualMachine vmToClone = getVirtualMachineByNameOrUUID(instanceImageId, rootFolder);
 
-        return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                        .mapToObj(instanceIndexStartAt1 -> cloneVM(vmToClone,
-                                                                   createUniqInstanceTag(instance.getTag(),
-                                                                                         instanceIndexStartAt1),
-                                                                   instance,
-                                                                   rootFolder,
-                                                                   createVirtualMachineCloneSpec(instanceIndexStartAt1,
-                                                                                                 vmToClone,
-                                                                                                 relocateSpecs,
-                                                                                                 instance),
-                                                                   destinationFolder))
-                        .map(vm -> instance.withId(vm.getConfig().getUuid()))
-                        .collect(Collectors.toSet());
+        return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber())).mapToObj(instanceIndexStartAt1 -> {
+            String uniqueInstanceTag = createUniqueInstanceTag(instance.getTag(), instanceIndexStartAt1);
+            return cloneVM(vmToClone,
+                           uniqueInstanceTag,
+                           instance,
+                           rootFolder,
+                           createVirtualMachineCloneSpec(instanceIndexStartAt1,
+                                                         vmToClone,
+                                                         relocateSpecs,
+                                                         instance,
+                                                         uniqueInstanceTag),
+                           destinationFolder);
+        }).map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
     }
 
     /**
@@ -119,7 +119,7 @@ public class VMWareProvider implements CloudProvider {
      * @param instanceIndex the instance index
      * @return a uniq VM tag
      */
-    private String createUniqInstanceTag(String tagBase, int instanceIndex) {
+    private String createUniqueInstanceTag(String tagBase, int instanceIndex) {
         if (instanceIndex > 1) {
             return tagBase + "_" + String.valueOf(instanceIndex);
         }
@@ -136,10 +136,13 @@ public class VMWareProvider implements CloudProvider {
      * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
      */
     private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1, VirtualMachine vmToClone,
-            VirtualMachineRelocateSpec relocateSpecs, Instance instance) {
+            VirtualMachineRelocateSpec relocateSpecs, Instance instance, String uniqueInstanceTag) {
 
         // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
         VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(instance);
+
+        // Set the hostname
+        vmCloneSpecs.getConfig().setName(uniqueInstanceTag);
 
         // Customize it with specific location
         vmCloneSpecs.setLocation(relocateSpecs);
@@ -332,12 +335,12 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
     @Override
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 

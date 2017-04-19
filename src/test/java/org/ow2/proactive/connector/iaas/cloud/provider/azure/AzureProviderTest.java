@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,6 +105,9 @@ public class AzureProviderTest {
 
     @Mock
     private AzureProviderUtils azureProviderUtils;
+
+    @Mock
+    private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
 
     @Mock
     private Azure azureService;
@@ -237,6 +242,9 @@ public class AzureProviderTest {
     private NetworkInterface networkInterface;
 
     @Mock
+    private NetworkInterface secondaryNetworkInterface;
+
+    @Mock
     private NetworkInterface.Update networkInterfaceUpdate;
 
     @Mock
@@ -288,28 +296,30 @@ public class AzureProviderTest {
         // Utils methods
         when(azureProviderUtils.searchVirtualMachineByName(azureService,
                                                            "vmTag")).thenReturn(Optional.of(virtualMachine));
-        when(azureProviderUtils.prepareVirtualNetwork(any(Azure.class),
-                                                      any(Region.class),
-                                                      any(ResourceGroup.class),
-                                                      anyString(),
-                                                      anyString())).thenReturn(creatableVirtualNetwork);
-        when(azureProviderUtils.preparePublicIPAddress(any(Azure.class),
-                                                       any(Region.class),
-                                                       any(ResourceGroup.class),
-                                                       anyString(),
-                                                       anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
-                                                        any(Region.class),
-                                                        any(ResourceGroup.class),
-                                                        anyString(),
-                                                        any(Creatable.class),
-                                                        any(Creatable.class),
-                                                        nullable(NetworkSecurityGroup.class),
-                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
-        when(azureProviderUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
-                                                                     any(Region.class),
-                                                                     any(ResourceGroup.class),
-                                                                     anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderNetworkingUtils.prepareVirtualNetwork(any(Azure.class),
+                                                                any(Region.class),
+                                                                any(ResourceGroup.class),
+                                                                anyString(),
+                                                                anyString())).thenReturn(creatableVirtualNetwork);
+        when(azureProviderNetworkingUtils.preparePublicIPAddress(any(Azure.class),
+                                                                 any(Region.class),
+                                                                 any(ResourceGroup.class),
+                                                                 anyString(),
+                                                                 anyBoolean())).thenReturn(creatablePublicIpAddress);
+        when(azureProviderNetworkingUtils.prepareNetworkInterface(any(Azure.class),
+                                                                  any(Region.class),
+                                                                  any(ResourceGroup.class),
+                                                                  anyString(),
+                                                                  any(Creatable.class),
+                                                                  nullable(Network.class),
+                                                                  any(Creatable.class),
+                                                                  nullable(NetworkSecurityGroup.class),
+                                                                  any(Creatable.class),
+                                                                  nullable(PublicIpAddress.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
+                                                                               any(Region.class),
+                                                                               any(ResourceGroup.class),
+                                                                               anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
         when(azureProviderUtils.searchNetworkSecurityGroupByName(any(Azure.class),
@@ -446,28 +456,30 @@ public class AzureProviderTest {
                                                            "vmTag")).thenReturn(Optional.of(virtualMachine));
         when(azureProviderUtils.searchVirtualMachineByName(azureService,
                                                            "vmTag2")).thenReturn(Optional.of(virtualMachine2));
-        when(azureProviderUtils.prepareVirtualNetwork(any(Azure.class),
-                                                      any(Region.class),
-                                                      any(ResourceGroup.class),
-                                                      anyString(),
-                                                      anyString())).thenReturn(creatableVirtualNetwork);
-        when(azureProviderUtils.preparePublicIPAddress(any(Azure.class),
-                                                       any(Region.class),
-                                                       any(ResourceGroup.class),
-                                                       anyString(),
-                                                       anyBoolean())).thenReturn(creatablePublicIpAddress);
-        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
-                                                        any(Region.class),
-                                                        any(ResourceGroup.class),
-                                                        anyString(),
-                                                        any(Creatable.class),
-                                                        any(Creatable.class),
-                                                        nullable(NetworkSecurityGroup.class),
-                                                        any(Creatable.class))).thenReturn(creatableNetworkInterface);
-        when(azureProviderUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
-                                                                     any(Region.class),
-                                                                     any(ResourceGroup.class),
-                                                                     anyString())).thenReturn(creatableNetworkSecurityGroup);
+        when(azureProviderNetworkingUtils.prepareVirtualNetwork(any(Azure.class),
+                                                                any(Region.class),
+                                                                any(ResourceGroup.class),
+                                                                anyString(),
+                                                                anyString())).thenReturn(creatableVirtualNetwork);
+        when(azureProviderNetworkingUtils.preparePublicIPAddress(any(Azure.class),
+                                                                 any(Region.class),
+                                                                 any(ResourceGroup.class),
+                                                                 anyString(),
+                                                                 anyBoolean())).thenReturn(creatablePublicIpAddress);
+        when(azureProviderNetworkingUtils.prepareNetworkInterface(any(Azure.class),
+                                                                  any(Region.class),
+                                                                  any(ResourceGroup.class),
+                                                                  anyString(),
+                                                                  any(Creatable.class),
+                                                                  nullable(Network.class),
+                                                                  any(Creatable.class),
+                                                                  nullable(NetworkSecurityGroup.class),
+                                                                  any(Creatable.class),
+                                                                  nullable(PublicIpAddress.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(any(Azure.class),
+                                                                               any(Region.class),
+                                                                               any(ResourceGroup.class),
+                                                                               anyString())).thenReturn(creatableNetworkSecurityGroup);
         when(azureProviderUtils.searchResourceGroupByName(azureService,
                                                           "resourceGroup")).thenReturn(Optional.of(resourceGroup));
 
@@ -562,18 +574,32 @@ public class AzureProviderTest {
         PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
+        when(networkInterfaces.getById("netIf-id")).thenReturn(networkInterface);
+        when(virtualMachine.networkInterfaceIds()).thenReturn(Collections.singletonList("netIf-id"));
 
         // PublicIPAddresses
         when(azureService.publicIpAddresses()).thenReturn(publicIpAddresses);
+        when(networkInterface.primaryIpConfiguration()).thenReturn(nicIpConfiguration);
+        when(nicIpConfiguration.getPublicIpAddress()).thenReturn(publicIpAddress);
+        when(azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService,
+                                                                 virtualMachine)).thenReturn(Lists.newArrayList(publicIpAddress));
 
         // Disks
         when(azureService.disks()).thenReturn(disks);
 
         // NetworkSecurityGroups
         when(azureService.networkSecurityGroups()).thenReturn(networkSecurityGroups);
+        when(azureProviderNetworkingUtils.getVMSecurityGroups(azureService,
+                                                              virtualMachine)).thenReturn(Lists.newArrayList(networkSecurityGroup));
 
         // Networks
+        Map<String, NicIpConfiguration> mapIpConfiguration = new HashMap<>();
+        mapIpConfiguration.put("ipConf", nicIpConfiguration);
+        when(networkInterface.ipConfigurations()).thenReturn(mapIpConfiguration);
+        when(nicIpConfiguration.getNetwork()).thenReturn(virtualNetwork);
         when(azureService.networks()).thenReturn(virtualNetworks);
+        when(azureProviderNetworkingUtils.getVMNetworks(azureService,
+                                                        virtualMachine)).thenReturn(Lists.newArrayList(virtualNetwork));
 
         // Trigger deleteInstance with full erasing
         azureProvider.deleteInstance(infrastructure, "vmId");
@@ -613,26 +639,43 @@ public class AzureProviderTest {
         // VirtualMachines
         PagedList<VirtualMachine> pagedListVirtualMachine = getPagedList();
         pagedListVirtualMachine.add(virtualMachine);
+        pagedListVirtualMachine.add(virtualMachine2);
         when(virtualMachines.list()).thenReturn(pagedListVirtualMachine);
         when(azureService.virtualMachines()).thenReturn(virtualMachines);
 
         // NetworkInterfaces
         PagedList<NetworkInterface> pagedListNetworkInterface = getPagedList();
         pagedListNetworkInterface.add(networkInterface);
+        pagedListNetworkInterface.add(secondaryNetworkInterface);
         when(networkInterfaces.list()).thenReturn(pagedListNetworkInterface);
         when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
+        when(networkInterfaces.getById("netIf-id")).thenReturn(networkInterface);
+        when(virtualMachine.networkInterfaceIds()).thenReturn(Collections.singletonList("netIf-id"));
+        when(secondaryNetworkInterface.getNetworkSecurityGroup()).thenReturn(networkSecurityGroup);
+        Map<String, NicIpConfiguration> mapIpConfiguration = new HashMap<>();
+        mapIpConfiguration.put("ipConf", nicIpConfiguration);
+        when(secondaryNetworkInterface.ipConfigurations()).thenReturn(mapIpConfiguration);
+        when(nicIpConfiguration.getNetwork()).thenReturn(virtualNetwork);
 
         // PublicIPAddresses
         when(azureService.publicIpAddresses()).thenReturn(publicIpAddresses);
+        when(networkInterface.primaryIpConfiguration()).thenReturn(nicIpConfiguration);
+        when(nicIpConfiguration.getPublicIpAddress()).thenReturn(publicIpAddress);
+        when(azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService,
+                                                                 virtualMachine)).thenReturn(Lists.newArrayList(publicIpAddress));
 
         // Disks
         when(azureService.disks()).thenReturn(disks);
 
         // NetworkSecurityGroups
         when(azureService.networkSecurityGroups()).thenReturn(networkSecurityGroups);
+        when(azureProviderNetworkingUtils.getVMSecurityGroups(azureService,
+                                                              virtualMachine)).thenReturn(Lists.newArrayList(networkSecurityGroup));
 
         // Networks
         when(azureService.networks()).thenReturn(virtualNetworks);
+        when(azureProviderNetworkingUtils.getVMNetworks(azureService,
+                                                        virtualMachine)).thenReturn(Lists.newArrayList(virtualNetwork));
 
         // Trigger deleteInstance with busy securityGroup and virtualNetwork
         azureProvider.deleteInstance(infrastructure, "vmId");
@@ -776,11 +819,17 @@ public class AzureProviderTest {
         when(networkInterface.getNetworkSecurityGroup()).thenReturn(networkSecurityGroup);
         when(virtualMachine.getPrimaryPublicIpAddress()).thenReturn(null);
 
-        when(azureProviderUtils.preparePublicIPAddress(any(Azure.class),
-                                                       any(Region.class),
-                                                       any(ResourceGroup.class),
-                                                       anyString(),
-                                                       anyBoolean())).thenReturn(creatablePublicIpAddress);
+        when(virtualMachine.networkInterfaceIds()).thenReturn(Collections.singletonList("netIf-id"));
+        when(azureService.networkInterfaces()).thenReturn(networkInterfaces);
+        when(networkInterfaces.getById("netIf-id")).thenReturn(networkInterface);
+        when(networkInterface.primaryIpConfiguration()).thenReturn(nicIpConfiguration);
+        when(nicIpConfiguration.getPublicIpAddress()).thenReturn(null);
+
+        when(azureProviderNetworkingUtils.preparePublicIPAddress(any(Azure.class),
+                                                                 any(Region.class),
+                                                                 any(ResourceGroup.class),
+                                                                 anyString(),
+                                                                 anyBoolean())).thenReturn(creatablePublicIpAddress);
         when(creatablePublicIpAddress.create()).thenReturn(publicIpAddress);
 
         when(networkInterface.update()).thenReturn(networkInterfaceUpdate);
@@ -788,12 +837,12 @@ public class AzureProviderTest {
         when(networkInterfaceUpdate.apply()).thenReturn(networkInterface);
 
         // Trigger addPublicIP
-        String ipAddress = azureProvider.addToInstancePublicIp(infrastructure, "vmId");
-        verify(azureProviderUtils).preparePublicIPAddress(any(Azure.class),
-                                                          any(Region.class),
-                                                          any(ResourceGroup.class),
-                                                          anyString(),
-                                                          anyBoolean());
+        String ipAddress = azureProvider.addToInstancePublicIp(infrastructure, "vmId", null);
+        verify(azureProviderNetworkingUtils).preparePublicIPAddress(any(Azure.class),
+                                                                    any(Region.class),
+                                                                    any(ResourceGroup.class),
+                                                                    anyString(),
+                                                                    anyBoolean());
         verify(networkInterface).update();
         assertThat(ipAddress, is("0.0.0.0"));
     }
@@ -821,40 +870,42 @@ public class AzureProviderTest {
         when(networkInterface.getNetworkSecurityGroup()).thenReturn(networkSecurityGroup);
         when(virtualMachine.getPrimaryPublicIpAddress()).thenReturn(publicIpAddress);
 
-        when(azureProviderUtils.preparePublicIPAddress(any(Azure.class),
-                                                       any(Region.class),
-                                                       any(ResourceGroup.class),
-                                                       anyString(),
-                                                       anyBoolean())).thenReturn(creatablePublicIpAddress);
+        when(azureProviderNetworkingUtils.preparePublicIPAddress(any(Azure.class),
+                                                                 any(Region.class),
+                                                                 any(ResourceGroup.class),
+                                                                 anyString(),
+                                                                 anyBoolean())).thenReturn(creatablePublicIpAddress);
         when(creatablePublicIpAddress.create()).thenReturn(publicIpAddress);
 
         when(virtualMachine.update()).thenReturn(virtualMachineUpdate);
+        when(virtualMachineUpdate.withExistingSecondaryNetworkInterface(networkInterface)).thenReturn(virtualMachineUpdate);
         when(virtualMachineUpdate.withNewSecondaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineUpdate);
-        when(azureProviderUtils.prepareNetworkInterface(any(Azure.class),
-                                                        any(Region.class),
-                                                        any(ResourceGroup.class),
-                                                        anyString(),
-                                                        any(Network.class),
-                                                        any(NetworkSecurityGroup.class),
-                                                        any(PublicIpAddress.class))).thenReturn(creatableNetworkInterface);
+        when(azureProviderNetworkingUtils.prepareNetworkInterface(any(Azure.class),
+                                                                  any(Region.class),
+                                                                  any(ResourceGroup.class),
+                                                                  anyString(),
+                                                                  any(Network.class),
+                                                                  any(NetworkSecurityGroup.class),
+                                                                  any(PublicIpAddress.class))).thenReturn(creatableNetworkInterface);
+        when(creatableNetworkInterface.create()).thenReturn(networkInterface);
         when(creatablePublicIpAddress.create()).thenReturn(publicIpAddress);
         when(virtualMachineUpdate.apply()).thenReturn(virtualMachine);
 
         // Trigger addPublicIP
-        String ipAddress = azureProvider.addToInstancePublicIp(infrastructure, "vmId");
+        String ipAddress = azureProvider.addToInstancePublicIp(infrastructure, "vmId", null);
         verify(virtualMachine).update();
-        verify(azureProviderUtils).preparePublicIPAddress(any(Azure.class),
-                                                          any(Region.class),
-                                                          any(ResourceGroup.class),
-                                                          anyString(),
-                                                          anyBoolean());
-        verify(azureProviderUtils).prepareNetworkInterface(any(Azure.class),
-                                                           any(Region.class),
-                                                           any(ResourceGroup.class),
-                                                           anyString(),
-                                                           any(Network.class),
-                                                           any(NetworkSecurityGroup.class),
-                                                           any(PublicIpAddress.class));
+        verify(azureProviderNetworkingUtils).preparePublicIPAddress(any(Azure.class),
+                                                                    any(Region.class),
+                                                                    any(ResourceGroup.class),
+                                                                    anyString(),
+                                                                    anyBoolean());
+        verify(azureProviderNetworkingUtils).prepareNetworkInterface(any(Azure.class),
+                                                                     any(Region.class),
+                                                                     any(ResourceGroup.class),
+                                                                     anyString(),
+                                                                     any(Network.class),
+                                                                     any(NetworkSecurityGroup.class),
+                                                                     any(PublicIpAddress.class));
         assertThat(ipAddress, is("0.0.0.0"));
     }
 
@@ -889,10 +940,10 @@ public class AzureProviderTest {
         when(networkInterfaceUpdate.apply()).thenReturn(networkInterface);
 
         // Trigger remove public IP
-        azureProvider.removeInstancePublicIp(infrastructure, "vmId");
+        azureProvider.removeInstancePublicIp(infrastructure, "vmId", null);
 
         verify(networkInterface).update();
-        verify(networkInterfaces, times(0)).deleteById("netIf-id");
+        verify(nicIpConfiguration, times(0)).getPublicIpAddress();
         verify(publicIpAddresses).deleteById("pubIP-id");
     }
 
@@ -927,10 +978,10 @@ public class AzureProviderTest {
         when(networkInterfaceUpdate.apply()).thenReturn(networkInterface);
 
         // Trigger remove public IP
-        azureProvider.removeInstancePublicIp(infrastructure, "vmId");
+        azureProvider.removeInstancePublicIp(infrastructure, "vmId", null);
 
         verify(networkInterface).update();
-        verify(networkInterfaces).deleteById("netIf-id");
+        verify(nicIpConfiguration, times(2)).getPublicIpAddress();
         verify(publicIpAddresses).deleteById("pubIP-id");
     }
 

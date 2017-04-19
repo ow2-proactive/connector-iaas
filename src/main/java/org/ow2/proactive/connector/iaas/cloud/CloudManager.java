@@ -85,11 +85,15 @@ public class CloudManager {
         return cloudProviderPerType.get(infrastructure.getType()).getAllImages(infrastructure);
     }
 
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
-        return cloudProviderPerType.get(infrastructure.getType()).addToInstancePublicIp(infrastructure, instanceId);
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
+        return cloudProviderPerType.get(infrastructure.getType()).addToInstancePublicIp(infrastructure,
+                                                                                        instanceId,
+                                                                                        optionalDesiredIp);
     }
 
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
-        cloudProviderPerType.get(infrastructure.getType()).removeInstancePublicIp(infrastructure, instanceId);
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
+        cloudProviderPerType.get(infrastructure.getType()).removeInstancePublicIp(infrastructure,
+                                                                                  instanceId,
+                                                                                  optionalDesiredIp);
     }
 }

@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -127,6 +128,9 @@ public class AzureProvider implements CloudProvider {
     @Autowired
     private AzureProviderUtils azureProviderUtils;
 
+    @Autowired
+    private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
@@ -161,17 +165,23 @@ public class AzureProvider implements CloudProvider {
 
         // Prepare a new virtual private network (same for all VMs)
         Optional<String> optionalPrivateNetworkCIDR = options.map(Options::getPrivateNetworkCIDR);
-        Creatable<Network> creatableVirtualNetwork = azureProviderUtils.prepareVirtualNetwork(azureService,
-                                                                                              region,
-                                                                                              resourceGroup,
-                                                                                              createUniqueVirtualNetworkName(instanceTag),
-                                                                                              optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
+        Creatable<Network> creatableVirtualNetwork = azureProviderNetworkingUtils.prepareVirtualNetwork(azureService,
+                                                                                                        region,
+                                                                                                        resourceGroup,
+                                                                                                        createUniqueVirtualNetworkName(instanceTag),
+                                                                                                        optionalPrivateNetworkCIDR.orElse(DEFAULT_PRIVATE_NETWORK_CIDR));
+
+        // Get existing virtual private network if specified
+        Optional<Network> optionalVirtualNetwork = options.map(Options::getSubnetId)
+                                                          .map(subnetId -> azureProviderUtils.searchVirtualNetworkByName(azureService,
+                                                                                                                         subnetId)
+                                                                                             .get());
 
         // Prepare a new  security group (same for all VMs)
-        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderUtils.prepareProactiveNetworkSecurityGroup(azureService,
-                                                                                                                                region,
-                                                                                                                                resourceGroup,
-                                                                                                                                createUniqueSecurityGroupName(instance.getTag()));
+        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(azureService,
+                                                                                                                                          region,
+                                                                                                                                          resourceGroup,
+                                                                                                                                          createUniqueSecurityGroupName(instance.getTag()));
 
         // Get existing security group if specified
         Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)
@@ -189,23 +199,25 @@ public class AzureProvider implements CloudProvider {
                                                                                 // Create a new public IP address (one per VM)
                                                                                 String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                               instanceNumber));
-                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderUtils.preparePublicIPAddress(azureService,
-                                                                                                                                                                                region,
-                                                                                                                                                                                resourceGroup,
-                                                                                                                                                                                publicIPAddressName,
-                                                                                                                                                                                optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
+                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                                                                                          region,
+                                                                                                                                                                                          resourceGroup,
+                                                                                                                                                                                          publicIPAddressName,
+                                                                                                                                                                                          optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
 
                                                                                 // Prepare a new network interface (one per VM)
                                                                                 String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
                                                                                                                                                                        instanceNumber));
-                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderUtils.prepareNetworkInterface(azureService,
-                                                                                                                                                                                   region,
-                                                                                                                                                                                   resourceGroup,
-                                                                                                                                                                                   networkInterfaceName,
-                                                                                                                                                                                   creatableVirtualNetwork,
-                                                                                                                                                                                   creatableNetworkSecurityGroup,
-                                                                                                                                                                                   optionalNetworkSecurityGroup.orElse(null),
-                                                                                                                                                                                   creatablePublicIpAddress);
+                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
+                                                                                                                                                                                             region,
+                                                                                                                                                                                             resourceGroup,
+                                                                                                                                                                                             networkInterfaceName,
+                                                                                                                                                                                             creatableVirtualNetwork,
+                                                                                                                                                                                             optionalVirtualNetwork.orElse(null),
+                                                                                                                                                                                             creatableNetworkSecurityGroup,
+                                                                                                                                                                                             optionalNetworkSecurityGroup.orElse(null),
+                                                                                                                                                                                             creatablePublicIpAddress,
+                                                                                                                                                                                             null);
 
                                                                                 return prepareVirtualMachine(instance,
                                                                                                              azureService,
@@ -391,83 +403,101 @@ public class AzureProvider implements CloudProvider {
                                                                                       instanceId + "'"));
 
         // Retrieve all resources attached to the instance
-        NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
-        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
-        NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
-        Optional<PublicIpAddress> optionalPublicIPAddress = Optional.ofNullable(vm.getPrimaryPublicIpAddress());
+        List<com.microsoft.azure.management.network.Network> networks = azureProviderNetworkingUtils.getVMNetworks(azureService,
+                                                                                                                   vm);
+        List<NetworkSecurityGroup> networkSecurityGroups = azureProviderNetworkingUtils.getVMSecurityGroups(azureService,
+                                                                                                            vm);
+        List<PublicIpAddress> publicIPAddresses = azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService, vm);
         String osDiskID = vm.osDiskId();
 
         // Delete the VM first
         azureService.virtualMachines().deleteById(vm.id());
 
-        // Then delete its network interface
-        azureService.networkInterfaces().deleteById(networkInterface.id());
+        // Then delete all network interfaces attached
+        vm.networkInterfaceIds().forEach(id -> azureService.networkInterfaces().deleteById(id));
 
-        // Delete its public IP address if present
-        optionalPublicIPAddress.ifPresent(pubIPAddr -> azureService.publicIpAddresses().deleteById(pubIPAddr.id()));
+        // Delete all public IP addresses
+        publicIPAddresses.stream()
+                         .map(PublicIpAddress::id)
+                         .forEach(id -> azureService.publicIpAddresses().deleteById(id));
 
-        // Delete its main disk (OS), and keep data disks
+        // Delete its main disk (OS), *and keep data disks*
         azureService.disks().deleteById(osDiskID);
 
-        // Delete the security group if present and not attached to any network interface
-        if (azureService.networkInterfaces()
-                        .list()
-                        .stream()
-                        .map(NetworkInterface::getNetworkSecurityGroup)
-                        .filter(netSecGrp -> Optional.ofNullable(netSecGrp).isPresent())
-                        .noneMatch(netSecGrp -> netSecGrp.id().equals(networkSecurityGroup.id()))) {
-            azureService.networkSecurityGroups().deleteById(networkSecurityGroup.id());
-        }
+        // Delete the security groups if not attached to any remaining network interface
+        deleteSecurityGroups(azureService, networkSecurityGroups);
 
-        // Delete the virtual network if not attached to any network interface
-        if (azureService.networkInterfaces()
-                        .list()
-                        .stream()
-                        .map(NetworkInterface::primaryIpConfiguration)
-                        .filter(ipConf -> Optional.ofNullable(ipConf).isPresent())
-                        .map(NicIpConfiguration::getNetwork)
-                        .filter(net -> Optional.ofNullable(net).isPresent())
-                        .noneMatch(net -> net.id().equals(network.id()))) {
-            azureService.networks().deleteById(network.id());
-        }
+        // Delete the virtual networks if not attached to any remaining network interface
+        deleteNetworks(azureService, networks);
+    }
+
+    private void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
+        // Delete the security groups if not attached to any remaining network interface
+        networkSecurityGroups.stream()
+                             .map(NetworkSecurityGroup::id)
+                             .filter(id -> azureService.networkInterfaces()
+                                                       .list()
+                                                       .stream()
+                                                       .map(NetworkInterface::getNetworkSecurityGroup)
+                                                       .filter(Objects::nonNull)
+                                                       .noneMatch(networkSecurityGroup -> networkSecurityGroup.id()
+                                                                                                              .equals(id)))
+                             .forEach(id -> azureService.networkSecurityGroups().deleteById(id));
+    }
+
+    private void deleteNetworks(Azure azureService, List<com.microsoft.azure.management.network.Network> networks) {
+        networks.stream()
+                .map(Network::id)
+                .filter(id -> azureService.networkInterfaces()
+                                          .list()
+                                          .stream()
+                                          .flatMap(networkInterface -> networkInterface.ipConfigurations()
+                                                                                       .values()
+                                                                                       .stream())
+                                          .filter(Objects::nonNull)
+                                          .map(NicIpConfiguration::getNetwork)
+                                          .filter(Objects::nonNull)
+                                          .noneMatch(network -> network.id().equals(id)))
+                .forEach(id -> azureService.networks().deleteById(id));
     }
 
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
         Azure azureService = azureServiceCache.getService(infrastructure);
-        return azureProviderUtils.getAllVirtualMachines(azureService)
-                                 .stream()
-                                 .map(vm -> Instance.builder()
-                                                    .id(vm.vmId())
-                                                    .tag(vm.name())
-                                                    .number(SINGLE_INSTANCE_NUMBER)
-                                                    .hardware(Hardware.builder().type(vm.size().toString()).build())
-                                                    .network(org.ow2.proactive.connector.iaas.model.Network.builder()
-                                                                                                           .publicAddresses(vm.networkInterfaceIds()
-                                                                                                                              .stream()
-                                                                                                                              .map(networkInterfaceId -> azureService.networkInterfaces()
-                                                                                                                                                                     .getById(networkInterfaceId))
-                                                                                                                              .map(NetworkInterface::primaryIpConfiguration)
-                                                                                                                              .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.getPublicIpAddress())
-                                                                                                                                                                    .isPresent())
-                                                                                                                              .map(nicIpConfiguration -> nicIpConfiguration.getPublicIpAddress()
-                                                                                                                                                                           .ipAddress())
-                                                                                                                              .collect(Collectors.toList()))
-                                                                                                           .privateAddresses(vm.networkInterfaceIds()
-                                                                                                                               .stream()
-                                                                                                                               .map(networkInterfaceId -> azureService.networkInterfaces()
-                                                                                                                                                                      .getById(networkInterfaceId))
-                                                                                                                               .flatMap(networkInterface -> networkInterface.ipConfigurations()
-                                                                                                                                                                            .values()
-                                                                                                                                                                            .stream())
-                                                                                                                               .filter(nicIpConfiguration -> Optional.ofNullable(nicIpConfiguration.privateIpAddress())
-                                                                                                                                                                     .isPresent())
-                                                                                                                               .map(HasPrivateIpAddress::privateIpAddress)
-                                                                                                                               .collect(Collectors.toList()))
-                                                                                                           .build())
-                                                    .status(String.valueOf(vm.powerState().toString()))
-                                                    .build())
-                                 .collect(Collectors.toSet());
+        return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService));
+    }
+
+    private Set<Instance> getInstancesFromVMs(Azure azureService, Set<VirtualMachine> vms) {
+        return vms.stream()
+                  .map(vm -> Instance.builder()
+                                     .id(vm.vmId())
+                                     .tag(vm.name())
+                                     .number(SINGLE_INSTANCE_NUMBER)
+                                     .hardware(Hardware.builder().type(vm.size().toString()).build())
+                                     .network(org.ow2.proactive.connector.iaas.model.Network.builder()
+                                                                                            .publicAddresses(vm.networkInterfaceIds()
+                                                                                                               .stream()
+                                                                                                               .map(networkInterfaceId -> azureService.networkInterfaces()
+                                                                                                                                                      .getById(networkInterfaceId))
+                                                                                                               .map(NetworkInterface::primaryIpConfiguration)
+                                                                                                               .filter(Objects::nonNull)
+                                                                                                               .map(nicIpConfiguration -> nicIpConfiguration.getPublicIpAddress()
+                                                                                                                                                            .ipAddress())
+                                                                                                               .collect(Collectors.toList()))
+                                                                                            .privateAddresses(vm.networkInterfaceIds()
+                                                                                                                .stream()
+                                                                                                                .map(networkInterfaceId -> azureService.networkInterfaces()
+                                                                                                                                                       .getById(networkInterfaceId))
+                                                                                                                .flatMap(networkInterface -> networkInterface.ipConfigurations()
+                                                                                                                                                             .values()
+                                                                                                                                                             .stream())
+                                                                                                                .filter(Objects::nonNull)
+                                                                                                                .map(HasPrivateIpAddress::privateIpAddress)
+                                                                                                                .collect(Collectors.toList()))
+                                                                                            .build())
+                                     .status(String.valueOf(vm.powerState().toString()))
+                                     .build())
+                  .collect(Collectors.toSet());
     }
 
     @Override
@@ -546,53 +576,122 @@ public class AzureProvider implements CloudProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
                                               .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
                                                                                       instanceId + "'"));
         ResourceGroup resourceGroup = azureService.resourceGroups().getByName(vm.resourceGroupName());
 
-        // Retrieve all resources attached to the instance
-        NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
-        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
-        NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
-        Optional<PublicIpAddress> optionalPublicIPAddress = Optional.ofNullable(vm.getPrimaryPublicIpAddress());
+        // Try to retrieve the desired public IP address or create a new one
+        PublicIpAddress publicIpAddress = Optional.ofNullable(optionalDesiredIp)
+                                                  .map(opt -> azureService.publicIpAddresses()
+                                                                          .list()
+                                                                          .stream()
+                                                                          .filter(availablePublicIP -> availablePublicIP.ipAddress()
+                                                                                                                        .equals(opt))
+                                                                          .findAny()
+                                                                          .get())
+                                                  .orElseGet((() -> azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                        vm.region(),
+                                                                                                                        resourceGroup,
+                                                                                                                        createUniquePublicIPName(vm.name()),
+                                                                                                                        DEFAULT_STATIC_PUBLIC_IP)
+                                                                                                .create()));
 
-        // Create a new public IP address
-        PublicIpAddress newPublicIPAddress = azureProviderUtils.preparePublicIPAddress(azureService,
-                                                                                       vm.region(),
-                                                                                       resourceGroup,
-                                                                                       createUniquePublicIPName(vm.name()),
-                                                                                       DEFAULT_STATIC_PUBLIC_IP)
-                                                               .create();
+        List<NetworkInterface> networkInterfaces = vm.networkInterfaceIds()
+                                                     .stream()
+                                                     .map(id -> azureService.networkInterfaces().getById(id))
+                                                     .collect(Collectors.toList());
 
-        // If primary network interface already has a public IP, then create a new/secondary network interface
-        if (optionalPublicIPAddress.isPresent()) {
-            vm.update()
-              .withNewSecondaryNetworkInterface(azureProviderUtils.prepareNetworkInterface(azureService,
-                                                                                           vm.region(),
-                                                                                           resourceGroup,
-                                                                                           createUniqueNetworkInterfaceName(vm.name()),
-                                                                                           network,
-                                                                                           networkSecurityGroup,
-                                                                                           newPublicIPAddress))
-              .apply();
+        // If all existing network interfaces already have a public IP, then create a new/secondary network interface
+        if (networkInterfaces.stream()
+                             .allMatch(netIf -> Optional.ofNullable(netIf.primaryIpConfiguration()).isPresent() &&
+                                                Optional.ofNullable(netIf.primaryIpConfiguration().getPublicIpAddress())
+                                                        .isPresent())) {
+            // Reuse the network configuration (virtual private network & security group) of the primary network interface
+            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, publicIpAddress);
+            // Otherwise add the public address to the first network interface without public IP
         } else {
-            vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIpAddress(newPublicIPAddress).apply();
+            networkInterfaces.stream()
+                             .filter(netIf -> !Optional.ofNullable(netIf.primaryIpConfiguration()).isPresent() ||
+                                              !Optional.ofNullable(netIf.primaryIpConfiguration().getPublicIpAddress())
+                                                       .isPresent())
+                             .findFirst()
+                             .ifPresent(pubIpAddr -> pubIpAddr.update()
+                                                              .withExistingPrimaryPublicIpAddress(publicIpAddress)
+                                                              .apply());
         }
 
-        return newPublicIPAddress.ipAddress();
+        return publicIpAddress.ipAddress();
+    }
+
+    private void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
+            ResourceGroup resourceGroup, PublicIpAddress publicIpAddress) {
+        // Reuse the network configuration (virtual private network & security group) of the primary network interface
+        NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
+        NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
+        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
+        NetworkInterface newSecondaryNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
+                                                                                                             vm.region(),
+                                                                                                             resourceGroup,
+                                                                                                             createUniqueNetworkInterfaceName(vm.name()),
+                                                                                                             network,
+                                                                                                             networkSecurityGroup,
+                                                                                                             publicIpAddress)
+                                                                                    .create();
+        try {
+            vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
+        } catch (RuntimeException ex) {
+            // Cannot add new network interface, remove it and modify the primary network interface instead
+            handleAddPublicIpWithNewSecondaryNetworkInterfaceException(azureService,
+                                                                       vm,
+                                                                       publicIpAddress,
+                                                                       newSecondaryNetworkInterface);
+        }
+    }
+
+    private void handleAddPublicIpWithNewSecondaryNetworkInterfaceException(Azure azureService, VirtualMachine vm,
+            PublicIpAddress publicIpAddress, NetworkInterface newSecondaryNetworkInterface) {
+        removePublicIpFromNetworkInterface(azureService, newSecondaryNetworkInterface);
+        replaceVMPrimaryPublicIpAddress(azureService, vm, publicIpAddress);
+    }
+
+    private void removePublicIpFromNetworkInterface(Azure azureService, NetworkInterface networkInterface) {
+        networkInterface.update().withoutPrimaryPublicIpAddress().apply();
+        azureService.networkInterfaces().deleteById(networkInterface.id());
+    }
+
+    private void replaceVMPrimaryPublicIpAddress(Azure azureService, VirtualMachine vm,
+            PublicIpAddress newPublicIpAddress) {
+        PublicIpAddress existingPublicIPAddress = vm.getPrimaryPublicIpAddress();
+        vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
+        azureService.publicIpAddresses().deleteById(existingPublicIPAddress.id());
+        vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIpAddress(newPublicIpAddress).apply();
     }
 
     @Override
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
                                               .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
                                                                                       instanceId + "'"));
+        Optional<PublicIpAddress> optionalPublicIpAddress = Optional.ofNullable(optionalDesiredIp)
+                                                                    .map(opt -> azureService.publicIpAddresses()
+                                                                                            .list()
+                                                                                            .stream()
+                                                                                            .filter(availablePublicIP -> availablePublicIP.ipAddress()
+                                                                                                                                          .equals(opt))
+                                                                                            .findAny()
+                                                                                            .get());
 
-        // If there are secondary interfaces then remove one of them including its public IP address
+        // Delete the desired IP address if present
+        if (optionalPublicIpAddress.isPresent()) {
+            azureService.publicIpAddresses().deleteById(optionalPublicIpAddress.get().id());
+            return;
+        }
+
+        // If there is a secondary interface with a public IP then remove it in prior
         Optional<NetworkInterface> optionalSecondaryNetworkInterface = vm.networkInterfaceIds()
                                                                          .stream()
                                                                          .map(networkInterfaceId -> azureService.networkInterfaces()
@@ -608,10 +707,9 @@ public class AzureProvider implements CloudProvider {
                                                                                .primaryIpConfiguration()
                                                                                .getPublicIpAddress();
             optionalSecondaryNetworkInterface.get().update().withoutPrimaryPublicIpAddress().apply();
-            azureService.networkInterfaces().deleteById(optionalSecondaryNetworkInterface.get().id());
             azureService.publicIpAddresses().deleteById(publicIPAddress.id());
         }
-        // Otherwise remove the public IP address from the primary interface, if present
+        // Otherwise remove the public IP address from the primary interface if present
         else if (Optional.ofNullable(vm.getPrimaryPublicIpAddress()).isPresent()) {
             PublicIpAddress publicIPAddress = vm.getPrimaryPublicIpAddress();
             vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();

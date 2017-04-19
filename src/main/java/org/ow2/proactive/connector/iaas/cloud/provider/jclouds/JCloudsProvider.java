@@ -33,10 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
@@ -72,12 +72,18 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listNodes()
-                                                                 .stream()
-                                                                 .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
-                                                                 .map(nodeMetadataImpl -> instanceCreatorFromNodeMetadata.apply(nodeMetadataImpl,
-                                                                                                                                infrastructure.getId()))
-                                                                 .collect(Collectors.toSet());
+        return createInstancesFromNodes(getAllNodes(infrastructure));
+    }
+
+    private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listNodes();
+    }
+
+    private Set<Instance> createInstancesFromNodes(Set<? extends ComputeMetadata> nodes) {
+        return nodes.stream()
+                    .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                    .map(this::createInstanceFromNode)
+                    .collect(Collectors.toSet());
     }
 
     @Override
@@ -136,9 +142,7 @@ public abstract class JCloudsProvider implements CloudProvider {
         jCloudsComputeServiceCache.removeComputeService(infrastructure);
     }
 
-    protected final BiFunction<NodeMetadataImpl, String, Instance> instanceCreatorFromNodeMetadata = (
-
-            nodeMetadataImpl, infrastructureId) -> {
+    protected final Instance createInstanceFromNode(NodeMetadataImpl nodeMetadataImpl) {
         return Instance.builder()
                        .id(nodeMetadataImpl.getId())
                        .tag(Optional.ofNullable(nodeMetadataImpl.getName()).orElse(""))
@@ -160,7 +164,7 @@ public abstract class JCloudsProvider implements CloudProvider {
                                        .build())
                        .status(nodeMetadataImpl.getStatus().name())
                        .build();
-    };
+    }
 
     protected ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
         return jCloudsComputeServiceCache.getComputeService(infrastructure);
