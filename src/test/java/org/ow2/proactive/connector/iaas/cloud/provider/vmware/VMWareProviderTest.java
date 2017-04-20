@@ -45,15 +45,18 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.model.Tag;
 
+import com.google.common.collect.Lists;
 import com.vmware.vim25.FileFault;
 import com.vmware.vim25.GuestInfo;
 import com.vmware.vim25.GuestOperationsFault;
@@ -155,7 +158,10 @@ public class VMWareProviderTest {
     @Mock
     private ManagedObjectReference datastoreMOR;
 
-    private Tag connectorIaasTag = Tag.builder().key("default-key").value("random-value").build();
+    @Mock
+    private TagManager tagManager;
+
+    private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
     @Before
     public void init() {
@@ -194,7 +200,10 @@ public class VMWareProviderTest {
 
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
-        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance, connectorIaasTag);
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
         assertThat(createdInstances.size(), is(1));
 
@@ -248,8 +257,11 @@ public class VMWareProviderTest {
                                          any(VirtualMachineCloneSpec.class))).thenReturn(task);
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+
         // Create the new instance and check if the MAC address is set as option
-        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance, connectorIaasTag);
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
         assertThat(createdInstances.size(), is(1));
         assertThat(createdInstances.iterator().next().getOptions().getMacAddresses().iterator().next(),
                    is("00:50:56:11:11:11"));
@@ -292,7 +304,10 @@ public class VMWareProviderTest {
 
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
-        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance, connectorIaasTag);
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
         assertThat(createdInstances.size(), is(1));
 
@@ -336,7 +351,7 @@ public class VMWareProviderTest {
 
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
-        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance, connectorIaasTag);
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
         assertThat(createdInstances.size(), is(1));
 
@@ -377,7 +392,7 @@ public class VMWareProviderTest {
 
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
-        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance, connectorIaasTag);
+        Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
         assertThat(createdInstances.size(), is(1));
 

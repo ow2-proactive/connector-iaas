@@ -44,6 +44,7 @@ import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -65,6 +66,9 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
@@ -84,7 +88,8 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     @Override
-    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag) {
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
         return createInstancesFromNodes(getAllNodes(infrastructure).stream()
                                                                    .filter(node -> node.getUserMetadata()
                                                                                        .keySet()

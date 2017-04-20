@@ -49,18 +49,6 @@ import lombok.Getter;
 @Service
 public class CloudManager {
 
-    @Getter
-    @Value("${connector-iaas-tag.key:proactive-connector-iaas}")
-    private String connectorIaasTagKey;
-
-    public static final String DEFAULT_CONNECTOR_IAAS_TAG_KEY = "proactive-connector-iaas";
-
-    @Getter
-    @Value("${connector-iaas-tag.value:default-tag}")
-    private String connectorIaasTagValue;
-
-    public static final String DEFAULT_CONNECTOR_IAAS_TAG_VALUE = "default-tag";
-
     private Map<String, CloudProvider> cloudProviderPerType;
 
     @Autowired
@@ -70,14 +58,7 @@ public class CloudManager {
     }
 
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-        return cloudProviderPerType.get(infrastructure.getType()).createInstance(infrastructure,
-                                                                                 instance,
-                                                                                 Tag.builder()
-                                                                                    .key(Optional.ofNullable(connectorIaasTagKey)
-                                                                                                 .orElse(DEFAULT_CONNECTOR_IAAS_TAG_KEY))
-                                                                                    .value(Optional.ofNullable(connectorIaasTagValue)
-                                                                                                   .orElse(DEFAULT_CONNECTOR_IAAS_TAG_VALUE))
-                                                                                    .build());
+        return cloudProviderPerType.get(infrastructure.getType()).createInstance(infrastructure, instance);
     }
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -93,13 +74,7 @@ public class CloudManager {
     }
 
     public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
-        return cloudProviderPerType.get(infrastructure.getType()).getCreatedInfrastructureInstances(infrastructure,
-                                                                                                    Tag.builder()
-                                                                                                       .key(Optional.ofNullable(connectorIaasTagKey)
-                                                                                                                    .orElse(DEFAULT_CONNECTOR_IAAS_TAG_KEY))
-                                                                                                       .value(Optional.ofNullable(connectorIaasTagValue)
-                                                                                                                      .orElse(DEFAULT_CONNECTOR_IAAS_TAG_VALUE))
-                                                                                                       .build());
+        return cloudProviderPerType.get(infrastructure.getType()).getCreatedInfrastructureInstances(infrastructure);
     }
 
     public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,

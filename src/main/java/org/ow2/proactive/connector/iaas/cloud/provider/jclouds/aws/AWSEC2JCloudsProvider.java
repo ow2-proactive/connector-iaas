@@ -40,12 +40,14 @@ import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.domain.Location;
 import org.jclouds.ec2.domain.PublicIpInstanceIdPair;
 import org.jclouds.ec2.features.ElasticIPAddressApi;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
@@ -61,8 +63,11 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     private final static String INSTANCE_ID_REGION_SEPARATOR = "/";
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -77,7 +82,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         Optional.ofNullable(instance.getOptions()).ifPresent(options -> addOptions(template, options));
 
         // Add tags
-        addTags(template, retrieveAllTags(connectorIaasTag, instance.getOptions()));
+        addTags(template, tagManager.retrieveAllTags(instance.getOptions()));
 
         Optional.ofNullable(instance.getCredentials()).ifPresent(options -> addCredential(template, options));
 

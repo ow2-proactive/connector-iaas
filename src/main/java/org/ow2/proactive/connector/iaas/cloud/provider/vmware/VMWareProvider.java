@@ -37,6 +37,7 @@ import java.util.stream.IntStream;
 import javax.ws.rs.NotSupportedException;
 
 import org.apache.log4j.Logger;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -89,8 +90,11 @@ public class VMWareProvider implements CloudProvider {
     @Autowired
     private VMWareProviderMacAddressHandler vmWareProviderMacAddressHandler;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         String image = instance.getImage();
         Folder rootFolder = vmWareServiceInstanceCache.getServiceInstance(infrastructure).getRootFolder();
@@ -100,7 +104,7 @@ public class VMWareProvider implements CloudProvider {
         Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
         VirtualMachine vmToClone = getVirtualMachineByNameOrUUID(instanceImageId, rootFolder);
 
-        List<Tag> tags = retrieveAllTags(connectorIaasTag, instance.getOptions());
+        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber())).mapToObj(instanceIndexStartAt1 -> {
             String uniqueInstanceTag = createUniqueInstanceTag(instance.getTag(), instanceIndexStartAt1);
@@ -257,7 +261,8 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag) {
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
         return getInstancesFromVMs(vmWareProviderVirtualMachineUtil.getAllVirtualMachines(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
                                                                                                                     .getRootFolder())
                                                                    .stream()

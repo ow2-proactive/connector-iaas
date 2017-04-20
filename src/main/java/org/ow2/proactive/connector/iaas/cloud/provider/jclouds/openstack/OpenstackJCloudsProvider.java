@@ -43,12 +43,14 @@ import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -62,8 +64,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     @Getter
     private final String type = "openstack-nova";
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
@@ -72,7 +77,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         ServerApi serverApi = novaApi.getServerApi(region);
 
         // Retrieve and add tags to the VM
-        List<Tag> tags = retrieveAllTags(connectorIaasTag, instance.getOptions());
+        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
         CreateServerOptions serverOptions = createOptions(instance, tags);
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))

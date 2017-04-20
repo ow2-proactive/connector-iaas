@@ -189,8 +189,6 @@ public class InstanceServiceTest {
         Instance instance3 = InstanceFixture.simpleInstance("id2");
 
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
-        when(cloudManager.getConnectorIaasTagKey()).thenReturn(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_KEY);
-        when(cloudManager.getConnectorIaasTagValue()).thenReturn(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_VALUE);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2,
                                                                                                     instance3));
@@ -282,8 +280,6 @@ public class InstanceServiceTest {
         Instance instance2 = InstanceFixture.simpleInstance("id2");
 
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
-        when(cloudManager.getConnectorIaasTagKey()).thenReturn(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_KEY);
-        when(cloudManager.getConnectorIaasTagValue()).thenReturn(CloudManager.DEFAULT_CONNECTOR_IAAS_TAG_VALUE);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2));
         when(cloudManager.getCreatedInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1));

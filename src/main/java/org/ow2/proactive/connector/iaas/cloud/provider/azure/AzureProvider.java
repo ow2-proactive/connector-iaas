@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.log4j.Logger;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -132,8 +133,11 @@ public class AzureProvider implements CloudProvider {
     @Autowired
     private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
-    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance, Tag connectorIaasTag) {
+    public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         Azure azureService = azureServiceCache.getService(infrastructure);
         String instanceTag = Optional.ofNullable(instance.getTag())
@@ -151,7 +155,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                            "'")));
 
         // Retrieve tags
-        List<Tag> tags = retrieveAllTags(connectorIaasTag, instance.getOptions());
+        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -482,8 +486,9 @@ public class AzureProvider implements CloudProvider {
     }
 
     @Override
-    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure, Tag connectorIaasTag) {
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
         Azure azureService = azureServiceCache.getService(infrastructure);
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
         return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService)
                                                                    .stream()
                                                                    .filter(vm -> vm.tags().keySet().contains(
