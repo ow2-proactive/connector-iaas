@@ -25,11 +25,9 @@
  */
 package org.ow2.proactive.connector.iaas.service;
 
-import java.util.HashSet;
 import java.util.Map;
 
 import org.ow2.proactive.connector.iaas.cache.InfrastructureCache;
-import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +41,6 @@ public class InfrastructureService {
     private InfrastructureCache infrastructureCache;
 
     @Autowired
-    private InstanceCache instanceCache;
-
-    @Autowired
     private CloudManager cloudManager;
 
     @Autowired
@@ -57,21 +52,18 @@ public class InfrastructureService {
 
     public Infrastructure registerInfrastructure(Infrastructure infrastructure) {
         infrastructureCache.registerInfrastructure(infrastructure);
-        instanceCache.registerInfrastructureInstances(infrastructure, new HashSet<>());
         return infrastructure;
     }
 
     public void deleteInfrastructure(Infrastructure infrastructure) {
         cloudManager.deleteInfrastructure(infrastructure);
         infrastructureCache.deleteInfrastructure(infrastructure);
-        instanceCache.deleteInfrastructure(infrastructure);
     }
 
     public void deleteInfrastructureWithCreatedInstances(Infrastructure infrastructure) {
         instanceService.deleteCreatedInstances(infrastructure.getId());
         cloudManager.deleteInfrastructure(infrastructure);
         infrastructureCache.deleteInfrastructure(infrastructure);
-        instanceCache.deleteInfrastructure(infrastructure);
     }
 
     public Infrastructure getInfrastructure(String infrastructureId) {

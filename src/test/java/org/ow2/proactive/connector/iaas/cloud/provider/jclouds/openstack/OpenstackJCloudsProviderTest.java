@@ -30,6 +30,7 @@ import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jclouds.compute.ComputeService;
@@ -66,6 +68,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
@@ -73,10 +76,13 @@ import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.microsoft.azure.management.compute.VirtualMachineExtension;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -112,6 +118,13 @@ public class OpenstackJCloudsProviderTest {
 
     @Mock
     private Resource resource;
+
+    @Mock
+    private TagManager tagManager;
+
+    private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
+
+    private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
     @Before
     public void init() {
@@ -178,6 +191,9 @@ public class OpenstackJCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+
         when(computeService.createNodesInGroup(instance.getTag(),
                                                Integer.parseInt(instance.getNumber()),
                                                template)).thenReturn(nodes);
@@ -223,6 +239,9 @@ public class OpenstackJCloudsProviderTest {
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
 
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
+
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set nodesMetaData = Sets.newHashSet();
         NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);

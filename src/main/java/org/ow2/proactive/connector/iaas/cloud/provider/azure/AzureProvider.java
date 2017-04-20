@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.log4j.Logger;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -43,6 +44,7 @@ import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -131,6 +133,9 @@ public class AzureProvider implements CloudProvider {
     @Autowired
     private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
@@ -148,6 +153,9 @@ public class AzureProvider implements CloudProvider {
                                                                                                      imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
                                                                                                                                                            instance.getImage() +
                                                                                                                                                            "'")));
+
+        // Retrieve tags
+        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -310,7 +318,11 @@ public class AzureProvider implements CloudProvider {
                                    .attach();
             }
         });
-        return creatableVMWithSize;
+
+        // Set tags
+        return creatableVMWithSize.withTags(tagManager.retrieveAllTags(instance.getOptions())
+                                                      .stream()
+                                                      .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private VirtualMachine.DefinitionStages.WithLinuxCreateManaged configureLinuxVirtualMachine(Azure azureService,
@@ -472,6 +484,20 @@ public class AzureProvider implements CloudProvider {
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService));
+    }
+
+    @Override
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        Azure azureService = azureServiceCache.getService(infrastructure);
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
+        return getInstancesFromVMs(azureService, azureProviderUtils.getAllVirtualMachines(azureService)
+                                                                   .stream()
+                                                                   .filter(vm -> vm.tags().keySet().contains(
+                                                                                                             connectorIaasTag.getKey()) &&
+                                                                                 vm.tags()
+                                                                                   .get(connectorIaasTag.getKey())
+                                                                                   .equals(connectorIaasTag.getValue()))
+                                                                   .collect(Collectors.toSet()));
     }
 
     private Set<Instance> getInstancesFromVMs(Azure azureService, Set<VirtualMachine> vms) {

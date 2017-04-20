@@ -44,6 +44,7 @@ import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -52,6 +53,7 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -64,6 +66,9 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
@@ -75,15 +80,28 @@ public abstract class JCloudsProvider implements CloudProvider {
         return createInstancesFromNodes(getAllNodes(infrastructure));
     }
 
-    private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listNodes();
-    }
-
     private Set<Instance> createInstancesFromNodes(Set<? extends ComputeMetadata> nodes) {
         return nodes.stream()
                     .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
                     .map(this::createInstanceFromNode)
                     .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
+        return createInstancesFromNodes(getAllNodes(infrastructure).stream()
+                                                                   .filter(node -> node.getUserMetadata()
+                                                                                       .keySet()
+                                                                                       .contains(connectorIaasTag.getKey()) &&
+                                                                                   node.getUserMetadata()
+                                                                                       .get(connectorIaasTag.getKey())
+                                                                                       .equals(connectorIaasTag.getValue()))
+                                                                   .collect(Collectors.toSet()));
+    }
+
+    private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listNodes();
     }
 
     @Override

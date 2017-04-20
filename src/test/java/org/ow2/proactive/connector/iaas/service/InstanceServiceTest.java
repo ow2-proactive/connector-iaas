@@ -27,8 +27,6 @@ package org.ow2.proactive.connector.iaas.service;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,18 +36,15 @@ import java.util.Set;
 import org.jclouds.compute.RunNodesException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.ow2.proactive.connector.iaas.cache.InstanceCache;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 
-import jersey.repackaged.com.google.common.collect.ImmutableMap;
 import jersey.repackaged.com.google.common.collect.Sets;
 
 
@@ -59,15 +54,10 @@ public class InstanceServiceTest {
     private InstanceService instanceService;
 
     @Mock
-    private InstanceCache instanceCache;
-
-    @Mock
     private InfrastructureService infrastructureService;
 
     @Mock
     private CloudManager cloudManager;
-
-    private ImmutableMap<String, Set<Instance>> mockCreatedInstances;
 
     @Before
     public void init() {
@@ -94,17 +84,12 @@ public class InstanceServiceTest {
                                                         "privateIP",
                                                         "running");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
-
         when(cloudManager.createInstance(infrastructure, instance)).thenReturn(Sets.newHashSet(instance));
 
         Set<Instance> created = instanceService.createInstance("id-aws", instance);
 
         assertThat(created.size(), is(1));
-        assertThat(instanceCache.getCreatedInstances().get(infrastructure.getId()), is(created));
         verify(cloudManager, times(1)).createInstance(infrastructure, instance);
-        verify(instanceCache, times(1)).registerInfrastructureInstances(infrastructure, created);
     }
 
     @Test(expected = javax.ws.rs.NotFoundException.class)
@@ -143,14 +128,11 @@ public class InstanceServiceTest {
                                                                                 "password");
         Instance instance = InstanceFixture.simpleInstance("instance-id");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         instanceService.deleteInstance(infrastructure.getId(), instance.getId());
 
         verify(cloudManager, times(1)).deleteInstance(infrastructure, instance.getId());
-        verify(instanceCache, times(1)).deleteInfrastructureInstance(infrastructure, instance);
     }
 
     @Test
@@ -181,8 +163,6 @@ public class InstanceServiceTest {
         Instance instance1 = InstanceFixture.simpleInstanceWithTag("id1", "tag1");
         Instance instance2 = InstanceFixture.simpleInstanceWithTag("id2", "tag2");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance1, instance2));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2));
@@ -192,7 +172,6 @@ public class InstanceServiceTest {
         verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(0)).deleteInstance(infrastructure, "id2");
-        verify(instanceCache, times(1)).deleteInfrastructureInstance(infrastructure, instance1);
     }
 
     @Test
@@ -207,22 +186,22 @@ public class InstanceServiceTest {
 
         Instance instance1 = InstanceFixture.simpleInstance("id1");
         Instance instance2 = InstanceFixture.simpleInstance("id2");
-        Instance instance3 = InstanceFixture.simpleInstance("id3");
+        Instance instance3 = InstanceFixture.simpleInstance("id2");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance1, instance2));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2,
                                                                                                     instance3));
+        when(cloudManager.getCreatedInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
+                                                                                                        instance2));
 
         instanceService.deleteCreatedInstances(infrastructure.getId());
 
-        verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
+        verify(cloudManager, times(0)).getAllInfrastructureInstances(infrastructure);
+        verify(cloudManager, times(1)).getCreatedInfrastructureInstances(infrastructure);
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(0)).deleteInstance(infrastructure, "id3");
-        verify(instanceCache, times(2)).deleteInfrastructureInstance(any(Infrastructure.class), any(Instance.class));
     }
 
     @Test
@@ -239,8 +218,6 @@ public class InstanceServiceTest {
         Instance instance2 = InstanceFixture.simpleInstance("id2");
         Instance instance3 = InstanceFixture.simpleInstance("id3");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance1, instance2));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2,
@@ -252,7 +229,6 @@ public class InstanceServiceTest {
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id1");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id2");
         verify(cloudManager, times(1)).deleteInstance(infrastructure, "id3");
-        verify(instanceCache, times(3)).deleteInfrastructureInstance(any(Infrastructure.class), any(Instance.class));
     }
 
     @Test(expected = javax.ws.rs.NotFoundException.class)
@@ -303,18 +279,16 @@ public class InstanceServiceTest {
         Instance instance1 = InstanceFixture.simpleInstance("id1");
         Instance instance2 = InstanceFixture.simpleInstance("id2");
 
-        mockCreatedInstances = ImmutableMap.of(infrastructure.getId(), Sets.newHashSet(instance1));
-        when(instanceCache.getCreatedInstances()).thenReturn(mockCreatedInstances);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1,
                                                                                                     instance2));
+        when(cloudManager.getCreatedInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(instance1));
 
         Set<Instance> created = instanceService.getCreatedInstances(infrastructure.getId());
 
         assertThat(created.size(), is(1));
-        InOrder inOrder = inOrder(instanceCache, cloudManager);
-        inOrder.verify(instanceCache, times(1)).getCreatedInstances();
-        inOrder.verify(cloudManager, times(1)).getAllInfrastructureInstances(infrastructure);
+        verify(cloudManager, times(0)).getAllInfrastructureInstances(infrastructure);
+        verify(cloudManager, times(1)).getCreatedInfrastructureInstances(infrastructure);
     }
 
     @Test(expected = javax.ws.rs.NotFoundException.class)

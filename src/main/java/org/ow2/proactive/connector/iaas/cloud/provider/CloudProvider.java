@@ -45,6 +45,8 @@ public interface CloudProvider {
 
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure);
 
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure);
+
     public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript);
 
@@ -58,4 +60,5 @@ public interface CloudProvider {
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
+
 }

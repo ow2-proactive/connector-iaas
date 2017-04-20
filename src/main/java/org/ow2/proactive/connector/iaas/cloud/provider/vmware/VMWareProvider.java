@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +37,7 @@ import java.util.stream.IntStream;
 import javax.ws.rs.NotSupportedException;
 
 import org.apache.log4j.Logger;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -44,12 +46,14 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 import com.vmware.vim25.GuestProgramSpec;
 import com.vmware.vim25.NamePasswordAuthentication;
+import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
@@ -86,6 +90,9 @@ public class VMWareProvider implements CloudProvider {
     @Autowired
     private VMWareProviderMacAddressHandler vmWareProviderMacAddressHandler;
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
@@ -97,6 +104,8 @@ public class VMWareProvider implements CloudProvider {
         Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
         VirtualMachine vmToClone = getVirtualMachineByNameOrUUID(instanceImageId, rootFolder);
 
+        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
+
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber())).mapToObj(instanceIndexStartAt1 -> {
             String uniqueInstanceTag = createUniqueInstanceTag(instance.getTag(), instanceIndexStartAt1);
             return cloneVM(vmToClone,
@@ -107,7 +116,8 @@ public class VMWareProvider implements CloudProvider {
                                                          vmToClone,
                                                          relocateSpecs,
                                                          instance,
-                                                         uniqueInstanceTag),
+                                                         uniqueInstanceTag,
+                                                         tags),
                            destinationFolder);
         }).map(vm -> instance.withId(vm.getConfig().getUuid())).collect(Collectors.toSet());
     }
@@ -136,13 +146,21 @@ public class VMWareProvider implements CloudProvider {
      * @return a new VirtualMachineCloneSpec that may be customized with the desired MAC address' index
      */
     private VirtualMachineCloneSpec createVirtualMachineCloneSpec(int instanceIndexStartAt1, VirtualMachine vmToClone,
-            VirtualMachineRelocateSpec relocateSpecs, Instance instance, String uniqueInstanceTag) {
+            VirtualMachineRelocateSpec relocateSpecs, Instance instance, String uniqueInstanceTag, List<Tag> tags) {
 
         // Create a new VirtualMachineCloneSpec based on the specified VM to clone.
         VirtualMachineCloneSpec vmCloneSpecs = generateDefaultVirtualMachineCloneSpec(instance);
 
         // Set the hostname
         vmCloneSpecs.getConfig().setName(uniqueInstanceTag);
+
+        // Add the tags
+        vmCloneSpecs.getConfig()
+                    .setExtraConfig(tags.stream()
+                                        .map(this::createOptionValueFromTag)
+                                        .collect(Collectors.toList())
+                                        .stream()
+                                        .toArray(OptionValue[]::new));
 
         // Customize it with specific location
         vmCloneSpecs.setLocation(relocateSpecs);
@@ -154,6 +172,13 @@ public class VMWareProvider implements CloudProvider {
                                                                                                 .ifPresent(virtDevConfSpec -> vmCloneSpecs.getConfig()
                                                                                                                                           .setDeviceChange(virtDevConfSpec)));
         return vmCloneSpecs;
+    }
+
+    private OptionValue createOptionValueFromTag(Tag tag) {
+        OptionValue optVal = new OptionValue();
+        optVal.setKey(tag.getKey());
+        optVal.setValue(tag.getValue());
+        return optVal;
     }
 
     /**
@@ -233,6 +258,21 @@ public class VMWareProvider implements CloudProvider {
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
         return getInstancesFromVMs(vmWareProviderVirtualMachineUtil.getAllVirtualMachines(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
                                                                                                                     .getRootFolder()));
+    }
+
+    @Override
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        Tag connectorIaasTag = tagManager.getConnectorIaasTag();
+        return getInstancesFromVMs(vmWareProviderVirtualMachineUtil.getAllVirtualMachines(vmWareServiceInstanceCache.getServiceInstance(infrastructure)
+                                                                                                                    .getRootFolder())
+                                                                   .stream()
+                                                                   .filter(vm -> Arrays.stream(vm.getConfig()
+                                                                                                 .getExtraConfig())
+                                                                                       .anyMatch(extraConfig -> extraConfig.getKey()
+                                                                                                                           .equals(connectorIaasTag.getKey()) &&
+                                                                                                                extraConfig.getValue()
+                                                                                                                           .equals(connectorIaasTag.getValue())))
+                                                                   .collect(Collectors.toSet()));
     }
 
     private Set<Instance> getInstancesFromVMs(Set<VirtualMachine> vms) {

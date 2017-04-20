@@ -52,12 +52,15 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -274,6 +277,11 @@ public class AzureProviderTest {
     @Mock
     private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
 
+    @Mock
+    private TagManager tagManager;
+
+    private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
+
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -370,6 +378,9 @@ public class AzureProviderTest {
         Collection<VirtualMachine> createdVirtualMachines = Lists.newArrayList(virtualMachine);
         when(virtualMachines.create(any(List.class))).thenReturn(virtualMachineCreatedResources);
         when(virtualMachineCreatedResources.values()).thenReturn(createdVirtualMachines);
+
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         // Tests
         Infrastructure infrastructure;
@@ -518,6 +529,9 @@ public class AzureProviderTest {
         Collection<VirtualMachine> createdVirtualMachines = Lists.newArrayList(virtualMachine, virtualMachine2);
         when(virtualMachines.create(any(List.class))).thenReturn(virtualMachineCreatedResources);
         when(virtualMachineCreatedResources.values()).thenReturn(createdVirtualMachines);
+
+        // Tags
+        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         // Tests
         Infrastructure infrastructure;
