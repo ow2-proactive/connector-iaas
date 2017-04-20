@@ -78,7 +78,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         // Retrieve and add tags to the VM
         List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
-        CreateServerOptions serverOptions = createOptions(instance, tags);
+        CreateServerOptions serverOptions = createOptions(instance);
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                         .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
@@ -87,7 +87,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     }
 
-    private CreateServerOptions createOptions(Instance instance, List<Tag> tags) {
+    private CreateServerOptions createOptions(Instance instance) {
 
         CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(instance.getCredentials()
                                                                                                 .getPublicKeyName())
@@ -98,7 +98,9 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         }
 
         // Set tags before returning options
-        return createServerOptions.metadata(tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+        return createServerOptions.metadata(tagManager.retrieveAllTags(instance.getOptions())
+                                                      .stream()
+                                                      .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private boolean isNetworkIdSet(Network network) {

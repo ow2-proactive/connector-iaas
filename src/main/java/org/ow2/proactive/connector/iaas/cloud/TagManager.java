@@ -50,7 +50,7 @@ public class TagManager {
     private static final String DEFAULT_CONNECTOR_IAAS_TAG_VALUE = "default-tag";
 
     @Getter
-    private Tag connectorIaasTag;
+    private final Tag connectorIaasTag;
 
     public TagManager(@Value("${connector-iaas-tag.key}") String connectorIaasTagKey,
             @Value("${connector-iaas-tag.value}") String connectorIaasTagValue) {

@@ -241,8 +241,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                              createUniqueInstanceTag(instanceTag,
                                                                                                                                      instanceNumber),
                                                                                                              image,
-                                                                                                             creatableNetworkInterface,
-                                                                                                             tags);
+                                                                                                             creatableNetworkInterface);
                                                                             })
                                                                             .collect(Collectors.toList());
 
@@ -273,7 +272,7 @@ public class AzureProvider implements CloudProvider {
 
     private Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
             ResourceGroup resourceGroup, Region region, String instanceTag, VirtualMachineCustomImage image,
-            Creatable<NetworkInterface> creatableNetworkInterface, List<Tag> tags) {
+            Creatable<NetworkInterface> creatableNetworkInterface) {
 
         // Configure the VM depending on the OS type
         VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged creatableVirtualMachineWithImage;
@@ -321,7 +320,9 @@ public class AzureProvider implements CloudProvider {
         });
 
         // Set tags
-        return creatableVMWithSize.withTags(tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+        return creatableVMWithSize.withTags(tagManager.retrieveAllTags(instance.getOptions())
+                                                      .stream()
+                                                      .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
     private VirtualMachine.DefinitionStages.WithLinuxCreateManaged configureLinuxVirtualMachine(Azure azureService,
