@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -41,17 +42,14 @@ import lombok.Getter;
 @Component
 public class TagManager {
 
-    private String connectorIaasTagKey;
-
     private static final String DEFAULT_CONNECTOR_IAAS_TAG_KEY = "proactive-connector-iaas";
-
-    private String connectorIaasTagValue;
 
     private static final String DEFAULT_CONNECTOR_IAAS_TAG_VALUE = "default-tag";
 
     @Getter
     private final Tag connectorIaasTag;
 
+    @Autowired
     public TagManager(@Value("${connector-iaas-tag.key}") String connectorIaasTagKey,
             @Value("${connector-iaas-tag.value}") String connectorIaasTagValue) {
         connectorIaasTag = Tag.builder()
