@@ -61,6 +61,7 @@ import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.NicIpConfiguration;
 import com.microsoft.azure.management.network.PublicIpAddress;
 import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
+import com.microsoft.azure.management.network.model.HasPublicIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
@@ -514,8 +515,9 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                       .getById(networkInterfaceId))
                                                                                                                .map(NetworkInterface::primaryIpConfiguration)
                                                                                                                .filter(Objects::nonNull)
-                                                                                                               .map(nicIpConfiguration -> nicIpConfiguration.getPublicIpAddress()
-                                                                                                                                                            .ipAddress())
+                                                                                                               .map(HasPublicIpAddress::getPublicIpAddress)
+                                                                                                               .filter(Objects::nonNull)
+                                                                                                               .map(PublicIpAddress::ipAddress)
                                                                                                                .collect(Collectors.toList()))
                                                                                             .privateAddresses(vm.networkInterfaceIds()
                                                                                                                 .stream()
