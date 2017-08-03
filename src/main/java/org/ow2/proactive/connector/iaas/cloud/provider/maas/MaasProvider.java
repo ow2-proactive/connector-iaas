@@ -118,8 +118,7 @@ public class MaasProvider implements CloudProvider {
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
-
-        if (!maasProviderClientCache.getMaasClient(infrastructure).deleteMachine(instanceId)) {
+        if (!maasProviderClientCache.getMaasClient(infrastructure).releaseMachineById(instanceId)) {
             throw new RuntimeException("ERROR when deleting MAAS instance : " + instanceId);
         }
     }
