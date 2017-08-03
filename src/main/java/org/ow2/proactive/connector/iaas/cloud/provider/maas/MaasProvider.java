@@ -181,9 +181,6 @@ public class MaasProvider implements CloudProvider {
 
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
-        // Remove only DESIRED instances
-        infrastructure.getInstances().stream()
-                .map(Instance::getId).forEach(id -> deleteInstance(infrastructure, id));
         maasProviderClientCache.removeMaasClient(infrastructure);
     }
 
