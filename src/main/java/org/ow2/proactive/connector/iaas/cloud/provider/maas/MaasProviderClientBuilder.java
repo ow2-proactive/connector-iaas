@@ -30,6 +30,7 @@ import org.ow2.proactive.connector.maas.MaasClient;
 import org.springframework.remoting.RemoteConnectFailureException;
 import org.springframework.stereotype.Component;
 
+
 /**
  * @author ActiveEon Team
  * @since 12/01/17
@@ -40,10 +41,11 @@ public class MaasProviderClientBuilder {
     public MaasClient buildMaasClientFromInfrastructure(Infrastructure infrastructure) {
 
         try {
-            return new MaasClient(infrastructure.getEndpoint(), infrastructure.getCredentials().getPassword(), infrastructure.getCredentials().isAllowSelfSignedSSLCertificate());
-        } catch(RemoteConnectFailureException e) {
-            throw new RuntimeException(
-                    "ERROR trying to create MaasClient with infrastructure : " + infrastructure, e);
+            return new MaasClient(infrastructure.getEndpoint(),
+                                  infrastructure.getCredentials().getPassword(),
+                                  infrastructure.getCredentials().isAllowSelfSignedSSLCertificate());
+        } catch (RemoteConnectFailureException e) {
+            throw new RuntimeException("ERROR trying to create MaasClient with infrastructure : " + infrastructure, e);
         }
     }
 }

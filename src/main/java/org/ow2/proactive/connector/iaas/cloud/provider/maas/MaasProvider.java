@@ -56,6 +56,7 @@ import com.google.common.collect.Lists;
 
 import lombok.Getter;
 
+
 /**
  * @author Vicent Kherbache
  * @since 09/01/17
@@ -83,19 +84,27 @@ public class MaasProvider implements CloudProvider {
         List<org.ow2.proactive.connector.maas.data.Tag> tags = convertIaasTagsToMaasTags(tagManager.retrieveAllTags(instance.getOptions()));
 
         // Initialize MAAS deployment polling
-        MaasClientPollingService maasPollingService = new MaasClientPollingService(maasClient, Integer.valueOf(instance.getNumber()));
+        MaasClientPollingService maasPollingService = new MaasClientPollingService(maasClient,
+                                                                                   Integer.valueOf(instance.getNumber()));
 
         // Start deployment(s) by ID or by resources
         List<Future<Machine>> futureMachines;
         if (instance.getId() != null) {
             futureMachines = IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(instance.getId(), instance.getInitScript().getScripts()[0], tags))
-                    .collect(Collectors.toList());
-        }
-        else {
+                                      .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(instance.getId(),
+                                                                                                          instance.getInitScript()
+                                                                                                                  .getScripts()[0],
+                                                                                                          tags))
+                                      .collect(Collectors.toList());
+        } else {
             futureMachines = IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                    .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(Integer.valueOf(instance.getHardware().getMinCores()), Integer.valueOf(instance.getHardware().getMinRam()), "", tags))
-                    .collect(Collectors.toList());
+                                      .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(Integer.valueOf(instance.getHardware()
+                                                                                                                                  .getMinCores()),
+                                                                                                          Integer.valueOf(instance.getHardware()
+                                                                                                                                  .getMinRam()),
+                                                                                                          "",
+                                                                                                          tags))
+                                      .collect(Collectors.toList());
         }
 
         // Retrieve futures (blocking calls)
@@ -106,9 +115,7 @@ public class MaasProvider implements CloudProvider {
                 e.printStackTrace();
                 return null;
             }
-        })
-        .map(this::getInstanceFromMachine)
-        .collect(Collectors.toSet());
+        }).map(this::getInstanceFromMachine).collect(Collectors.toSet());
 
         // Kill polling timeout tasks
         maasPollingService.shutdown();
@@ -125,7 +132,11 @@ public class MaasProvider implements CloudProvider {
 
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
-        return maasProviderClientCache.getMaasClient(infrastructure).getMachines().stream().map(this::getInstanceFromMachine).collect(Collectors.toSet());
+        return maasProviderClientCache.getMaasClient(infrastructure)
+                                      .getMachines()
+                                      .stream()
+                                      .map(this::getInstanceFromMachine)
+                                      .collect(Collectors.toSet());
     }
 
     @Override
@@ -135,14 +146,19 @@ public class MaasProvider implements CloudProvider {
      * a random/unique name. The value of the tag is not used.
      */
     public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
-        return maasProviderClientCache.getMaasClient(infrastructure).getMachinesByTag(convertIaasTagToMaasTag(tagManager.getConnectorIaasTag())).stream().map(this::getInstanceFromMachine).collect(Collectors.toSet());
+        return maasProviderClientCache.getMaasClient(infrastructure)
+                                      .getMachinesByTag(convertIaasTagToMaasTag(tagManager.getConnectorIaasTag()))
+                                      .stream()
+                                      .map(this::getInstanceFromMachine)
+                                      .collect(Collectors.toSet());
     }
 
     @Override
     /**
      * Upload a new *decommissioning* script to MAAS region controller.
      */
-    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId, InstanceScript instanceScript) {
+    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
+            InstanceScript instanceScript) {
 
         ScriptResult scriptResult = new ScriptResult(instanceId, "", "");
 
@@ -154,24 +170,35 @@ public class MaasProvider implements CloudProvider {
         }
 
         CommissioningScript maasScript = maasProviderClientCache.getMaasClient(infrastructure)
-                .postCommissioningScript(script.toString().getBytes(), instanceId);
+                                                                .postCommissioningScript(script.toString().getBytes(),
+                                                                                         instanceId);
 
         if (maasScript == null) {
-            return Lists.newArrayList(scriptResult.withError("Unable to upload script " +  instanceId));
+            return Lists.newArrayList(scriptResult.withError("Unable to upload script " + instanceId));
         }
 
         // Unable to retrieve scripts output, returns empty results instead
         return IntStream.rangeClosed(1, instanceScript.getScripts().length)
-                .mapToObj(scriptNumber -> new ScriptResult(instanceId, "", ""))
-                .collect(Collectors.toList());
+                        .mapToObj(scriptNumber -> new ScriptResult(instanceId, "", ""))
+                        .collect(Collectors.toList());
     }
 
     @Override
-    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag, InstanceScript instanceScript) {
+    public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
+            InstanceScript instanceScript) {
 
-        return executeScriptOnInstanceId(infrastructure, maasProviderClientCache.getMaasClient(infrastructure).getMachines().stream()
-                .filter(machine -> machine.getHostname().equals(instanceTag))
-                .findFirst().orElseThrow(() -> new RuntimeException("ERROR machine with hostname '" + instanceTag + "' not found")).getSystemId(), instanceScript);
+        return executeScriptOnInstanceId(infrastructure,
+                                         maasProviderClientCache.getMaasClient(infrastructure)
+                                                                .getMachines()
+                                                                .stream()
+                                                                .filter(machine -> machine.getHostname()
+                                                                                          .equals(instanceTag))
+                                                                .findFirst()
+                                                                .orElseThrow(() -> new RuntimeException("ERROR machine with hostname '" +
+                                                                                                        instanceTag +
+                                                                                                        "' not found"))
+                                                                .getSystemId(),
+                                         instanceScript);
     }
 
     @Override
@@ -196,18 +223,25 @@ public class MaasProvider implements CloudProvider {
 
     private Instance getInstanceFromMachine(Machine machine) {
 
-        return Instance.builder().id(machine.getSystemId()).tag(machine.getHostname())
-                .number("1").hardware(Hardware.builder().minCores(machine.getCpuCount().toString())
-                        .minRam(machine.getMemory().toString()).type(machine.getNodeTypeName()).build())
-                .network(Network.builder().publicAddresses(Lists.newArrayList(machine.getIpAddresses())).build())
-                .status(machine.getStatusMessage()).build();
+        return Instance.builder()
+                       .id(machine.getSystemId())
+                       .tag(machine.getHostname())
+                       .number("1")
+                       .hardware(Hardware.builder()
+                                         .minCores(machine.getCpuCount().toString())
+                                         .minRam(machine.getMemory().toString())
+                                         .type(machine.getNodeTypeName())
+                                         .build())
+                       .network(Network.builder().publicAddresses(Lists.newArrayList(machine.getIpAddresses())).build())
+                       .status(machine.getStatusMessage())
+                       .build();
     }
 
-    private List<org.ow2.proactive.connector.maas.data.Tag> convertIaasTagsToMaasTags(List<Tag> iaasTags){
+    private List<org.ow2.proactive.connector.maas.data.Tag> convertIaasTagsToMaasTags(List<Tag> iaasTags) {
         return iaasTags.stream().map(this::convertIaasTagToMaasTag).collect(Collectors.toList());
     }
 
-    private org.ow2.proactive.connector.maas.data.Tag convertIaasTagToMaasTag(Tag iaasTag){
+    private org.ow2.proactive.connector.maas.data.Tag convertIaasTagToMaasTag(Tag iaasTag) {
         return new org.ow2.proactive.connector.maas.data.Tag(null, null, iaasTag.getKey(), iaasTag.getValue(), null);
     }
 }

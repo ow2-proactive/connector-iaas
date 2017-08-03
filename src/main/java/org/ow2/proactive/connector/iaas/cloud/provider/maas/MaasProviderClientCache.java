@@ -34,6 +34,7 @@ import org.ow2.proactive.connector.maas.MaasClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+
 /**
  * @author ActiveEon Team
  * @since 12/01/17
@@ -58,8 +59,7 @@ public class MaasProviderClientCache {
         maasClientCache.remove(infrastructure);
     }
 
-    private Function<Infrastructure, MaasClient> buildMaasClient = memoise(infrastructure ->
-            maasClientBuilder.buildMaasClientFromInfrastructure(infrastructure));
+    private Function<Infrastructure, MaasClient> buildMaasClient = memoise(infrastructure -> maasClientBuilder.buildMaasClientFromInfrastructure(infrastructure));
 
     private Function<Infrastructure, MaasClient> memoise(Function<Infrastructure, MaasClient> fn) {
         return (a) -> maasClientCache.computeIfAbsent(a, fn);
