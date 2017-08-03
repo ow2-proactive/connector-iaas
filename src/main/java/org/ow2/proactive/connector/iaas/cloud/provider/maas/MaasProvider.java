@@ -27,12 +27,15 @@ package org.ow2.proactive.connector.iaas.cloud.provider.maas;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import javax.ws.rs.NotSupportedException;
 
 import org.apache.log4j.Logger;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
@@ -41,13 +44,15 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.maas.MaasClient;
 import org.ow2.proactive.connector.maas.data.CommissioningScript;
 import org.ow2.proactive.connector.maas.data.Machine;
-import org.ow2.proactive.connector.maas.data.powertype.IpmiPowerType;
+import org.ow2.proactive.connector.maas.polling.MaasClientPollingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 import lombok.Getter;
 
@@ -64,25 +69,50 @@ public class MaasProvider implements CloudProvider {
     private final String type = "maas";
 
     @Autowired
+    private TagManager tagManager;
+
+    @Autowired
     private MaasProviderClientCache maasProviderClientCache;
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
-        // TODO: need to be adjusted to match exact parameters from nodesource-addons
-        Set<Instance> instances = IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                .mapToObj(instanceIndexStartAt1 -> maasProviderClientCache.getMaasClient(infrastructure)
-                        .createMachine(new Machine.Builder()
-                                .hostName(createUniqInstanceTag(instance.getTag(),instanceIndexStartAt1))
-                                .architecture(instance.getHardware().getType())
-                                .powerType(new IpmiPowerType.Builder()
-                                        .powerAddress(instance.getOptions().getSubnetId())
-                                        .macAddress(instance.getOptions().getMacAddresses().get(0)).build())
-                                .macAddress(instance.getOptions().getMacAddresses().get(0))))
-                .map(machine -> getInstanceFromMachine(infrastructure, machine))
-                .collect(Collectors.toSet());
-        // Add instances to the list
-        infrastructure.getInstances().addAll(instances);
+        MaasClient maasClient = maasProviderClientCache.getMaasClient(infrastructure);
+
+        // Retrieve and convert the list of tags
+        List<org.ow2.proactive.connector.maas.data.Tag> tags = convertIaasTagsToMaasTags(tagManager.retrieveAllTags(instance.getOptions()));
+
+        // Initialize MAAS deployment polling
+        MaasClientPollingService maasPollingService = new MaasClientPollingService(maasClient, Integer.valueOf(instance.getNumber()));
+
+        // Start deployment(s) by ID or by resources
+        List<Future<Machine>> futureMachines;
+        if (instance.getId() != null) {
+            futureMachines = IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
+                    .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(instance.getId(), instance.getInitScript().getScripts()[0], tags))
+                    .collect(Collectors.toList());
+        }
+        else {
+            futureMachines = IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
+                    .mapToObj(instanceIndexStartAt1 -> maasPollingService.deployMachine(Integer.valueOf(instance.getHardware().getMinCores()), Integer.valueOf(instance.getHardware().getMinRam()), "", tags))
+                    .collect(Collectors.toList());
+        }
+
+        // Retrieve futures (blocking calls)
+        Set<Instance> instances = futureMachines.stream().map(futureMachine -> {
+            try {
+                return futureMachine.get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                return null;
+            }
+        })
+        .map(this::getInstanceFromMachine)
+        .collect(Collectors.toSet());
+
+        // Kill polling timeout tasks
+        maasPollingService.shutdown();
+
         return instances;
     }
 
