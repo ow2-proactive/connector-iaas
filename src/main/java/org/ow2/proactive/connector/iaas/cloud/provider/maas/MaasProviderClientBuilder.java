@@ -39,9 +39,8 @@ public class MaasProviderClientBuilder {
 
     public MaasClient buildMaasClientFromInfrastructure(Infrastructure infrastructure) {
 
-        // TODO: add ignoreCert boolean !!
         try {
-            return new MaasClient(infrastructure.getEndpoint(), infrastructure.getCredentials().getPassword());
+            return new MaasClient(infrastructure.getEndpoint(), infrastructure.getCredentials().getPassword(), infrastructure.getCredentials().isAllowSelfSignedSSLCertificate());
         } catch(RemoteConnectFailureException e) {
             throw new RuntimeException(
                     "ERROR trying to create MaasClient with infrastructure : " + infrastructure, e);

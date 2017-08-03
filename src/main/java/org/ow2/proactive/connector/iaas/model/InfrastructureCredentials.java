@@ -46,4 +46,6 @@ public class InfrastructureCredentials {
     private String domain;
 
     private String subscriptionId;
+
+    private boolean allowSelfSignedSSLCertificate;
 }
