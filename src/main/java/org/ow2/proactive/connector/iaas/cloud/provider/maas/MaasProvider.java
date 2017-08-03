@@ -193,4 +193,21 @@ public class MaasProvider implements CloudProvider {
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp) {
         throw new NotSupportedException("Operation not supported for MAAS");
     }
+
+    private Instance getInstanceFromMachine(Machine machine) {
+
+        return Instance.builder().id(machine.getSystemId()).tag(machine.getHostname())
+                .number("1").hardware(Hardware.builder().minCores(machine.getCpuCount().toString())
+                        .minRam(machine.getMemory().toString()).type(machine.getNodeTypeName()).build())
+                .network(Network.builder().publicAddresses(Lists.newArrayList(machine.getIpAddresses())).build())
+                .status(machine.getStatusMessage()).build();
+    }
+
+    private List<org.ow2.proactive.connector.maas.data.Tag> convertIaasTagsToMaasTags(List<Tag> iaasTags){
+        return iaasTags.stream().map(this::convertIaasTagToMaasTag).collect(Collectors.toList());
+    }
+
+    private org.ow2.proactive.connector.maas.data.Tag convertIaasTagToMaasTag(Tag iaasTag){
+        return new org.ow2.proactive.connector.maas.data.Tag(null, null, iaasTag.getKey(), iaasTag.getValue(), null);
+    }
 }
