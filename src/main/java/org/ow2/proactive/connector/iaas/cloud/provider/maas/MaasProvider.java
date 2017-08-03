@@ -139,7 +139,10 @@ public class MaasProvider implements CloudProvider {
     }
 
     @Override
-    public ScriptResult executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId, InstanceScript instanceScript) {
+    /**
+     * Upload a new *decommissioning* script to MAAS region controller.
+     */
+    public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId, InstanceScript instanceScript) {
 
         ScriptResult scriptResult = new ScriptResult(instanceId, "", "");
 
@@ -151,21 +154,24 @@ public class MaasProvider implements CloudProvider {
         }
 
         CommissioningScript maasScript = maasProviderClientCache.getMaasClient(infrastructure)
-                .postCommissioningScript(script.toString().getBytes(), instanceScript.getName());
+                .postCommissioningScript(script.toString().getBytes(), instanceId);
 
         if (maasScript == null) {
-            return scriptResult.withError("Unable to upload script " +  instanceScript.getName());
+            return Lists.newArrayList(scriptResult.withError("Unable to upload script " +  instanceId));
         }
-        return scriptResult.withOutput(maasScript.getResourceUri());
+
+        // Unable to retrieve scripts output, returns empty results instead
+        return IntStream.rangeClosed(1, instanceScript.getScripts().length)
+                .mapToObj(scriptNumber -> new ScriptResult(instanceId, "", ""))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag, InstanceScript instanceScript) {
 
-        return maasProviderClientCache.getMaasClient(infrastructure).getMachines().stream()
+        return executeScriptOnInstanceId(infrastructure, maasProviderClientCache.getMaasClient(infrastructure).getMachines().stream()
                 .filter(machine -> machine.getHostname().equals(instanceTag))
-                .map(machine -> executeScriptOnInstanceId(infrastructure, machine.getSystemId(), instanceScript))
-                .collect(Collectors.toList());
+                .findFirst().orElseThrow(() -> new RuntimeException("ERROR machine with hostname '" + instanceTag + "' not found")).getSystemId(), instanceScript);
     }
 
     @Override
