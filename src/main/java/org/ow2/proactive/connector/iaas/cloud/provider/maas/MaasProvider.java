@@ -123,13 +123,19 @@ public class MaasProvider implements CloudProvider {
         }
     }
 
-    private Instance getInstanceFromMachine(Infrastructure infrastructure, Machine machine) {
+    @Override
+    public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
+        return maasProviderClientCache.getMaasClient(infrastructure).getMachines().stream().map(this::getInstanceFromMachine).collect(Collectors.toSet());
+    }
 
-        return Instance.builder().id(machine.getSystemId()).tag(machine.getHostname())
-                .number("1").hardware(Hardware.builder().minCores(machine.getCpuCount().toString())
-                                .minRam(machine.getMemory().toString()).type(machine.getNodeTypeName()).build())
-                .network(Network.builder().publicAddresses(Sets.newHashSet(machine.getIpAddresses())).build())
-                .status(machine.getStatusMessage()).build();
+    @Override
+    /**
+     * For MAAS, only the key of the tag is used as it must remains unique among all created tags.
+     * Therefore, the key need to be customized in the file 'resources/application.properties' with
+     * a random/unique name. The value of the tag is not used.
+     */
+    public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
+        return maasProviderClientCache.getMaasClient(infrastructure).getMachinesByTag(convertIaasTagToMaasTag(tagManager.getConnectorIaasTag())).stream().map(this::getInstanceFromMachine).collect(Collectors.toSet());
     }
 
     @Override
