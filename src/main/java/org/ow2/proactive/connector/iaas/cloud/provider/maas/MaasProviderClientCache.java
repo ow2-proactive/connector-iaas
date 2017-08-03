@@ -58,10 +58,10 @@ public class MaasProviderClientCache {
         maasClientCache.remove(infrastructure);
     }
 
-    private Function<Infrastructure, MaasClient> buildMaasClient = memorise(
-            maasClientBuilder::buildMaasClientFromInfrastructure);
+    private Function<Infrastructure, MaasClient> buildMaasClient = memoise(infrastructure ->
+            maasClientBuilder.buildMaasClientFromInfrastructure(infrastructure));
 
-    private Function<Infrastructure, MaasClient> memorise(Function<Infrastructure, MaasClient> fn) {
+    private Function<Infrastructure, MaasClient> memoise(Function<Infrastructure, MaasClient> fn) {
         return (a) -> maasClientCache.computeIfAbsent(a, fn);
     }
 }
