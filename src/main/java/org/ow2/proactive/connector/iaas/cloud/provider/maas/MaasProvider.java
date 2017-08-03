@@ -185,12 +185,12 @@ public class MaasProvider implements CloudProvider {
     }
 
     @Override
-    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp) {
         throw new NotSupportedException("Operation not supported for MAAS");
     }
 
     @Override
-    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId) {
+    public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp) {
         throw new NotSupportedException("Operation not supported for MAAS");
     }
 }
