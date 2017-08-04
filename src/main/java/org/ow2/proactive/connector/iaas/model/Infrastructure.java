@@ -33,7 +33,8 @@ import lombok.ToString;
 
 
 @EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "authenticationEndpoint", "managementEndpoint",
-                               "resourceManagerEndpoint", "graphEndpoint", "toBeRemovedOnShutdown" })
+                               "resourceManagerEndpoint", "graphEndpoint", "toBeRemovedOnShutdown",
+                               "allowSelfSignedSSLCertificate" })
 @Getter
 @AllArgsConstructor
 @ToString
@@ -55,6 +56,8 @@ public class Infrastructure {
     private String resourceManagerEndpoint;
 
     private String graphEndpoint;
+
+    private boolean allowSelfSignedSSLCertificate;
 
     private boolean toBeRemovedOnShutdown;
 }

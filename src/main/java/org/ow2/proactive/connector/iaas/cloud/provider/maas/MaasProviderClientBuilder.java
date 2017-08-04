@@ -43,7 +43,7 @@ public class MaasProviderClientBuilder {
         try {
             return new MaasClient(infrastructure.getEndpoint(),
                                   infrastructure.getCredentials().getPassword(),
-                                  infrastructure.getCredentials().isAllowSelfSignedSSLCertificate());
+                                  infrastructure.isAllowSelfSignedSSLCertificate());
         } catch (RemoteConnectFailureException e) {
             throw new RuntimeException("ERROR trying to create MaasClient with infrastructure : " + infrastructure, e);
         }

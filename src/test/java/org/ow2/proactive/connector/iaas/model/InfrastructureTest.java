@@ -55,6 +55,7 @@ public class InfrastructureTest {
                                                            null,
                                                            null,
                                                            null,
+                                                           false,
                                                            false);
         assertThat(infrastructure.getId(), is("id-openstack"));
     }
@@ -70,6 +71,7 @@ public class InfrastructureTest {
                                                             null,
                                                             null,
                                                             null,
+                                                            false,
                                                             false);
         Infrastructure infrastructure2 = new Infrastructure("id-openstack",
                                                             "openstack",
@@ -80,6 +82,7 @@ public class InfrastructureTest {
                                                             null,
                                                             null,
                                                             null,
+                                                            false,
                                                             false);
 
         Set<Infrastructure> infrastructures = Sets.newHashSet(infrastructure1, infrastructure2);

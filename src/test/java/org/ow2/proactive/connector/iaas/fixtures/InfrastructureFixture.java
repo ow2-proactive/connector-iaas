@@ -47,6 +47,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   false);
     }
 
@@ -64,6 +65,7 @@ public class InfrastructureFixture {
                                   managementEndpoint,
                                   resourceManagerEndpoint,
                                   graphEndpoint,
+                                  false,
                                   false);
     }
 
@@ -92,6 +94,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   false);
     }
 
@@ -104,6 +107,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   removeOnShutdown);
     }
 
