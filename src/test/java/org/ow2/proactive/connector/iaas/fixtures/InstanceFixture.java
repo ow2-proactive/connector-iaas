@@ -76,6 +76,20 @@ public class InstanceFixture {
                             InstanceScriptFixture.getInstanceScript(scripts));
     }
 
+    public static Instance simpleInstanceWithResourcesAndInitScripts(String tag, String minRam, String minCpu,
+            String[] scripts) {
+        return new Instance("instanceId",
+                            tag,
+                            null,
+                            "1",
+                            null,
+                            HardwareFixtures.getHardware(minRam, minCpu),
+                            null,
+                            null,
+                            null,
+                            InstanceScriptFixture.getInstanceScript(scripts));
+    }
+
     public static Instance simpleInstanceWithMacAddress(String tag, String image, List<String> macAddresses) {
 
         return getInstanceWithMacAddress(tag,
