@@ -102,7 +102,8 @@ public class MaasProvider implements CloudProvider {
                                                                                                                                   .getMinCores()),
                                                                                                           Integer.valueOf(instance.getHardware()
                                                                                                                                   .getMinRam()),
-                                                                                                          "",
+                                                                                                          instance.getInitScript()
+                                                                                                                  .getScripts()[0],
                                                                                                           tags))
                                       .collect(Collectors.toList());
         }
