@@ -113,7 +113,7 @@ public class MaasProvider implements CloudProvider {
             try {
                 return futureMachine.get();
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+                logger.error("Error while retrieving machines deployment futures: " + e.getMessage());
                 return null;
             }
         }).map(this::getInstanceFromMachine).collect(Collectors.toSet());
