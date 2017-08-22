@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -422,6 +423,9 @@ public class AzureProvider implements CloudProvider {
                                               .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
                                                                                       instanceId + "'"));
 
+        logger.info("Deletion of all Azure resources of instance " + instanceId +
+                    " is being requested to the provider (infrastructure: " + infrastructure.getId() + ")");
+
         // Retrieve all resources attached to the instance
         List<com.microsoft.azure.management.network.Network> networks = azureProviderNetworkingUtils.getVMNetworks(azureService,
                                                                                                                    vm);
@@ -449,6 +453,8 @@ public class AzureProvider implements CloudProvider {
 
         // Delete the virtual networks if not attached to any remaining network interface
         deleteNetworks(azureService, networks);
+
+        logger.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
     }
 
     private void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
@@ -572,12 +578,28 @@ public class AzureProvider implements CloudProvider {
                                                                                         .equals(SCRIPT_EXTENSION_TYPE))
                                                           .findAny();
         if (vmExtension.isPresent()) {
+            // if the script didn't change compared to the previous update,
+            // then the script will not be run by the Azure provider.
+            // Moreover, the 'forceUpdateTag' is not available in the Azure
+            // Java SDK. So in order to make sure that the script slightly
+            // changes, we make the scripts begin with a command that prints
+            // a new ID each time a script needs to be run after the first
+            // executed script.
+            UUID scriptExecutionId = UUID.randomUUID();
+            String newConcatenatedScript = concatenatedScripts.insert(0,
+                                                                      "echo \"Script execution ID: " +
+                                                                         scriptExecutionId + "\"" + SCRIPT_SEPARATOR)
+                                                              .toString();
+            logger.info("Request Azure provider to execute script " + scriptExecutionId + ": " + newConcatenatedScript);
             vm.update()
               .updateExtension(vmExtension.get().name())
-              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
+              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, newConcatenatedScript)
               .parent()
               .apply();
+            logger.debug("Execution of script has been requested.");
         } else {
+            logger.info("Request Azure provider to install script extension and to execute script: " +
+                        concatenatedScripts.toString());
             vm.update()
               .defineNewExtension(createUniqueScriptName(vm.name()))
               .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
@@ -587,6 +609,7 @@ public class AzureProvider implements CloudProvider {
               .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
               .attach()
               .apply();
+            logger.debug("Installation of script extension and execution of script has been requested.");
         }
 
         // Unable to retrieve scripts output, returns empty results instead
