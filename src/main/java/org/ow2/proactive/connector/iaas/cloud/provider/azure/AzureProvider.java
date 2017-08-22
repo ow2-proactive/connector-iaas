@@ -126,6 +126,8 @@ public class AzureProvider implements CloudProvider {
 
     private static final String SINGLE_INSTANCE_NUMBER = "1";
 
+    private static final String INSTANCE_NOT_FOUND_ERROR = "ERROR unable to find instance with ID: ";
+
     @Autowired
     private AzureServiceCache azureServiceCache;
 
@@ -420,7 +422,7 @@ public class AzureProvider implements CloudProvider {
         Azure azureService = azureServiceCache.getService(infrastructure);
 
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
-                                              .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
+                                              .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
 
         logger.info("Deletion of all Azure resources of instance " + instanceId +
@@ -546,7 +548,7 @@ public class AzureProvider implements CloudProvider {
             InstanceScript instanceScript) {
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureServiceCache.getService(infrastructure),
                                                                         instanceId)
-                                              .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
+                                              .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
         return executeScriptOnVM(vm, instanceScript);
     }
@@ -586,14 +588,16 @@ public class AzureProvider implements CloudProvider {
             // a new ID each time a script needs to be run after the first
             // executed script.
             UUID scriptExecutionId = UUID.randomUUID();
-            String newConcatenatedScript = concatenatedScripts.insert(0,
-                                                                      "echo \"Script execution ID: " +
-                                                                         scriptExecutionId + "\"" + SCRIPT_SEPARATOR)
-                                                              .toString();
-            logger.info("Request Azure provider to execute script " + scriptExecutionId + ": " + newConcatenatedScript);
+            String concatenatedScriptsWithExecutionId = concatenatedScripts.insert(0,
+                                                                                   "echo \"Script execution ID: " +
+                                                                                      scriptExecutionId + "\"" +
+                                                                                      SCRIPT_SEPARATOR)
+                                                                           .toString();
+            logger.info("Request Azure provider to execute script " + scriptExecutionId + ": " +
+                        concatenatedScriptsWithExecutionId);
             vm.update()
               .updateExtension(vmExtension.get().name())
-              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, newConcatenatedScript)
+              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScriptsWithExecutionId)
               .parent()
               .apply();
             logger.debug("Execution of script has been requested.");
@@ -637,7 +641,7 @@ public class AzureProvider implements CloudProvider {
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
-                                              .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
+                                              .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
         ResourceGroup resourceGroup = azureService.resourceGroups().getByName(vm.resourceGroupName());
 
@@ -650,12 +654,12 @@ public class AzureProvider implements CloudProvider {
                                                                                                                         .equals(opt))
                                                                           .findAny()
                                                                           .get())
-                                                  .orElseGet((() -> azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
-                                                                                                                        vm.region(),
-                                                                                                                        resourceGroup,
-                                                                                                                        createUniquePublicIPName(vm.name()),
-                                                                                                                        DEFAULT_STATIC_PUBLIC_IP)
-                                                                                                .create()));
+                                                  .orElseGet(() -> azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                       vm.region(),
+                                                                                                                       resourceGroup,
+                                                                                                                       createUniquePublicIPName(vm.name()),
+                                                                                                                       DEFAULT_STATIC_PUBLIC_IP)
+                                                                                               .create());
 
         List<NetworkInterface> networkInterfaces = vm.networkInterfaceIds()
                                                      .stream()
@@ -732,7 +736,7 @@ public class AzureProvider implements CloudProvider {
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         Azure azureService = azureServiceCache.getService(infrastructure);
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
-                                              .orElseThrow(() -> new RuntimeException("ERROR unable to find instance with ID: '" +
+                                              .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
         Optional<PublicIpAddress> optionalPublicIpAddress = Optional.ofNullable(optionalDesiredIp)
                                                                     .map(opt -> azureService.publicIpAddresses()
