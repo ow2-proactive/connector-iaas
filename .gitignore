@@ -11,3 +11,5 @@ smart-watch.iml
 *.log
 /out/*
 gradle/ext/
+*.iml
+/classes
