@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
@@ -55,19 +56,32 @@ import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
+import lombok.Getter;
+import lombok.Setter;
+
 
 @Component
 public abstract class JCloudsProvider implements CloudProvider {
+
+    private static final String DEFAULT_CONNECTOR_IAAS_VM_USER_LOGIN = "admin";
+
+    private final Logger logger = Logger.getLogger(JCloudsProvider.class);
 
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
     @Autowired
     private TagManager tagManager;
+
+    @Getter
+    @Setter
+    @Value("${connector-iaas.vm-user-login}")
+    private String vmUserLogin;
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -199,13 +213,15 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
+        logger.info("Script options: LoginUser=" + getVmUserLogin());
         return Optional.ofNullable(instanceScript.getCredentials())
                        .map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
                                                                    .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
                                                                                                                            .password(credentials.getPassword())
                                                                                                                            .authenticateSudo(false)
                                                                                                                            .build()))
-                       .orElse(RunScriptOptions.NONE);
+                       .orElse(RunScriptOptions.Builder.overrideLoginUser(Optional.ofNullable(getVmUserLogin())
+                                                                                  .orElse(DEFAULT_CONNECTOR_IAAS_VM_USER_LOGIN)));
     }
 
 }

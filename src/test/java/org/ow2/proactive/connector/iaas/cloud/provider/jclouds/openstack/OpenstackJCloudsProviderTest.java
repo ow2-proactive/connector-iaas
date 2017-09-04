@@ -129,7 +129,7 @@ public class OpenstackJCloudsProviderTest {
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
-
+        jcloudsProvider.setVmUserLogin("user");
     }
 
     @Test

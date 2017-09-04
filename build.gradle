@@ -123,16 +123,16 @@ dependencies {
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile 'org.springframework.boot:spring-boot-starter-jetty:1.3.1.RELEASE'
     // Jcloud dependencies
-    compile ('org.apache.jclouds:jclouds-compute:2.0.1'){
+    compile ('org.apache.stratos:jclouds-compute:1.9.1'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.api:openstack-nova:2.0.1'){
+    compile ('org.apache.jclouds.api:openstack-nova:1.9.2'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:aws-ec2:2.0.1'){
+    compile ('org.apache.jclouds.provider:aws-ec2:1.9.1'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.labs:docker:1.9.3'){
+    compile ('org.apache.jclouds.labs:docker:1.9.1'){
         exclude module : 'jsr311-api'
     }
 
