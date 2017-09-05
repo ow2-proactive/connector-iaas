@@ -68,8 +68,6 @@ import lombok.Setter;
 @Component
 public abstract class JCloudsProvider implements CloudProvider {
 
-    private static final String DEFAULT_CONNECTOR_IAAS_VM_USER_LOGIN = "admin";
-
     private final Logger logger = Logger.getLogger(JCloudsProvider.class);
 
     @Autowired
@@ -78,9 +76,14 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Autowired
     private TagManager tagManager;
 
+    /**
+     * By default, the login that will be used to connect to the instances
+     * and launch the script will be 'admin'. This default can be overriden
+     * in the application.properties file.
+     */
     @Getter
     @Setter
-    @Value("${connector-iaas.vm-user-login}")
+    @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
 
     @Override
@@ -213,15 +216,14 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
-        logger.info("Script options: LoginUser=" + getVmUserLogin());
+        logger.info("Script options: userLogin=" + getVmUserLogin());
         return Optional.ofNullable(instanceScript.getCredentials())
                        .map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
                                                                    .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
                                                                                                                            .password(credentials.getPassword())
                                                                                                                            .authenticateSudo(false)
                                                                                                                            .build()))
-                       .orElse(RunScriptOptions.Builder.overrideLoginUser(Optional.ofNullable(getVmUserLogin())
-                                                                                  .orElse(DEFAULT_CONNECTOR_IAAS_VM_USER_LOGIN)));
+                       .orElse(RunScriptOptions.Builder.overrideLoginUser(getVmUserLogin()));
     }
 
 }
