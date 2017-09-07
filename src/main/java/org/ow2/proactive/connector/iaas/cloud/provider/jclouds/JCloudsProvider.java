@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
@@ -216,14 +217,30 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
-        logger.info("Script options: userLogin=" + getVmUserLogin());
-        return Optional.ofNullable(instanceScript.getCredentials())
-                       .map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
-                                                                   .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-                                                                                                                           .password(credentials.getPassword())
-                                                                                                                           .authenticateSudo(false)
-                                                                                                                           .build()))
-                       .orElse(RunScriptOptions.Builder.overrideLoginUser(getVmUserLogin()));
+        return Optional.ofNullable(instanceScript.getCredentials()).map(credentials -> {
+            if (credentials.getPrivateKey() != null) {
+                String username = Optional.of(credentials.getUsername())
+                                          .filter(StringUtils::isNotEmpty)
+                                          .filter(StringUtils::isNotBlank)
+                                          .orElse(getVmUserLogin());
+                logger.info("Key based authentication is provided. Script is going to be executed with the given private key and username=" +
+                            username);
+                return RunScriptOptions.Builder.runAsRoot(false)
+                                               .overrideLoginUser(username)
+                                               .overrideLoginPrivateKey(credentials.getPrivateKey());
+            } else {
+                logger.info("Credentials are provided. Script is going to be executed with the given password and username=" +
+                            credentials.getUsername());
+                return RunScriptOptions.Builder.runAsRoot(false)
+                                               .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
+                                                                                                       .password(credentials.getPassword())
+                                                                                                       .authenticateSudo(false)
+                                                                                                       .build());
+            }
+        }).orElseGet(() -> {
+            logger.info("No credentials provided. Script is going to be executed with default options");
+            return RunScriptOptions.NONE;
+        });
     }
 
 }

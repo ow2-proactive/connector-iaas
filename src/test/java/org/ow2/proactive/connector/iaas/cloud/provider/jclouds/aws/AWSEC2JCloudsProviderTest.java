@@ -111,7 +111,6 @@ public class AWSEC2JCloudsProviderTest {
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
-        jcloudsProvider.setVmUserLogin("ec2-user");
     }
 
     @Test

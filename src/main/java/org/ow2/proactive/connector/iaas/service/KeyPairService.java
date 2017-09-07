@@ -23,29 +23,37 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.model;
+package org.ow2.proactive.connector.iaas.service;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import java.util.Optional;
+
+import javax.ws.rs.NotFoundException;
+
+import org.ow2.proactive.connector.iaas.cloud.CloudManager;
+import org.ow2.proactive.connector.iaas.model.Instance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-@ToString
-@NoArgsConstructor
-public class InstanceCredentials {
+/**
+ * @author ActiveEon Team
+ * @since 07/09/17
+ */
+@Service
+public class KeyPairService {
 
-    private String username;
+    @Autowired
+    private InfrastructureService infrastructureService;
 
-    private String password;
+    @Autowired
+    private CloudManager cloudManager;
 
-    private String publicKeyName;
+    public String createKeyPair(String infrastructureId, Instance instance) {
 
-    private String publicKey;
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.createKeyPair(infrastructure, instance))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id : " + infrastructureId +
+                                                                " does not exists"));
+    }
 
-    private String privateKey;
 }

@@ -385,6 +385,11 @@ public class VMWareProvider implements CloudProvider {
         throw new NotSupportedException("Operation not supported for VMWare");
     }
 
+    @Override
+    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+        throw new UnsupportedOperationException();
+    }
+
     private VirtualMachine cloneVM(VirtualMachine vm, String newVMname, Instance instance, Folder rootFolder,
             VirtualMachineCloneSpec vmcs, Folder vmFolder) {
         try {

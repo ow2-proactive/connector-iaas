@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
@@ -38,8 +39,11 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.domain.Location;
+import org.jclouds.ec2.EC2Api;
+import org.jclouds.ec2.domain.KeyPair;
 import org.jclouds.ec2.domain.PublicIpInstanceIdPair;
 import org.jclouds.ec2.features.ElasticIPAddressApi;
+import org.jclouds.ec2.features.KeyPairApi;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -57,6 +61,8 @@ import lombok.Getter;
 
 @Component
 public class AWSEC2JCloudsProvider extends JCloudsProvider {
+
+    private static final Logger logger = Logger.getLogger(AWSEC2JCloudsProvider.class);
 
     @Getter
     private final String type = "aws-ec2";
@@ -84,7 +90,13 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         // Add tags
         addTags(template, tagManager.retrieveAllTags(instance.getOptions()));
 
-        Optional.ofNullable(instance.getCredentials()).ifPresent(options -> addCredential(template, options));
+        Optional.ofNullable(instance.getCredentials())
+                .map(credentials -> addCredential(template, credentials))
+                .orElse(addCredential(template, new InstanceCredentials(getVmUserLogin(),
+                                                                        null,
+                                                                        infrastructure.getId(),
+                                                                        null,
+                                                                        null)));
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -103,12 +115,19 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     }
 
-    private void addCredential(Template template, InstanceCredentials credentials) {
+    private InstanceCredentials addCredential(Template template, InstanceCredentials credentials) {
+        Optional.ofNullable(credentials.getUsername())
+                .filter(username -> !username.isEmpty())
+                .ifPresent(username -> template.getOptions()
+                                               .as(AWSEC2TemplateOptions.class)
+                                               .overrideLoginUser(credentials.getUsername()));
+
         Optional.ofNullable(credentials.getPublicKeyName())
                 .filter(keyName -> !keyName.isEmpty())
                 .ifPresent(keyName -> template.getOptions()
                                               .as(AWSEC2TemplateOptions.class)
                                               .keyPair(credentials.getPublicKeyName()));
+        return credentials;
     }
 
     private void addOptions(Template template, Options options) {
@@ -220,6 +239,31 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
             elasticIPAddressApi.disassociateAddressInRegion(region, ip);
             //elasticIPAddressApi.releaseAddressInRegion(region, ip);
         });
+    }
+
+    @Override
+    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+        KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
+        String region = getRegionFromImage(instance);
+        String keyPairName = infrastructure.getId();
+        KeyPair keyPair = keyPairApi.createKeyPairInRegion(region, keyPairName);
+        logger.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
+        return keyPair.getKeyMaterial();
+    }
+
+    private KeyPairApi getKeyPairApi(Infrastructure infrastructure) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        EC2Api ec2Api = computeService.getContext().unwrapApi(EC2Api.class);
+        if (ec2Api.getKeyPairApi().isPresent()) {
+            return ec2Api.getKeyPairApi().get();
+        } else {
+            throw new UnsupportedOperationException("Cannot retrieve AWS API, which enables key pair creation");
+        }
+    }
+
+    private String getRegionFromImage(Instance instance) {
+        String image = instance.getImage();
+        return image.split(INSTANCE_ID_REGION_SEPARATOR)[0];
     }
 
 }

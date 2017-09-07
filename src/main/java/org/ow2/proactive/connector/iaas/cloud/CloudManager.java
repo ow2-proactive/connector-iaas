@@ -105,4 +105,9 @@ public class CloudManager {
                                                                                   instanceId,
                                                                                   optionalDesiredIp);
     }
+
+    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+        return cloudProviderPerType.get(infrastructure.getType()).createKeyPair(infrastructure, instance);
+    }
+
 }

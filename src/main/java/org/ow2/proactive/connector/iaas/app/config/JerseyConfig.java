@@ -32,6 +32,7 @@ import org.ow2.proactive.connector.iaas.rest.ImageRest;
 import org.ow2.proactive.connector.iaas.rest.InfrastructureRest;
 import org.ow2.proactive.connector.iaas.rest.InstanceRest;
 import org.ow2.proactive.connector.iaas.rest.InstanceScriptRest;
+import org.ow2.proactive.connector.iaas.rest.KeyPairRest;
 import org.springframework.context.annotation.Configuration;
 
 
@@ -45,6 +46,6 @@ public class JerseyConfig extends ResourceConfig {
         register(InstanceScriptRest.class);
         register(ClientErrorExceptionMapper.class);
         register(ServerErrorExceptionMapper.class);
-
+        register(KeyPairRest.class);
     }
 }

@@ -61,4 +61,5 @@ public interface CloudProvider {
 
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
+    public String createKeyPair(Infrastructure infrastructure, Instance instance);
 }

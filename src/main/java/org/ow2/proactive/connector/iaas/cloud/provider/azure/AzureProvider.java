@@ -778,4 +778,9 @@ public class AzureProvider implements CloudProvider {
             azureService.publicIpAddresses().deleteById(publicIPAddress.id());
         }
     }
+
+    @Override
+    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+        throw new UnsupportedOperationException();
+    }
 }

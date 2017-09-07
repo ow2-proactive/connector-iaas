@@ -183,6 +183,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         }
     }
 
+    @Override
+    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+        throw new UnsupportedOperationException();
+    }
+
     private void validatePlateformOperation(NovaApi novaApi) {
         if (!novaApi.getFloatingIPApi(region).isPresent()) {
             throw new NotSupportedException("Operation not supported for this Openstack cloud");
