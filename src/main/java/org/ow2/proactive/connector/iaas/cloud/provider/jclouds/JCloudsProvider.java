@@ -218,26 +218,40 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
         return Optional.ofNullable(instanceScript.getCredentials()).map(credentials -> {
+
+            // retrieve the passed username or read it from the property file
+            // only in the case where credentials are provided by the user
+            String username = Optional.ofNullable(credentials.getUsername())
+                                      .filter(StringUtils::isNotEmpty)
+                                      .filter(StringUtils::isNotBlank)
+                                      .orElse(getVmUserLogin());
             if (credentials.getPrivateKey() != null) {
-                String username = Optional.of(credentials.getUsername())
-                                          .filter(StringUtils::isNotEmpty)
-                                          .filter(StringUtils::isNotBlank)
-                                          .orElse(getVmUserLogin());
+                // currently, the private key is only used in the AWS EC2
+                // infrastructure, where root login is forbidden, this is why
+                // we use a custom username in this case. Login through
+                // user/password is also not allowed, so this seems the only
+                // way we can connect to EC2 instances to launch the script
                 logger.info("Key based authentication is provided. Script is going to be executed with the given private key and username=" +
                             username);
                 return RunScriptOptions.Builder.runAsRoot(false)
                                                .overrideLoginUser(username)
                                                .overrideLoginPrivateKey(credentials.getPrivateKey());
             } else {
+                // the other infrastructures can use user/password
+                // authentication this is the case for OpenStack
                 logger.info("Credentials are provided. Script is going to be executed with the given password and username=" +
-                            credentials.getUsername());
+                            username);
                 return RunScriptOptions.Builder.runAsRoot(false)
-                                               .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-                                                                                                       .password(credentials.getPassword())
+                                               .overrideLoginCredentials(new LoginCredentials.Builder().user(username)
+                                                                                                       .password(Optional.ofNullable(credentials.getPassword())
+                                                                                                                         .orElseThrow(() -> new IllegalArgumentException("Credentials are provided but neither a password nor a private key is specified")))
                                                                                                        .authenticateSudo(false)
                                                                                                        .build());
             }
         }).orElseGet(() -> {
+            // just in case nothing is provided, we let jcloud do the job and
+            // create credentials. Then the user that is used to login is root
+            // (jcloud library)
             logger.info("No credentials provided. Script is going to be executed with default options");
             return RunScriptOptions.NONE;
         });

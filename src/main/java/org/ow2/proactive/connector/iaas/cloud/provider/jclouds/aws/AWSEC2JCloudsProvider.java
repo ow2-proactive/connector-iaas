@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
@@ -90,13 +91,13 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         // Add tags
         addTags(template, tagManager.retrieveAllTags(instance.getOptions()));
 
-        Optional.ofNullable(instance.getCredentials())
-                .map(credentials -> addCredential(template, credentials))
-                .orElse(addCredential(template, new InstanceCredentials(getVmUserLogin(),
-                                                                        null,
-                                                                        infrastructure.getId(),
-                                                                        null,
-                                                                        null)));
+        addCredential(template,
+                      Optional.ofNullable(instance.getCredentials())
+                              .orElseGet(() -> new InstanceCredentials(getVmUserLogin(),
+                                                                       null,
+                                                                       infrastructure.getId(),
+                                                                       null,
+                                                                       null)));
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -115,9 +116,10 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     }
 
-    private InstanceCredentials addCredential(Template template, InstanceCredentials credentials) {
+    private void addCredential(Template template, InstanceCredentials credentials) {
         Optional.ofNullable(credentials.getUsername())
-                .filter(username -> !username.isEmpty())
+                .filter(StringUtils::isNotEmpty)
+                .filter(StringUtils::isNotBlank)
                 .ifPresent(username -> template.getOptions()
                                                .as(AWSEC2TemplateOptions.class)
                                                .overrideLoginUser(credentials.getUsername()));
@@ -127,7 +129,6 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 .ifPresent(keyName -> template.getOptions()
                                               .as(AWSEC2TemplateOptions.class)
                                               .keyPair(credentials.getPublicKeyName()));
-        return credentials;
     }
 
     private void addOptions(Template template, Options options) {
