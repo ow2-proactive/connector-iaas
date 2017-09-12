@@ -39,6 +39,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
+import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.Location;
 import org.jclouds.ec2.EC2Api;
 import org.jclouds.ec2.domain.KeyPair;
@@ -70,6 +71,8 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     private final static String INSTANCE_ID_REGION_SEPARATOR = "/";
 
+    private String generatedPrivateKey;
+
     @Autowired
     private TagManager tagManager;
 
@@ -93,11 +96,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
         addCredential(template,
                       Optional.ofNullable(instance.getCredentials())
-                              .orElseGet(() -> new InstanceCredentials(getVmUserLogin(),
-                                                                       null,
-                                                                       infrastructure.getId(),
-                                                                       null,
-                                                                       null)));
+                              .orElseGet(() -> createCredentialsIfNotExist(infrastructure, instance)));
 
         Set<? extends NodeMetadata> createdNodeMetaData = Sets.newHashSet();
 
@@ -114,6 +113,20 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .map(this::createInstanceFromNode)
                                   .collect(Collectors.toSet());
 
+    }
+
+    private InstanceCredentials createCredentialsIfNotExist(Infrastructure infrastructure, Instance instance) {
+        KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
+        String infrastructureKeyPairName = infrastructure.getId();
+        // check whether a key pair for this infrastructure exists already
+        Set<KeyPair> keyPairs = keyPairApi.describeKeyPairsInRegion(getRegionFromImage(instance));
+        boolean infrastructureKeyPairExistsAlready = keyPairs.stream()
+                                                             .anyMatch(keyPair -> keyPair.getKeyName()
+                                                                                         .equals(infrastructureKeyPairName));
+        if (!infrastructureKeyPairExistsAlready) {
+            generatedPrivateKey = createKeyPair(infrastructure, instance);
+        }
+        return new InstanceCredentials(getVmUserLogin(), null, infrastructureKeyPairName, null, null);
     }
 
     private void addCredential(Template template, InstanceCredentials credentials) {
@@ -247,9 +260,14 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
         String region = getRegionFromImage(instance);
         String keyPairName = infrastructure.getId();
-        KeyPair keyPair = keyPairApi.createKeyPairInRegion(region, keyPairName);
-        logger.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
-        return keyPair.getKeyMaterial();
+        try {
+            KeyPair keyPair = keyPairApi.createKeyPairInRegion(region, keyPairName);
+            logger.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
+            return keyPair.getKeyMaterial();
+        } catch (RuntimeException e) {
+            logger.warn("Cannot create key pair in region '" + region + "'. Key pair '" + "' probably exists already.");
+            return null;
+        }
     }
 
     private KeyPairApi getKeyPairApi(Infrastructure infrastructure) {
@@ -265,6 +283,20 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     private String getRegionFromImage(Instance instance) {
         String image = instance.getImage();
         return image.split(INSTANCE_ID_REGION_SEPARATOR)[0];
+    }
+
+    @Override
+    public RunScriptOptions getDefaultRunScriptOptions() {
+        return Optional.ofNullable(generatedPrivateKey)
+                       .filter(StringUtils::isNotEmpty)
+                       .filter(StringUtils::isNotBlank)
+                       // currently, we cannot login as root user on ec2 instances anymore
+                       // this is why we absolutely need to pass an authentication key
+                       .map(privateKey -> RunScriptOptions.Builder.runAsRoot(false)
+                                                                  .overrideLoginUser(getVmUserLogin())
+                                                                  .overrideLoginPrivateKey(privateKey))
+                       // fall back, last helpless chance to run the script
+                       .orElse(RunScriptOptions.NONE);
     }
 
 }

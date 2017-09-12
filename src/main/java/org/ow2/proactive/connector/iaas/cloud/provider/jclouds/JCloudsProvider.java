@@ -87,6 +87,8 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
 
+    public abstract RunScriptOptions getDefaultRunScriptOptions();
+
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
@@ -253,7 +255,7 @@ public abstract class JCloudsProvider implements CloudProvider {
             // create credentials. Then the user that is used to login is root
             // (jcloud library)
             logger.info("No credentials provided. Script is going to be executed with default options");
-            return RunScriptOptions.NONE;
+            return getDefaultRunScriptOptions();
         });
     }
 

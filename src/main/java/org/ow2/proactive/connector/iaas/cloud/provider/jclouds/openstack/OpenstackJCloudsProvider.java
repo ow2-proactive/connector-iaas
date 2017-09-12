@@ -36,6 +36,7 @@ import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Response;
 
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
@@ -212,6 +213,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                        .hardware(Hardware.builder().type(server.getFlavor().getName()).build())
                        .status(server.getStatus().name())
                        .build();
+    }
+
+    @Override
+    public RunScriptOptions getDefaultRunScriptOptions() {
+        return RunScriptOptions.NONE;
     }
 
 }

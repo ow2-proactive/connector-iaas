@@ -25,6 +25,8 @@
  */
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.Optional;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -33,6 +35,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.KeyPairService;
@@ -62,7 +65,12 @@ public class KeyPairRest {
     public Response createKeyPair(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
         logger.info("received rest request for creating keypair");
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        return Response.ok(keyPairService.createKeyPair(infrastructureId, instance)).build();
+        String privateKey = keyPairService.createKeyPair(infrastructureId, instance);
+        return Optional.ofNullable(privateKey)
+                       .filter(StringUtils::isNotEmpty)
+                       .filter(StringUtils::isNotBlank)
+                       .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
+                       .orElse(Response.serverError().build());
     }
 
 }
