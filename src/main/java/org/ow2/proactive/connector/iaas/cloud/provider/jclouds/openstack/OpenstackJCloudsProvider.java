@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -185,7 +186,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+    public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         throw new UnsupportedOperationException();
     }
 
@@ -216,7 +217,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public RunScriptOptions getDefaultRunScriptOptions() {
+    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure) {
         return RunScriptOptions.NONE;
     }
 

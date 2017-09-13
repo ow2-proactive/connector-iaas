@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Optional;
 
 import javax.ws.rs.NotFoundException;
@@ -48,7 +49,7 @@ public class KeyPairService {
     @Autowired
     private CloudManager cloudManager;
 
-    public String createKeyPair(String infrastructureId, Instance instance) {
+    public SimpleImmutableEntry<String, String> createKeyPair(String infrastructureId, Instance instance) {
 
         return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
                        .map(infrastructure -> cloudManager.createKeyPair(infrastructure, instance))

@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Set;
 
@@ -61,5 +62,5 @@ public interface CloudProvider {
 
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
-    public String createKeyPair(Infrastructure infrastructure, Instance instance);
+    public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance);
 }

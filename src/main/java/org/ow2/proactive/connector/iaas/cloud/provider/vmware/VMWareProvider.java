@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -386,7 +387,7 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public String createKeyPair(Infrastructure infrastructure, Instance instance) {
+    public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         throw new UnsupportedOperationException();
     }
 
