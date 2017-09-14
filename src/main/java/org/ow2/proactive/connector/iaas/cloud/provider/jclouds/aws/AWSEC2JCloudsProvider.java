@@ -25,6 +25,8 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
+import static org.jclouds.compute.predicates.NodePredicates.all;
+
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.HashMap;
 import java.util.List;
@@ -313,21 +315,41 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure) {
+    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
+            String instanceTag) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-        NodeMetadata node = computeService.getNodeMetadata(instanceId);
-        String instanceRegion = getRegionFromNode(computeService, node);
+
+        // in order to run the script with the default options, we need to
+        // know in which region the instance is so that we can retrieve for
+        // that region the key pair that will be used to execute the script
+        String region;
+        if (instanceId == null) {
+            // retrieve at least one instance that has the given tag
+            Instance taggedInstance = getCreatedInfrastructureInstances(infrastructure).stream()
+                                                                                       .filter(instance -> instance.getTag()
+                                                                                                                   .equals(instanceTag))
+                                                                                       .findAny()
+                                                                                       .orElseThrow(() -> new IllegalArgumentException("Unable to create script options: cannot retrieve instance id from tag " +
+                                                                                                                                       instanceTag));
+            region = getRegionFromImage(taggedInstance);
+
+        } else {
+            NodeMetadata node = computeService.getNodeMetadata(instanceId);
+            region = getRegionFromNode(computeService, node);
+        }
 
         // the region returned here contains a subdivision of the region, for
         // example eu-west-1c for the region eu-west-1, so we need to remove
         // the subdivision to have the exact region name of the key
-        String keyPairRegion = instanceRegion.substring(0, instanceRegion.length() - 1);
+        String keyPairRegion = region.substring(0, region.length() - 1);
         logger.debug("Using region " + keyPairRegion + " for instance id " + instanceId);
 
-        // we use the key pair that was created in the AWS region of the instance
+        // we use the key pair that was created in the AWS region of the
+        // instance
         return Optional.ofNullable(generatedKeyPairsPerAwsRegion.get(keyPairRegion))
-                       // currently, we cannot login as root user on ec2 instances anymore
-                       // this is why we absolutely need to pass an authentication key
+                       // currently, we cannot login as root user on ec2 
+                       // instances anymore this is why we absolutely need to 
+                       // pass an authentication key
                        .map(keypair -> RunScriptOptions.Builder.runAsRoot(false)
                                                                .overrideLoginUser(getVmUserLogin())
                                                                .overrideLoginPrivateKey(keypair.getValue()))

@@ -217,7 +217,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure) {
+    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
+            String instanceTag) {
         return RunScriptOptions.NONE;
     }
 

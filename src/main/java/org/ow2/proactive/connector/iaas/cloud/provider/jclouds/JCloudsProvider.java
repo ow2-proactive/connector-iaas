@@ -87,7 +87,8 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
 
-    public abstract RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure);
+    public abstract RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
+            String instanceTag);
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -134,7 +135,8 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                                               buildScriptToExecuteString(instanceScript),
                                                                                               buildScriptOptions(instanceScript,
                                                                                                                  instanceId,
-                                                                                                                 infrastructure));
+                                                                                                                 infrastructure,
+                                                                                                                 null));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -152,8 +154,9 @@ public abstract class JCloudsProvider implements CloudProvider {
             execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
                                                                                                         buildScriptToExecuteString(instanceScript),
                                                                                                         buildScriptOptions(instanceScript,
-                                                                                                                           instanceTag,
-                                                                                                                           infrastructure));
+                                                                                                                           null,
+                                                                                                                           infrastructure,
+                                                                                                                           instanceTag));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -223,7 +226,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     private RunScriptOptions buildScriptOptions(InstanceScript instanceScript, String instanceId,
-            Infrastructure infrastructure) {
+            Infrastructure infrastructure, String instanceTag) {
         return Optional.ofNullable(instanceScript.getCredentials()).map(credentials -> {
 
             // retrieve the passed username or read it from the property file
@@ -260,7 +263,7 @@ public abstract class JCloudsProvider implements CloudProvider {
             // create credentials. Then the user that is used to login is root
             // (jcloud library)
             logger.info("No credentials provided. Script is going to be executed with default options");
-            return getDefaultRunScriptOptions(instanceId, infrastructure);
+            return getDefaultRunScriptOptions(instanceId, infrastructure, instanceTag);
         });
     }
 
