@@ -49,4 +49,9 @@ public class InstanceScriptFixture {
         return new InstanceScript(CredentialsFixtures.getInstanceCredentials(username, pasword), scripts);
     }
 
+    public static InstanceScript getInstanceScriptPrivateKey(String privateKey) {
+        return new InstanceScript(CredentialsFixtures.getInstanceCredentialsWithPrivateKey(privateKey),
+                                  new String[] {});
+    }
+
 }

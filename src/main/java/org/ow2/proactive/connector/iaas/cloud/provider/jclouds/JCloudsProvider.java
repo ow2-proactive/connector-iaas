@@ -35,15 +35,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
-import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
@@ -52,6 +49,7 @@ import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
@@ -69,8 +67,6 @@ import lombok.Setter;
 @Component
 public abstract class JCloudsProvider implements CloudProvider {
 
-    private final Logger logger = Logger.getLogger(JCloudsProvider.class);
-
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
@@ -87,8 +83,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
 
-    public abstract RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
-            String instanceTag);
+    protected abstract RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials);
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -133,12 +128,11 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
                                                                                               buildScriptToExecuteString(instanceScript),
-                                                                                              buildScriptOptions(instanceScript,
-                                                                                                                 instanceId,
-                                                                                                                 infrastructure,
-                                                                                                                 null));
+                                                                                              buildScriptOptionsWithInstanceId(instanceScript,
+                                                                                                                               instanceId,
+                                                                                                                               infrastructure));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Script cannot be run on instance with id: " + instanceId, e);
         }
 
         return Lists.newArrayList(new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError()));
@@ -153,12 +147,11 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
                                                                                                         buildScriptToExecuteString(instanceScript),
-                                                                                                        buildScriptOptions(instanceScript,
-                                                                                                                           null,
-                                                                                                                           infrastructure,
-                                                                                                                           instanceTag));
+                                                                                                        buildScriptOptionsWithInstanceTag(instanceScript,
+                                                                                                                                          instanceTag,
+                                                                                                                                          infrastructure));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Script cannot be run on instances with tag: " + instanceTag, e);
         }
 
         return execResponses.entrySet()
@@ -225,46 +218,36 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     }
 
-    private RunScriptOptions buildScriptOptions(InstanceScript instanceScript, String instanceId,
-            Infrastructure infrastructure, String instanceTag) {
-        return Optional.ofNullable(instanceScript.getCredentials()).map(credentials -> {
+    private RunScriptOptions buildScriptOptionsWithInstanceId(InstanceScript instanceScript, String instanceId,
+            Infrastructure infrastructure) {
+        return Optional.ofNullable(instanceScript.getCredentials())
+                       .map(this::getRunScriptOptionsWithCredentials)
+                       .orElseGet(() -> getDefaultRunScriptOptionsUsingInstanceId(instanceId, infrastructure));
+    }
 
-            // retrieve the passed username or read it from the property file
-            // only in the case where credentials are provided by the user
-            String username = Optional.ofNullable(credentials.getUsername())
-                                      .filter(StringUtils::isNotEmpty)
-                                      .filter(StringUtils::isNotBlank)
-                                      .orElse(getVmUserLogin());
-            if (credentials.getPrivateKey() != null) {
-                // currently, the private key is only used in the AWS EC2
-                // infrastructure, where root login is forbidden, this is why
-                // we use a custom username in this case. Login through
-                // user/password is also not allowed, so this seems the only
-                // way we can connect to EC2 instances to launch the script
-                logger.info("Key based authentication is provided. Script is going to be executed with the given private key and username=" +
-                            username);
-                return RunScriptOptions.Builder.runAsRoot(false)
-                                               .overrideLoginUser(username)
-                                               .overrideLoginPrivateKey(credentials.getPrivateKey());
-            } else {
-                // the other infrastructures can use user/password
-                // authentication this is the case for OpenStack
-                logger.info("Credentials are provided. Script is going to be executed with the given password and username=" +
-                            username);
-                return RunScriptOptions.Builder.runAsRoot(false)
-                                               .overrideLoginCredentials(new LoginCredentials.Builder().user(username)
-                                                                                                       .password(Optional.ofNullable(credentials.getPassword())
-                                                                                                                         .orElseThrow(() -> new IllegalArgumentException("Credentials are provided but neither a password nor a private key is specified")))
-                                                                                                       .authenticateSudo(false)
-                                                                                                       .build());
-            }
-        }).orElseGet(() -> {
-            // just in case nothing is provided, we let jcloud do the job and
-            // create credentials. Then the user that is used to login is root
-            // (jcloud library)
-            logger.info("No credentials provided. Script is going to be executed with default options");
-            return getDefaultRunScriptOptions(instanceId, infrastructure, instanceTag);
-        });
+    private RunScriptOptions buildScriptOptionsWithInstanceTag(InstanceScript instanceScript, String instanceTag,
+            Infrastructure infrastructure) {
+        return Optional.ofNullable(instanceScript.getCredentials())
+                       .map(this::getRunScriptOptionsWithCredentials)
+                       .orElseGet(() -> getDefaultRunScriptOptionsUsingInstanceTag(instanceTag, infrastructure));
+    }
+
+    /**
+     * @return scripts options, based on the instance identifier, that can be
+     * specific to concrete implementations
+     */
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceId(String instanceId,
+            Infrastructure infrastructure) {
+        return RunScriptOptions.NONE;
+    }
+
+    /**
+     * @return scripts options, based on instances tag, that can be specific
+     * to concrete implementations
+     */
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceTag(String instanceTag,
+            Infrastructure infrastructure) {
+        return RunScriptOptions.NONE;
     }
 
 }

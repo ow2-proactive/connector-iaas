@@ -43,6 +43,10 @@ public class CredentialsFixtures {
         return new InstanceCredentials(null, null, null, publicKey, null);
     }
 
+    public static InstanceCredentials getInstanceCredentialsWithPrivateKey(String privateKey) {
+        return new InstanceCredentials(null, null, null, null, privateKey);
+    }
+
     public static InfrastructureCredentials getInfrastructureCredentials(String username, String password) {
         return new InfrastructureCredentials(username, password, null, null);
     }

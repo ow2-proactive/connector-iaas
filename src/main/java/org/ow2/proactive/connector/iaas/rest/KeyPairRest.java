@@ -36,7 +36,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.KeyPairService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +51,6 @@ import com.aol.micro.server.rest.jackson.JacksonUtil;
 @Path("/infrastructures")
 @Component
 public class KeyPairRest {
-
-    private static final Logger logger = Logger.getLogger(KeyPairRest.class);
 
     @Autowired
     private KeyPairService keyPairService;

@@ -64,6 +64,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceCache;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -73,6 +74,7 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -109,8 +111,9 @@ public class AWSEC2JCloudsProviderTest {
     private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
     @Before
-    public void init() {
+    public void init() throws Exception {
         MockitoAnnotations.initMocks(this);
+        ReflectionTestUtils.setField(jcloudsProvider, "vmUserLogin", "admin", String.class);
     }
 
     @Test
@@ -609,7 +612,7 @@ public class AWSEC2JCloudsProviderTest {
 
         List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceId(infrastructure,
                                                                                      "instanceId",
-                                                                                     InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                                                                     InstanceScriptFixture.getInstanceScriptPrivateKey("privateKey"));
 
         assertTrue(scriptResults.size() == 1);
         assertThat(scriptResults.get(0).getInstanceId(), is("instanceId"));
@@ -643,7 +646,7 @@ public class AWSEC2JCloudsProviderTest {
 
         List<ScriptResult> scriptResults = jcloudsProvider.executeScriptOnInstanceTag(infrastructure,
                                                                                       "instanceTag",
-                                                                                      InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                                                                      InstanceScriptFixture.getInstanceScriptPrivateKey("privateKey"));
 
         assertThat(scriptResults.size(), is(0));
 

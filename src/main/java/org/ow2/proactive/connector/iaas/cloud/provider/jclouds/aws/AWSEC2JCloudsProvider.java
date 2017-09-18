@@ -25,8 +25,6 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
-import static org.jclouds.compute.predicates.NodePredicates.all;
-
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +73,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     @Getter
     private final String type = "aws-ec2";
 
-    private final static String INSTANCE_ID_REGION_SEPARATOR = "/";
+    private static final String INSTANCE_ID_REGION_SEPARATOR = "/";
 
     /**
      * This field stores the couple (AWS key pair name, private key) for each 
@@ -280,7 +278,6 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         // Dissociate one of the IP associated to the instance
         node.getPublicAddresses().stream().findAny().ifPresent(ip -> {
             elasticIPAddressApi.disassociateAddressInRegion(region, ip);
-            //elasticIPAddressApi.releaseAddressInRegion(region, ip);
         });
     }
 
@@ -294,7 +291,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
             logger.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
             return new SimpleImmutableEntry<>(keyPairName, keyPair.getKeyMaterial());
         } catch (RuntimeException e) {
-            logger.warn("Cannot create key pair in region '" + region);
+            logger.warn("Cannot create key pair in region '" + region, e);
             return null;
         }
     }
@@ -315,46 +312,68 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
-            String instanceTag) {
+    public RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
+        // retrieve the passed username or read it from the property file
+        String username = Optional.ofNullable(credentials.getUsername())
+                                  .filter(StringUtils::isNotEmpty)
+                                  .filter(StringUtils::isNotBlank)
+                                  .orElse(getVmUserLogin());
+        logger.info("Script options: username=" + username + ", private-key=(given in credentials)");
+        // Currently in AWS EC2 root login is forbidden, as well as
+        // username/password login. So the only way to login to run the script
+        // is by giving username/private key credentials
+        return RunScriptOptions.Builder.runAsRoot(false)
+                                       .overrideLoginUser(username)
+                                       .overrideLoginPrivateKey(credentials.getPrivateKey());
+    }
+
+    @Override
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceId(String instanceId,
+            Infrastructure infrastructure) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        NodeMetadata node = computeService.getNodeMetadata(instanceId);
 
-        // in order to run the script with the default options, we need to
-        // know in which region the instance is so that we can retrieve for
-        // that region the key pair that will be used to execute the script
-        String region;
-        if (instanceId == null) {
-            // retrieve at least one instance that has the given tag
-            Instance taggedInstance = getCreatedInfrastructureInstances(infrastructure).stream()
-                                                                                       .filter(instance -> instance.getTag()
-                                                                                                                   .equals(instanceTag))
-                                                                                       .findAny()
-                                                                                       .orElseThrow(() -> new IllegalArgumentException("Unable to create script options: cannot retrieve instance id from tag " +
-                                                                                                                                       instanceTag));
-            region = getRegionFromImage(taggedInstance);
+        String subdividedRegion = getRegionFromNode(computeService, node);
+        String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
 
-        } else {
-            NodeMetadata node = computeService.getNodeMetadata(instanceId);
-            region = getRegionFromNode(computeService, node);
-        }
+        logger.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
+        return buildDefaultRunScriptOptions(keyPairRegion);
+    }
 
-        // the region returned here contains a subdivision of the region, for
-        // example eu-west-1c for the region eu-west-1, so we need to remove
-        // the subdivision to have the exact region name of the key
-        String keyPairRegion = region.substring(0, region.length() - 1);
-        logger.debug("Using region " + keyPairRegion + " for instance id " + instanceId);
+    @Override
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceTag(String instanceTag,
+            Infrastructure infrastructure) {
+        // retrieve at least one instance that has the given tag to know in
+        // which AWS region we are
+        Instance taggedInstance = getCreatedInfrastructureInstances(infrastructure).stream()
+                                                                                   .filter(instance -> instance.getTag()
+                                                                                                               .equals(instanceTag))
+                                                                                   .findAny()
+                                                                                   .orElseThrow(() -> new IllegalArgumentException("Unable to create script options: cannot retrieve instance id from tag " +
+                                                                                                                                   instanceTag));
+        String subdividedRegion = getRegionFromImage(taggedInstance);
 
-        // we use the key pair that was created in the AWS region of the
-        // instance
+        String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
+
+        logger.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
+        return buildDefaultRunScriptOptions(keyPairRegion);
+    }
+
+    private RunScriptOptions buildDefaultRunScriptOptions(String keyPairRegion) {
         return Optional.ofNullable(generatedKeyPairsPerAwsRegion.get(keyPairRegion))
-                       // currently, we cannot login as root user on ec2 
-                       // instances anymore this is why we absolutely need to 
-                       // pass an authentication key
                        .map(keypair -> RunScriptOptions.Builder.runAsRoot(false)
                                                                .overrideLoginUser(getVmUserLogin())
                                                                .overrideLoginPrivateKey(keypair.getValue()))
-                       // fall back, last helpless chance to run the script
                        .orElse(RunScriptOptions.NONE);
+    }
+
+    private String extractRegionFromSubdividedRegion(String subdividedRegion) {
+        // the region returned here contains a subdivision of the region, for
+        // example eu-west-1c for the region eu-west-1, so we need to remove
+        // the subdivision to have the exact region name of the key
+        String region = subdividedRegion.substring(0, subdividedRegion.length() - 1);
+        logger.debug("Subdivided region=" + subdividedRegion + ", extracted region=" + region);
+        return region;
     }
 
 }

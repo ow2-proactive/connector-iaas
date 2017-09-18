@@ -36,8 +36,10 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Response;
 
+import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
@@ -50,6 +52,7 @@ import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +64,9 @@ import lombok.Getter;
 @Component
 public class OpenstackJCloudsProvider extends JCloudsProvider {
 
-    private final static String region = "RegionOne";
+    private static final Logger logger = Logger.getLogger(OpenstackJCloudsProvider.class);
+
+    private static final String REGION = "RegionOne";
 
     @Getter
     private final String type = "openstack-nova";
@@ -74,9 +79,9 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
-        NovaApi novaApi = computeService.getContext().unwrapApi((NovaApi.class));
+        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
-        ServerApi serverApi = novaApi.getServerApi(region);
+        ServerApi serverApi = novaApi.getServerApi(REGION);
 
         // Retrieve and add tags to the VM
         List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
@@ -118,7 +123,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         validatePlateformOperation(novaApi);
 
-        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
+        FloatingIPApi api = novaApi.getFloatingIPApi(REGION).get();
 
         // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
         List<FloatingIP> floatingIPs = api.list().toList();
@@ -160,7 +165,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
-        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
+        FloatingIPApi api = novaApi.getFloatingIPApi(REGION).get();
 
         // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
         List<FloatingIP> floatingIPs = api.list().toList();
@@ -191,7 +196,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     private void validatePlateformOperation(NovaApi novaApi) {
-        if (!novaApi.getFloatingIPApi(region).isPresent()) {
+        if (!novaApi.getFloatingIPApi(REGION).isPresent()) {
             throw new NotSupportedException("Operation not supported for this Openstack cloud");
         }
     }
@@ -207,7 +212,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     private final Instance createInstanceFromNode(Server server) {
         return Instance.builder()
-                       .id(region + "/" + server.getId())
+                       .id(REGION + "/" + server.getId())
                        .tag(server.getName())
                        .image(server.getImage().getName())
                        .number("1")
@@ -217,9 +222,13 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public RunScriptOptions getDefaultRunScriptOptions(String instanceId, Infrastructure infrastructure,
-            String instanceTag) {
-        return RunScriptOptions.NONE;
+    public RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
+        logger.info("Script options: username=" + credentials.getUsername() + " and given password");
+        return RunScriptOptions.Builder.runAsRoot(false)
+                                       .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
+                                                                                               .password(credentials.getPassword())
+                                                                                               .authenticateSudo(false)
+                                                                                               .build());
     }
 
 }
