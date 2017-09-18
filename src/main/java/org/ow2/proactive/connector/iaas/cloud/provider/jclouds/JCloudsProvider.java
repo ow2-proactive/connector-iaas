@@ -35,14 +35,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
-import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
@@ -51,6 +49,7 @@ import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
+import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
@@ -68,8 +67,6 @@ import lombok.Setter;
 @Component
 public abstract class JCloudsProvider implements CloudProvider {
 
-    private final Logger logger = Logger.getLogger(JCloudsProvider.class);
-
     @Autowired
     private JCloudsComputeServiceCache jCloudsComputeServiceCache;
 
@@ -85,6 +82,8 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Setter
     @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
+
+    protected abstract RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials);
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
@@ -129,9 +128,11 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
                                                                                               buildScriptToExecuteString(instanceScript),
-                                                                                              buildScriptOptions(instanceScript));
+                                                                                              buildScriptOptionsWithInstanceId(instanceScript,
+                                                                                                                               instanceId,
+                                                                                                                               infrastructure));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Script cannot be run on instance with id: " + instanceId, e);
         }
 
         return Lists.newArrayList(new ScriptResult(instanceId, execResponse.getOutput(), execResponse.getError()));
@@ -146,9 +147,11 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
                                                                                                         buildScriptToExecuteString(instanceScript),
-                                                                                                        buildScriptOptions(instanceScript));
+                                                                                                        buildScriptOptionsWithInstanceTag(instanceScript,
+                                                                                                                                          instanceTag,
+                                                                                                                                          infrastructure));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Script cannot be run on instances with tag: " + instanceTag, e);
         }
 
         return execResponses.entrySet()
@@ -215,15 +218,36 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     }
 
-    private RunScriptOptions buildScriptOptions(InstanceScript instanceScript) {
-        logger.info("Script options: userLogin=" + getVmUserLogin());
+    private RunScriptOptions buildScriptOptionsWithInstanceId(InstanceScript instanceScript, String instanceId,
+            Infrastructure infrastructure) {
         return Optional.ofNullable(instanceScript.getCredentials())
-                       .map(credentials -> RunScriptOptions.Builder.runAsRoot(false)
-                                                                   .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
-                                                                                                                           .password(credentials.getPassword())
-                                                                                                                           .authenticateSudo(false)
-                                                                                                                           .build()))
-                       .orElse(RunScriptOptions.Builder.overrideLoginUser(getVmUserLogin()));
+                       .map(this::getRunScriptOptionsWithCredentials)
+                       .orElseGet(() -> getDefaultRunScriptOptionsUsingInstanceId(instanceId, infrastructure));
+    }
+
+    private RunScriptOptions buildScriptOptionsWithInstanceTag(InstanceScript instanceScript, String instanceTag,
+            Infrastructure infrastructure) {
+        return Optional.ofNullable(instanceScript.getCredentials())
+                       .map(this::getRunScriptOptionsWithCredentials)
+                       .orElseGet(() -> getDefaultRunScriptOptionsUsingInstanceTag(instanceTag, infrastructure));
+    }
+
+    /**
+     * @return scripts options, based on the instance identifier, that can be
+     * specific to concrete implementations
+     */
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceId(String instanceId,
+            Infrastructure infrastructure) {
+        return RunScriptOptions.NONE;
+    }
+
+    /**
+     * @return scripts options, based on instances tag, that can be specific
+     * to concrete implementations
+     */
+    protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceTag(String instanceTag,
+            Infrastructure infrastructure) {
+        return RunScriptOptions.NONE;
     }
 
 }

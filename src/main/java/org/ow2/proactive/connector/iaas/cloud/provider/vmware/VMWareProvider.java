@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.vmware;
 
 import java.rmi.RemoteException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -383,6 +384,11 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
         throw new NotSupportedException("Operation not supported for VMWare");
+    }
+
+    @Override
+    public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
+        throw new UnsupportedOperationException();
     }
 
     private VirtualMachine cloneVM(VirtualMachine vm, String newVMname, Instance instance, Folder rootFolder,

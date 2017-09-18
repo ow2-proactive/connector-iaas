@@ -32,15 +32,19 @@ import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
 public class CredentialsFixtures {
 
     public static InstanceCredentials getInstanceCredentials(String username, String password) {
-        return new InstanceCredentials(username, password, null, null);
+        return new InstanceCredentials(username, password, null, null, null);
     }
 
     public static InstanceCredentials getInstanceCredentialsWithKeyName(String publicKeyName) {
-        return new InstanceCredentials(null, null, publicKeyName, null);
+        return new InstanceCredentials(null, null, publicKeyName, null, null);
     }
 
     public static InstanceCredentials getInstanceCredentialsWithKey(String publicKey) {
-        return new InstanceCredentials(null, null, null, publicKey);
+        return new InstanceCredentials(null, null, null, publicKey, null);
+    }
+
+    public static InstanceCredentials getInstanceCredentialsWithPrivateKey(String privateKey) {
+        return new InstanceCredentials(null, null, null, null, privateKey);
     }
 
     public static InfrastructureCredentials getInfrastructureCredentials(String username, String password) {

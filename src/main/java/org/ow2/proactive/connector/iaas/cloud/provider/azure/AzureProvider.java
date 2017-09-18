@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -777,5 +778,10 @@ public class AzureProvider implements CloudProvider {
             vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
             azureService.publicIpAddresses().deleteById(publicIPAddress.id());
         }
+    }
+
+    @Override
+    public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
+        throw new UnsupportedOperationException();
     }
 }

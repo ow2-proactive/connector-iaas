@@ -46,7 +46,11 @@ public class CredentialsTest {
 
     @Test
     public void testConstructor() {
-        InstanceCredentials credentials = new InstanceCredentials("username", "password", "publicKeyName", "publicKey");
+        InstanceCredentials credentials = new InstanceCredentials("username",
+                                                                  "password",
+                                                                  "publicKeyName",
+                                                                  "publicKey",
+                                                                  "privateKey");
         assertThat(credentials.getUsername(), is("username"));
         assertThat(credentials.getPassword(), is("password"));
         assertThat(credentials.getPublicKeyName(), is("publicKeyName"));
@@ -58,11 +62,13 @@ public class CredentialsTest {
         InstanceCredentials credentials1 = new InstanceCredentials("username",
                                                                    "password",
                                                                    "publicKeyName",
-                                                                   "publicKey");
+                                                                   "publicKey",
+                                                                   "privateKey");
         InstanceCredentials credentials2 = new InstanceCredentials("username",
                                                                    "password",
                                                                    "publicKeyName",
-                                                                   "publicKey");
+                                                                   "publicKey",
+                                                                   "privateKey");
 
         Set<InstanceCredentials> credentialss = Sets.newHashSet(credentials1, credentials2);
 

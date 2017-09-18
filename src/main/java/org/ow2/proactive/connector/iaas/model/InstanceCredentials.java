@@ -46,4 +46,6 @@ public class InstanceCredentials {
     private String publicKeyName;
 
     private String publicKey;
+
+    private String privateKey;
 }
