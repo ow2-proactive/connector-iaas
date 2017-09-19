@@ -37,7 +37,6 @@ import java.util.stream.IntStream;
 
 import javax.ws.rs.NotSupportedException;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -73,11 +72,9 @@ import lombok.Getter;
 @Component
 public class VMWareProvider implements CloudProvider {
 
-    private final Logger logger = Logger.getLogger(VMWareProvider.class);
+    private static final String IMAGE_DELIMITER = "/";
 
-    private final static String IMAGE_DELIMITER = "/";
-
-    private final static String RANDOM_HOST = "*";
+    private static final String RANDOM_HOST = "*";
 
     @Getter
     private final String type = "vmware";
@@ -132,7 +129,7 @@ public class VMWareProvider implements CloudProvider {
      */
     private String createUniqueInstanceTag(String tagBase, int instanceIndex) {
         if (instanceIndex > 1) {
-            return tagBase + "_" + String.valueOf(instanceIndex);
+            return tagBase + "_" + instanceIndex;
         }
         return tagBase;
     }
@@ -231,12 +228,10 @@ public class VMWareProvider implements CloudProvider {
                                         .findFirst()
                                         .ifPresent(vm -> {
                                             try {
-
                                                 if (Task.SUCCESS.equals(vm.powerOffVM_Task().waitForTask())) {
                                                     Task task = vm.destroy_Task();
                                                     String result = task.waitForTask();
                                                     if (!result.equals(Task.SUCCESS)) {
-
                                                         throw new RuntimeException("Unable to delete VMWare instance : " +
                                                                                    instanceId + " Task result = " +
                                                                                    result);
@@ -245,12 +240,10 @@ public class VMWareProvider implements CloudProvider {
                                                     throw new RuntimeException("ERROR when powering OFF the instance : " +
                                                                                instanceId);
                                                 }
-
                                             } catch (RemoteException | InterruptedException e) {
                                                 throw new RuntimeException("ERROR when deleting VMWare instance : " +
                                                                            instanceId, e);
                                             }
-
                                         });
 
     }
@@ -283,24 +276,24 @@ public class VMWareProvider implements CloudProvider {
                                      .id(vm.getConfig().getUuid())
                                      .tag(vm.getName())
                                      .number("1")
-                                     .hardware(Hardware.builder()
-                                                       .minCores(String.valueOf(vm.getConfig()
-                                                                                  .getHardware()
-                                                                                  .getNumCPU()))
-                                                       .minRam((String.valueOf(vm.getConfig()
-                                                                                 .getHardware()
-                                                                                 .getMemoryMB())))
-                                                       .build())
-
-                                     .network(Network.builder()
-                                                     .publicAddresses(Lists.newArrayList(vm.getGuest()
-                                                                                           .getIpAddress()))
-                                                     .build())
+                                     .hardware(buildVmHardware(vm))
+                                     .network(buildVmNetwork(vm))
 
                                      .status(String.valueOf(vm.getSummary()
                                                               .getOverallStatus()))
                                      .build())
                   .collect(Collectors.toSet());
+    }
+
+    private Network buildVmNetwork(VirtualMachine vm) {
+        return Network.builder().publicAddresses(Lists.newArrayList(vm.getGuest().getIpAddress())).build();
+    }
+
+    private Hardware buildVmHardware(VirtualMachine vm) {
+        return Hardware.builder()
+                       .minCores(String.valueOf(vm.getConfig().getHardware().getNumCPU()))
+                       .minRam(String.valueOf(vm.getConfig().getHardware().getMemoryMB()))
+                       .build();
     }
 
     @Override
@@ -335,7 +328,7 @@ public class VMWareProvider implements CloudProvider {
                 GuestProcessManager gpm = gom.getProcessManager(vm);
 
                 scriptResult = scriptResult.withOutput((scriptResult.getOutput() + " " +
-                                                        String.valueOf(gpm.startProgramInGuest(npa, gps))).trim());
+                                                        gpm.startProgramInGuest(npa, gps)).trim());
                 scriptResults.add(scriptResult);
             }
 
@@ -470,7 +463,7 @@ public class VMWareProvider implements CloudProvider {
             try {
                 return vmToClone.getResourcePool();
             } catch (RemoteException e) {
-                throw new RuntimeException("Unable to retrieve destination resource pool for VM:");
+                throw new RuntimeException("Unable to retrieve destination resource pool for VM:", e);
             }
         }), destinationHost.orElse(null), destinationDatastore.orElse(null));
     }
