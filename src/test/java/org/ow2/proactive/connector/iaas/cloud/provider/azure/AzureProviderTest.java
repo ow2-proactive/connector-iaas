@@ -61,6 +61,7 @@ import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -283,9 +284,13 @@ public class AzureProviderTest {
     private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
     @Before
-    public void init() {
+    public void init() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(azureServiceCache.getService(any(Infrastructure.class))).thenReturn(azureService);
+        ReflectionTestUtils.setField(azureProvider, "defaultUsername", "activeeon", String.class);
+        ReflectionTestUtils.setField(azureProvider, "defaultPassword", "Act1v€0N", String.class);
+        ReflectionTestUtils.setField(azureProvider, "defaultPrivateNetworkCidr", "10.0.0.0/24", String.class);
+
     }
 
     @Test

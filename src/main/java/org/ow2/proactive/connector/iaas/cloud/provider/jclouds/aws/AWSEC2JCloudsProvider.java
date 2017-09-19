@@ -239,14 +239,19 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                                        .stream()
                                                                        .filter(address -> address.getInstanceId() == null)
                                                                        .collect(Collectors.toSet());
+        boolean associated;
         for (PublicIpInstanceIdPair unassignedIp : unassignedIps) {
+            associated = false;
             try {
                 elasticIPAddressApi.associateAddressInRegion(region, unassignedIp.getPublicIp(), id);
+                associated = true;
             } catch (RuntimeException e) {
-                continue;
+                logger.warn("Cannot associate address " + unassignedIp.getPublicIp() + " in region " + region, e);
             }
-            ip = unassignedIp.getPublicIp();
-            break;
+            if (associated) {
+                ip = unassignedIp.getPublicIp();
+                break;
+            }
         }
         // Allocate a new IP otherwise
         if (ip == null) {
