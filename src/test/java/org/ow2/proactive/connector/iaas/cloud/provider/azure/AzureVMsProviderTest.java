@@ -53,6 +53,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
+import org.ow2.proactive.connector.iaas.cloud.provider.azure.vm.AzureVMsProvider;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
@@ -99,10 +100,10 @@ import com.microsoft.rest.RestException;
  * @author ActiveEon Team
  * @since 12/03/17
  */
-public class AzureProviderTest {
+public class AzureVMsProviderTest {
 
     @InjectMocks
-    private AzureProvider azureProvider;
+    private AzureVMsProvider azureProvider;
 
     @Mock
     private AzureServiceCache azureServiceCache;

@@ -64,4 +64,6 @@ public class Instance {
 
     private InstanceScript initScript;
 
+    private String customScriptUrl;
+
 }

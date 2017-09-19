@@ -45,6 +45,19 @@ public class InstanceFixture {
         return getInstance(id, tag, id, "1", "512", "1", "172.168.1.248", "1.0.0.2", "RUNNING");
     }
 
+    public static Instance simpleInstanceWithCustomScript(String id, String tag, String customScriptUrl) {
+        return getInstanceWithCustomScript(id,
+                                           tag,
+                                           id,
+                                           "1",
+                                           "512",
+                                           "1",
+                                           "172.168.1.248",
+                                           "1.0.0.2",
+                                           "RUNNING",
+                                           customScriptUrl);
+    }
+
     public static Instance simpleInstanceWithTagAndImage(String tag, String image) {
 
         return getInstance("", tag, image, "1", "512", "1", "172.168.1.248", "1.0.0.2", "RUNNING");
@@ -60,6 +73,7 @@ public class InstanceFixture {
                             null,
                             CredentialsFixtures.getInstanceCredentialsWithKey(publicKey),
                             null,
+                            null,
                             null);
     }
 
@@ -73,7 +87,8 @@ public class InstanceFixture {
                             null,
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             null,
-                            InstanceScriptFixture.getInstanceScript(scripts));
+                            InstanceScriptFixture.getInstanceScript(scripts),
+                            null);
     }
 
     public static Instance simpleInstanceWithMacAddress(String tag, String image, List<String> macAddresses) {
@@ -115,7 +130,8 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             null,
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 
     public static Instance getInstance(String id, String tag, String image, String number, String minRam,
@@ -129,7 +145,24 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             null,
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
+    }
+
+    public static Instance getInstanceWithCustomScript(String id, String tag, String image, String number,
+            String minRam, String minCores, String networkId, String publicAddress, String privateAddress,
+            String customScriptUrl) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            "OK",
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
+                            CredentialsFixtures.getInstanceCredentials("username", "password"),
+                            new Options(null, null, null, null, "resourceGroup", "region", null, null, null, null),
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            customScriptUrl);
     }
 
     public static Instance getInstanceWithSpotPrice(String id, String tag, String image, String number, String minRam,
@@ -143,7 +176,8 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().spotPrice("0.05").build(),
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 
     public static Instance getInstanceWithSecurityGroup(String id, String tag, String image, String number,
@@ -162,7 +196,8 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().securityGroupNames(securityGroupNames).build(),
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 
     public static Instance getInstanceWithSubnetId(String id, String tag, String image, String number, String minRam,
@@ -176,7 +211,8 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().subnetId("127.0.0.1").build(),
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 
     public static Instance getInstanceWithMacAddress(String id, String tag, String image, String number, String minRam,
@@ -190,7 +226,8 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().macAddresses(macAddresses).build(),
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 
     public static Instance getInstanceWithResourceGroupAndRegion(String id, String tag, String image, String number,
@@ -205,6 +242,7 @@ public class InstanceFixture {
                             NetworkFixtures.getNetwork(publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
                             Options.builder().resourceGroup(resourceGroup).region(region).build(),
-                            InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
     }
 }

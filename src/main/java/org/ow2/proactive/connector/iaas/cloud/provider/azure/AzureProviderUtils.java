@@ -33,6 +33,8 @@ import org.springframework.stereotype.Component;
 
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
+import com.microsoft.azure.management.compute.VirtualMachineScaleSet;
+import com.microsoft.azure.management.network.LoadBalancer;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.PublicIpAddress;
@@ -98,4 +100,23 @@ public class AzureProviderUtils {
         return azureService.virtualMachines().list().stream().collect(Collectors.toSet());
     }
 
+    public Optional<LoadBalancer> searchLoadBalancerByName(Azure azureService, String name) {
+        return azureService.loadBalancers().list().stream().filter(lb -> lb.name().equals(name)).findAny();
+    }
+
+    public Optional<VirtualMachineScaleSet> searchVirtualMachineScaleSetByName(Azure azureService, String name) {
+        return azureService.virtualMachineScaleSets()
+                           .list()
+                           .stream()
+                           .filter(vmss -> vmss.name().equals(name))
+                           .findAny();
+    }
+
+    public Optional<PublicIpAddress> searchPublicIpAddressByName(Azure azureService, String name) {
+        return azureService.publicIpAddresses()
+                           .list()
+                           .stream()
+                           .filter(publicIpAddress -> publicIpAddress.name().equals(name))
+                           .findAny();
+    }
 }
