@@ -248,21 +248,19 @@ public class AzureScaleSetProvider extends AzureProvider {
 
         return virtualMachineScaleSetStage2
 
-                                                                                    .withNewDataDisk(azureVMDiskSize)
-                                                                                    .withCapacity(vmssNbOfInstances)
+                                           .withNewDataDisk(azureVMDiskSize)
+                                           .withCapacity(vmssNbOfInstances)
 
-                                                                                    .defineNewExtension("CustomScriptForLinux")
-                                                                                    .withPublisher("Microsoft.OSTCExtensions")
-                                                                                    .withType("CustomScriptForLinux")
-                                                                                    .withVersion("1.4")
-                                                                                    .withMinorVersionAutoUpgrade()
-                                                                                    .withPublicSetting("fileUris",
-                                                                                                       fileUris)
-                                                                                    .withPublicSetting("commandToExecute",
-                                                                                                       installCommand)
+                                           .defineNewExtension("CustomScriptForLinux")
+                                           .withPublisher("Microsoft.OSTCExtensions")
+                                           .withType("CustomScriptForLinux")
+                                           .withVersion("1.4")
+                                           .withMinorVersionAutoUpgrade()
+                                           .withPublicSetting("fileUris", fileUris)
+                                           .withPublicSetting("commandToExecute", installCommand)
 
-                                                                                    .attach()
-                                                                                    .create();
+                                           .attach()
+                                           .create();
     }
 
     private void genAzureResourcesNames(Infrastructure infrastructure) {
