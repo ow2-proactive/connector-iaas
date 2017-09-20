@@ -67,7 +67,8 @@ public class InstanceTest {
                                                 .securityGroupNames(securityGroupNames)
                                                 .subnetId("127.0.0.1")
                                                 .build(),
-                                         InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                         InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                                         null);
 
         assertThat(instance.getTag(), is("new-vm"));
     }
@@ -90,7 +91,8 @@ public class InstanceTest {
                                                  .securityGroupNames(securityGroupNames)
                                                  .subnetId("127.0.0.1")
                                                  .build(),
-                                          InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                          InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                                          null);
         Instance instance2 = new Instance("instance-id",
                                           "new-vm",
                                           "ubuntu",
@@ -104,7 +106,8 @@ public class InstanceTest {
                                                  .securityGroupNames(securityGroupNames)
                                                  .subnetId("127.0.0.1")
                                                  .build(),
-                                          InstanceScriptFixture.simpleInstanceScriptNoscripts());
+                                          InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                                          null);
 
         Set<Instance> instances = Sets.newHashSet(instance1, instance2);
 

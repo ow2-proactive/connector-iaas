@@ -87,63 +87,63 @@ import lombok.Getter;
  * @since 01/03/17
  */
 @Component
-public class AzureProvider implements CloudProvider {
+public abstract class AzureProvider implements CloudProvider {
 
     private static final Logger logger = Logger.getLogger(AzureProvider.class);
 
     @Getter
-    private final String type = "azure";
+    protected final String type = "azureAbstract";
 
-    private static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
+    protected static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
 
-    private static final int RESOURCES_NAME_EXTRA_CHARS = 10;
+    protected static final int RESOURCES_NAME_EXTRA_CHARS = 10;
 
-    private static final String VIRTUAL_NETWORK_NAME_BASE = "vnet";
+    protected static final String VIRTUAL_NETWORK_NAME_BASE = "vnet";
 
-    private static final String PUBLIC_IP_ADDRESS_NAME_BASE = "ip";
+    protected static final String PUBLIC_IP_ADDRESS_NAME_BASE = "ip";
 
-    private static final String NETWORK_SECURITY_GROUP_NAME_BASE = "sg";
+    protected static final String NETWORK_SECURITY_GROUP_NAME_BASE = "sg";
 
-    private static final String NETWORK_INTERFACE_NAME_BASE = "if";
+    protected static final String NETWORK_INTERFACE_NAME_BASE = "if";
 
-    private static final String OS_DISK_NAME_BASE = "os";
+    protected static final String OS_DISK_NAME_BASE = "os";
 
-    private static final Boolean DEFAULT_STATIC_PUBLIC_IP = true;
+    protected static final Boolean DEFAULT_STATIC_PUBLIC_IP = true;
 
-    private static final String SCRIPT_EXTENSION_PUBLISHER = "Microsoft.Azure.Extensions";
+    protected static final String SCRIPT_EXTENSION_PUBLISHER = "Microsoft.Azure.Extensions";
 
-    private static final String SCRIPT_EXTENSION_TYPE = "CustomScript";
+    protected static final String SCRIPT_EXTENSION_TYPE = "CustomScript";
 
-    private static final String SCRIPT_EXTENSION_VERSION = "2.0";
+    protected static final String SCRIPT_EXTENSION_VERSION = "2.0";
 
-    private static final String SCRIPT_EXTENSION_CMD_KEY = "commandToExecute";
+    protected static final String SCRIPT_EXTENSION_CMD_KEY = "commandToExecute";
 
-    private static final String SCRIPT_SEPARATOR = ";";
+    protected static final String SCRIPT_SEPARATOR = ";";
 
-    private static final String SINGLE_INSTANCE_NUMBER = "1";
+    protected static final String SINGLE_INSTANCE_NUMBER = "1";
 
-    private static final String INSTANCE_NOT_FOUND_ERROR = "ERROR unable to find instance with ID: ";
-
-    @Autowired
-    private AzureServiceCache azureServiceCache;
+    protected static final String INSTANCE_NOT_FOUND_ERROR = "ERROR unable to find instance with ID: ";
 
     @Autowired
-    private AzureProviderUtils azureProviderUtils;
+    protected AzureServiceCache azureServiceCache;
 
     @Autowired
-    private AzureProviderNetworkingUtils azureProviderNetworkingUtils;
+    protected AzureProviderUtils azureProviderUtils;
 
     @Autowired
-    private TagManager tagManager;
+    protected AzureProviderNetworkingUtils azureProviderNetworkingUtils;
+
+    @Autowired
+    protected TagManager tagManager;
 
     @Value("${connector-iaas.azure.default-username:activeeon}")
-    private String defaultUsername;
+    protected String defaultUsername;
 
     @Value("${connector-iaas.azure.default-password:Act1v€0N}")
-    private String defaultPassword;
+    protected String defaultPassword;
 
     @Value("${connector-iaas.azure.default-private-network-cidr:10.0.0.0/24}")
-    private String defaultPrivateNetworkCidr;
+    protected String defaultPrivateNetworkCidr;
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -250,7 +250,7 @@ public class AzureProvider implements CloudProvider {
                            .collect(Collectors.toSet());
     }
 
-    private Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService, String instanceTag,
+    protected Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService, String instanceTag,
             ResourceGroup resourceGroup, Region region, AzureNetworkOptions networkOptions, int instanceNumber) {
         // Create a new public IP address (one per VM)
         String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
@@ -280,7 +280,7 @@ public class AzureProvider implements CloudProvider {
                                                                                         : null);
     }
 
-    private Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String name) {
+    protected Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String name) {
         return azureService.virtualMachineCustomImages()
                            .list()
                            .stream()
@@ -288,7 +288,7 @@ public class AzureProvider implements CloudProvider {
                            .findAny();
     }
 
-    private Optional<VirtualMachineCustomImage> getImageById(Azure azureService, String id) {
+    protected Optional<VirtualMachineCustomImage> getImageById(Azure azureService, String id) {
         return azureService.virtualMachineCustomImages()
                            .list()
                            .stream()
@@ -296,7 +296,7 @@ public class AzureProvider implements CloudProvider {
                            .findAny();
     }
 
-    private Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
+    protected Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
             ResourceGroup resourceGroup, Region region, String instanceTag, VirtualMachineCustomImage image,
             Creatable<NetworkInterface> creatableNetworkInterface) {
 
@@ -351,7 +351,7 @@ public class AzureProvider implements CloudProvider {
                                                       .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
 
-    private VirtualMachine.DefinitionStages.WithLinuxCreateManaged configureLinuxVirtualMachine(Azure azureService,
+    protected VirtualMachine.DefinitionStages.WithLinuxCreateManaged configureLinuxVirtualMachine(Azure azureService,
             String instanceTag, Region region, ResourceGroup resourceGroup, InstanceCredentials instanceCredentials,
             VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
@@ -376,9 +376,10 @@ public class AzureProvider implements CloudProvider {
                                 .orElseGet(() -> creatableVMWithoutCredentials.withRootPassword(optionalPassword.orElse(defaultPassword)));
     }
 
-    private VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(Azure azureService,
-            String instanceTag, Region region, ResourceGroup resourceGroup, InstanceCredentials instanceCredentials,
-            VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
+    protected VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(
+            Azure azureService, String instanceTag, Region region, ResourceGroup resourceGroup,
+            InstanceCredentials instanceCredentials, VirtualMachineCustomImage image,
+            Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
         Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
                                                     .map(InstanceCredentials::getUsername);
@@ -403,38 +404,38 @@ public class AzureProvider implements CloudProvider {
      * @param instanceIndex the instance index
      * @return a unique VM tag
      */
-    private static String createUniqueInstanceTag(String tagBase, int instanceIndex) {
+    protected static String createUniqueInstanceTag(String tagBase, int instanceIndex) {
         if (instanceIndex > 1) {
             return tagBase + String.valueOf(instanceIndex);
         }
         return tagBase;
     }
 
-    private static String createUniqueSecurityGroupName(String instanceTag) {
+    protected static String createUniqueSecurityGroupName(String instanceTag) {
         return createUniqueName(instanceTag, NETWORK_SECURITY_GROUP_NAME_BASE);
     }
 
-    private static String createUniqueVirtualNetworkName(String instanceTag) {
+    protected static String createUniqueVirtualNetworkName(String instanceTag) {
         return createUniqueName(instanceTag, VIRTUAL_NETWORK_NAME_BASE);
     }
 
-    private static String createUniqueNetworkInterfaceName(String instanceTag) {
+    protected static String createUniqueNetworkInterfaceName(String instanceTag) {
         return createUniqueName(instanceTag, NETWORK_INTERFACE_NAME_BASE);
     }
 
-    private static String createUniquePublicIPName(String instanceTag) {
+    protected static String createUniquePublicIPName(String instanceTag) {
         return createUniqueName(instanceTag, PUBLIC_IP_ADDRESS_NAME_BASE);
     }
 
-    private static String createUniqOSDiskName(String instanceTag) {
+    protected static String createUniqOSDiskName(String instanceTag) {
         return createUniqueName(instanceTag, OS_DISK_NAME_BASE);
     }
 
-    private static String createUniqueScriptName(String instanceTag) {
+    protected static String createUniqueScriptName(String instanceTag) {
         return createUniqueName(instanceTag, "");
     }
 
-    private static String createUniqueName(String customPart, String basePart) {
+    protected static String createUniqueName(String customPart, String basePart) {
         return SdkContext.randomResourceName(customPart + '-' + basePart,
                                              customPart.length() + basePart.length() + 1 + RESOURCES_NAME_EXTRA_CHARS);
     }
@@ -481,7 +482,7 @@ public class AzureProvider implements CloudProvider {
         logger.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
     }
 
-    private void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
+    protected void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
         // Delete the security groups if not attached to any remaining network interface
         networkSecurityGroups.stream()
                              .map(NetworkSecurityGroup::id)
@@ -495,7 +496,7 @@ public class AzureProvider implements CloudProvider {
                              .forEach(id -> azureService.networkSecurityGroups().deleteById(id));
     }
 
-    private void deleteNetworks(Azure azureService, List<com.microsoft.azure.management.network.Network> networks) {
+    protected void deleteNetworks(Azure azureService, List<com.microsoft.azure.management.network.Network> networks) {
         networks.stream()
                 .map(Network::id)
                 .filter(id -> azureService.networkInterfaces()
@@ -531,7 +532,7 @@ public class AzureProvider implements CloudProvider {
                                                                    .collect(Collectors.toSet()));
     }
 
-    private Set<Instance> getInstancesFromVMs(Azure azureService, Set<VirtualMachine> vms) {
+    protected Set<Instance> getInstancesFromVMs(Azure azureService, Set<VirtualMachine> vms) {
         return vms.stream()
                   .map(vm -> Instance.builder()
                                      .id(vm.vmId())
@@ -549,7 +550,7 @@ public class AzureProvider implements CloudProvider {
                   .collect(Collectors.toSet());
     }
 
-    private List<String> buildPrivateAddressList(Azure azureService, VirtualMachine vm) {
+    protected List<String> buildPrivateAddressList(Azure azureService, VirtualMachine vm) {
         return vm.networkInterfaceIds()
                  .stream()
                  .map(networkInterfaceId -> azureService.networkInterfaces().getById(networkInterfaceId))
@@ -559,7 +560,7 @@ public class AzureProvider implements CloudProvider {
                  .collect(Collectors.toList());
     }
 
-    private List<String> buildPublicAddressList(Azure azureService, VirtualMachine vm) {
+    protected List<String> buildPublicAddressList(Azure azureService, VirtualMachine vm) {
         return vm.networkInterfaceIds()
                  .stream()
                  .map(networkInterfaceId -> azureService.networkInterfaces().getById(networkInterfaceId))
@@ -591,7 +592,7 @@ public class AzureProvider implements CloudProvider {
         return executeScriptOnVM(vm, instanceScript);
     }
 
-    private List<ScriptResult> executeScriptOnVM(VirtualMachine vm, InstanceScript instanceScript) {
+    protected List<ScriptResult> executeScriptOnVM(VirtualMachine vm, InstanceScript instanceScript) {
 
         // Concatenate all provided scripts in one (Multiple VMExtensions per handler not supported)
         StringBuilder concatenatedScripts = new StringBuilder();
@@ -716,7 +717,7 @@ public class AzureProvider implements CloudProvider {
         return publicIpAddress.ipAddress();
     }
 
-    private void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
+    protected void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
             ResourceGroup resourceGroup, PublicIpAddress publicIpAddress) {
         // Reuse the network configuration (virtual private network & security group) of the primary network interface
         NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
@@ -742,18 +743,18 @@ public class AzureProvider implements CloudProvider {
         }
     }
 
-    private void handleAddPublicIpWithNewSecondaryNetworkInterfaceException(Azure azureService, VirtualMachine vm,
+    protected void handleAddPublicIpWithNewSecondaryNetworkInterfaceException(Azure azureService, VirtualMachine vm,
             PublicIpAddress publicIpAddress, NetworkInterface newSecondaryNetworkInterface) {
         removePublicIpFromNetworkInterface(azureService, newSecondaryNetworkInterface);
         replaceVMPrimaryPublicIpAddress(azureService, vm, publicIpAddress);
     }
 
-    private void removePublicIpFromNetworkInterface(Azure azureService, NetworkInterface networkInterface) {
+    protected void removePublicIpFromNetworkInterface(Azure azureService, NetworkInterface networkInterface) {
         networkInterface.update().withoutPrimaryPublicIpAddress().apply();
         azureService.networkInterfaces().deleteById(networkInterface.id());
     }
 
-    private void replaceVMPrimaryPublicIpAddress(Azure azureService, VirtualMachine vm,
+    protected void replaceVMPrimaryPublicIpAddress(Azure azureService, VirtualMachine vm,
             PublicIpAddress newPublicIpAddress) {
         PublicIpAddress existingPublicIPAddress = vm.getPrimaryPublicIpAddress();
         vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
