@@ -246,7 +246,7 @@ public class AzureScaleSetProvider extends AzureProvider {
         virtualMachineScaleSetStage2 = vmAdminSSHPubKey.map(virtualMachineScaleSetStage1::withSsh)
                                                        .orElseGet(() -> virtualMachineScaleSetStage1.withRootPassword(vmAdminPassword));
 
-        VirtualMachineScaleSet virtualMachineScaleSet = virtualMachineScaleSetStage2
+        return virtualMachineScaleSetStage2
 
                                                                                     .withNewDataDisk(azureVMDiskSize)
                                                                                     .withCapacity(vmssNbOfInstances)
@@ -263,7 +263,6 @@ public class AzureScaleSetProvider extends AzureProvider {
 
                                                                                     .attach()
                                                                                     .create();
-        return virtualMachineScaleSet;
     }
 
     private void genAzureResourcesNames(Infrastructure infrastructure) {
@@ -356,11 +355,11 @@ public class AzureScaleSetProvider extends AzureProvider {
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         Azure azureService = azureServiceCache.getService(infrastructure);
 
-        final int azureResourcesUUID = Math.abs(infrastructure.hashCode()); // Make it distinguable and findable (OK since 1 NS <-> 1 Scale Set)
-        final String azureLoadBalancerName = "LB-" + azureResourcesUUID;
-        final String azureVNetName = "VNET-" + azureResourcesUUID;
-        final String azureIPName = "IP-" + azureResourcesUUID;
-        final String azureScaleSetName = "aeSS-" + azureResourcesUUID;
+        azureResourcesUUID = Math.abs(infrastructure.hashCode()); // Make it distinguable and findable (OK since 1 NS <-> 1 Scale Set)
+        azureLoadBalancerName = "LB-" + azureResourcesUUID;
+        azureVNetName = "VNET-" + azureResourcesUUID;
+        azureIPName = "IP-" + azureResourcesUUID;
+        azureScaleSetName = "aeSS-" + azureResourcesUUID;
 
         VirtualMachineScaleSet vmss = azureProviderUtils.searchVirtualMachineScaleSetByName(azureService,
                                                                                             azureScaleSetName)
