@@ -92,7 +92,7 @@ public abstract class AzureProvider implements CloudProvider {
     private static final Logger logger = Logger.getLogger(AzureProvider.class);
 
     @Getter
-    protected final String type = "azure";
+    protected final String type = "azureAbstract";
 
     protected static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
 
@@ -142,7 +142,7 @@ public abstract class AzureProvider implements CloudProvider {
     @Value("${connector-iaas.azure.default-password:Act1v€0N}")
     protected String defaultPassword;
 
-    @Value("${connector-iaas.azure.default-protected-network-cidr:10.0.0.0/24}")
+    @Value("${connector-iaas.azure.default-private-network-cidr:10.0.0.0/24}")
     protected String defaultPrivateNetworkCidr;
 
     @Override

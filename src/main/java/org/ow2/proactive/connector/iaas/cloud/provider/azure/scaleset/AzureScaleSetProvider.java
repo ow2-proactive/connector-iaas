@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProvider;
 import org.ow2.proactive.connector.iaas.model.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.microsoft.azure.management.Azure;
@@ -40,7 +41,6 @@ import com.microsoft.azure.management.network.*;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
-import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 
 import lombok.Getter;
 
@@ -69,9 +69,43 @@ public class AzureScaleSetProvider extends AzureProvider {
      */
 
     @Getter
-    protected final String type = "azureScaleSet";
+    private final String type = "azureScaleSet";
 
-    private final Logger logger = Logger.getLogger(AzureScaleSetProvider.class);
+    private static final Logger logger = Logger.getLogger(AzureScaleSetProvider.class);
+
+    private int azureResourcesUUID;
+
+    private String azureLoadBalancerName;
+
+    private String azureFrontendName;
+
+    private String azureBackendPoolName;
+
+    private String azureTCPProbeName;
+
+    private String azureHTTPLoadBalancingRule;
+
+    private String azureNATPoolSSHName;
+
+    private String azureNATPoolPNPName;
+
+    private String azureNATPoolPNPSName;
+
+    private String azureVNetName;
+
+    private String azureSubnetName;
+
+    private String azureIPName;
+
+    private String azureScaleSetName;
+
+    private int azureVMDiskSize;
+
+    @Value("${connector-iaas.azure.vmss.default-private-network-cidr:172.16.0.0/16}")
+    protected String vmssNetAddressSpace;
+
+    @Value("${connector-iaas.azure.vmss.default-private-network-prefix:172.16.1.0/24}")
+    protected String vmssNetAddressPrefix;
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -79,30 +113,9 @@ public class AzureScaleSetProvider extends AzureProvider {
         // Initialize Azure service connector
         Azure azureService = azureServiceCache.getService(infrastructure);
 
-        // Retrieve general information, tags & options
-        String instanceTag = Optional.ofNullable(instance.getTag())
-                                     .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
-                                                                             instance + "'"));
-        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
+        // Retrieve options and prepare Azure resources creation
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
-
-        // Initialize bunch of variables for Azure resources creation
-        final int azureResourcesUUID = Math.abs(infrastructure.hashCode()); // Make it distinguable and findable (OK since 1 NS <-> 1 Scale Set)
-        final String azureLoadBalancerName = "LB-" + azureResourcesUUID;
-        final String azureFrontendName = "FE-" + azureResourcesUUID;
-        final String azureBackendPoolName = "BE-SSH-" + azureResourcesUUID;
-        final String azureTCPProbeName = "PTCP-" + azureResourcesUUID; // useless but required
-        final String azureHTTPLoadBalancingRule = "RHTTP-" + azureResourcesUUID; // useless but required
-        final String azureNATPoolSSHName = "NATSSH-" + azureResourcesUUID;
-        final String azureNATPoolPNPName = "NATPNP-" + azureResourcesUUID;
-        final String azureNATPoolPNPSName = "NATPNPS-" + azureResourcesUUID;
-        final String azureVNetName = "VNET-" + azureResourcesUUID;
-        final String azureSubnetName = "Front-end";
-        final String azureVnetAddressSpace = "172.16.0.0/16";
-        final String azureVnetAddressPrefix = "172.16.1.0/24";
-        final String azureIPName = "IP-" + azureResourcesUUID;
-        final String azureScaleSetName = "aeSS-" + azureResourcesUUID;
-        final int azureVMDiskSize = 3;
+        genAzureResourcesNames(infrastructure);
 
         logger.info("Starting creation of Azure Scale set '" + azureScaleSetName + "'.");
 
@@ -113,7 +126,6 @@ public class AzureScaleSetProvider extends AzureProvider {
                                                                                instance + "'"));
 
         // Retrieve resource group
-
         String rgName = options.map(Options::getResourceGroup)
                                .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resourceGroup from instance: '" +
                                                                        instance + "'"));
@@ -159,9 +171,9 @@ public class AzureScaleSetProvider extends AzureProvider {
                                                                     .define(azureVNetName)
                                                                     .withRegion(region)
                                                                     .withExistingResourceGroup(resourceGroup)
-                                                                    .withAddressSpace(azureVnetAddressSpace)
+                                                                    .withAddressSpace(vmssNetAddressSpace)
                                                                     .defineSubnet(azureSubnetName)
-                                                                    .withAddressPrefix(azureVnetAddressPrefix)
+                                                                    .withAddressPrefix(vmssNetAddressPrefix)
                                                                     .attach()
                                                                     .create());
 
@@ -178,91 +190,22 @@ public class AzureScaleSetProvider extends AzureProvider {
                                                                      .create());
 
         // Create a dedicated LB with the required rules
-        LoadBalancer lb = azureService.loadBalancers()
-                                      .define(azureLoadBalancerName)
-                                      .withRegion(region)
-                                      .withExistingResourceGroup(resourceGroup)
-                                      // assign a public IP address to the load balancer
-                                      .definePublicFrontend(azureFrontendName)
-                                      .withExistingPublicIpAddress(publicIPAddress)
-                                      .attach()
-                                      // Add one backend address pools
-                                      .defineBackend(azureBackendPoolName)
-                                      .attach()
-                                      // Define mock TCP probe and HTTP rule
-                                      .defineTcpProbe(azureTCPProbeName)
-                                      .withPort(22)
-                                      .withNumberOfProbes(1)
-                                      .attach()
-                                      .defineLoadBalancingRule(azureHTTPLoadBalancingRule)
-                                      .withProtocol(TransportProtocol.TCP)
-                                      .withFrontend(azureFrontendName)
-                                      .withFrontendPort(81)
-                                      .withProbe(azureTCPProbeName)
-                                      .withBackend(azureBackendPoolName)
-                                      .attach()
-                                      // Define NAT pools for SSH, PNP and PNPS
-                                      .defineInboundNatPool(azureNATPoolSSHName)
-                                      .withProtocol(TransportProtocol.TCP)
-                                      .withFrontend(azureFrontendName)
-                                      .withFrontendPortRange(50000, 50099)
-                                      .withBackendPort(22) // SSH
-                                      .attach()
-
-                                      .defineInboundNatPool(azureNATPoolPNPName)
-                                      .withProtocol(TransportProtocol.TCP)
-                                      .withFrontend(azureFrontendName)
-                                      .withFrontendPortRange(30000, 30099)
-                                      .withBackendPort(64738) // PNP
-                                      .attach()
-                                      .defineInboundNatPool(azureNATPoolPNPSName)
-                                      .withProtocol(TransportProtocol.TCP)
-                                      .withFrontend(azureFrontendName)
-                                      .withFrontendPortRange(40000, 40099)
-                                      .withBackendPort(64739) // PNPS
-                                      .attach()
-                                      .create();
+        LoadBalancer lb = createLoadBalancer(azureService, region, resourceGroup, publicIPAddress);
 
         // Create the Scale Set (multi-stages)
-        VirtualMachineScaleSet.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged virtualMachineScaleSet_stage1 = azureService.virtualMachineScaleSets()
-                                                                                                                                               .define(azureScaleSetName)
-
-                                                                                                                                               .withRegion(region)
-                                                                                                                                               .withExistingResourceGroup(resourceGroup)
-                                                                                                                                               .withSku(selectScaleSetSku(instance.getHardware()
-                                                                                                                                                                                  .getType()))
-                                                                                                                                               .withExistingPrimaryNetworkSubnet(network,
-                                                                                                                                                                                 azureSubnetName)
-                                                                                                                                               .withExistingPrimaryInternetFacingLoadBalancer(lb)
-                                                                                                                                               .withPrimaryInternetFacingLoadBalancerBackends(azureBackendPoolName)
-                                                                                                                                               .withPrimaryInternetFacingLoadBalancerInboundNatPools(azureNATPoolSSHName,
-                                                                                                                                                                                                     azureNATPoolPNPName,
-                                                                                                                                                                                                     azureNATPoolPNPSName)
-                                                                                                                                               .withoutPrimaryInternalLoadBalancer()
-                                                                                                                                               .withPopularLinuxImage(selectScaleSetLinuxImage(imageNameOrId))
-                                                                                                                                               .withRootUsername(vmAdminUsername);
-        VirtualMachineScaleSet.DefinitionStages.WithLinuxCreateManagedOrUnmanaged virtualMachineScaleSet_stage2;
-
-        virtualMachineScaleSet_stage2 = vmAdminSSHPubKey.map(virtualMachineScaleSet_stage1::withSsh)
-                                                        .orElseGet(() -> virtualMachineScaleSet_stage1.withRootPassword(vmAdminPassword));
-
-        VirtualMachineScaleSet virtualMachineScaleSet = virtualMachineScaleSet_stage2
-
-                                                                                     .withNewDataDisk(azureVMDiskSize)
-                                                                                     .withCapacity(vmssNbOfInstances)
-
-                                                                                     .defineNewExtension("CustomScriptForLinux")
-                                                                                     .withPublisher("Microsoft.OSTCExtensions")
-                                                                                     .withType("CustomScriptForLinux")
-                                                                                     .withVersion("1.4")
-                                                                                     .withMinorVersionAutoUpgrade()
-                                                                                     .withPublicSetting("fileUris",
-                                                                                                        fileUris)
-                                                                                     .withPublicSetting("commandToExecute",
-                                                                                                        installCommand)
-
-                                                                                     .attach()
-                                                                                     .create();
+        VirtualMachineScaleSet virtualMachineScaleSet = createVMSS(azureService,
+                                                                   region,
+                                                                   resourceGroup,
+                                                                   instance,
+                                                                   network,
+                                                                   lb,
+                                                                   imageNameOrId,
+                                                                   vmAdminUsername,
+                                                                   vmAdminSSHPubKey,
+                                                                   vmAdminPassword,
+                                                                   vmssNbOfInstances,
+                                                                   fileUris,
+                                                                   installCommand);
 
         logger.info("Azure Scale set '" + azureScaleSetName + "'" + " created inside resource group " + resourceGroup);
 
@@ -274,6 +217,118 @@ public class AzureScaleSetProvider extends AzureProvider {
                                                         .withId(vm.id())
                                                         .withNumber(SINGLE_INSTANCE_NUMBER))
                                      .collect(Collectors.toSet());
+    }
+
+    private VirtualMachineScaleSet createVMSS(Azure azureService, Region region, ResourceGroup resourceGroup,
+            Instance instance, Network network, LoadBalancer lb, String imageNameOrId, String vmAdminUsername,
+            Optional<String> vmAdminSSHPubKey, String vmAdminPassword, int vmssNbOfInstances, List<String> fileUris,
+            String installCommand) {
+
+        VirtualMachineScaleSet.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged virtualMachineScaleSetStage1 = azureService.virtualMachineScaleSets()
+                                                                                                                                              .define(azureScaleSetName)
+
+                                                                                                                                              .withRegion(region)
+                                                                                                                                              .withExistingResourceGroup(resourceGroup)
+                                                                                                                                              .withSku(selectScaleSetSku(instance.getHardware()
+                                                                                                                                                                                 .getType()))
+                                                                                                                                              .withExistingPrimaryNetworkSubnet(network,
+                                                                                                                                                                                azureSubnetName)
+                                                                                                                                              .withExistingPrimaryInternetFacingLoadBalancer(lb)
+                                                                                                                                              .withPrimaryInternetFacingLoadBalancerBackends(azureBackendPoolName)
+                                                                                                                                              .withPrimaryInternetFacingLoadBalancerInboundNatPools(azureNATPoolSSHName,
+                                                                                                                                                                                                    azureNATPoolPNPName,
+                                                                                                                                                                                                    azureNATPoolPNPSName)
+                                                                                                                                              .withoutPrimaryInternalLoadBalancer()
+                                                                                                                                              .withPopularLinuxImage(selectScaleSetLinuxImage(imageNameOrId))
+                                                                                                                                              .withRootUsername(vmAdminUsername);
+        VirtualMachineScaleSet.DefinitionStages.WithLinuxCreateManagedOrUnmanaged virtualMachineScaleSetStage2;
+
+        virtualMachineScaleSetStage2 = vmAdminSSHPubKey.map(virtualMachineScaleSetStage1::withSsh)
+                                                       .orElseGet(() -> virtualMachineScaleSetStage1.withRootPassword(vmAdminPassword));
+
+        VirtualMachineScaleSet virtualMachineScaleSet = virtualMachineScaleSetStage2
+
+                                                                                    .withNewDataDisk(azureVMDiskSize)
+                                                                                    .withCapacity(vmssNbOfInstances)
+
+                                                                                    .defineNewExtension("CustomScriptForLinux")
+                                                                                    .withPublisher("Microsoft.OSTCExtensions")
+                                                                                    .withType("CustomScriptForLinux")
+                                                                                    .withVersion("1.4")
+                                                                                    .withMinorVersionAutoUpgrade()
+                                                                                    .withPublicSetting("fileUris",
+                                                                                                       fileUris)
+                                                                                    .withPublicSetting("commandToExecute",
+                                                                                                       installCommand)
+
+                                                                                    .attach()
+                                                                                    .create();
+        return virtualMachineScaleSet;
+    }
+
+    private void genAzureResourcesNames(Infrastructure infrastructure) {
+        azureResourcesUUID = Math.abs(infrastructure.hashCode()); // Make it distinguable and findable (OK since 1 NS <-> 1 Scale Set)
+        azureLoadBalancerName = "LB-" + azureResourcesUUID;
+        azureFrontendName = "FE-" + azureResourcesUUID;
+        azureBackendPoolName = "BE-SSH-" + azureResourcesUUID;
+        azureTCPProbeName = "PTCP-" + azureResourcesUUID; // useless but required
+        azureHTTPLoadBalancingRule = "RHTTP-" + azureResourcesUUID; // useless but required
+        azureNATPoolSSHName = "NATSSH-" + azureResourcesUUID;
+        azureNATPoolPNPName = "NATPNP-" + azureResourcesUUID;
+        azureNATPoolPNPSName = "NATPNPS-" + azureResourcesUUID;
+        azureVNetName = "VNET-" + azureResourcesUUID;
+        azureSubnetName = "Front-end";
+        azureIPName = "IP-" + azureResourcesUUID;
+        azureScaleSetName = "aeSS-" + azureResourcesUUID;
+        azureVMDiskSize = 3;
+    }
+
+    private LoadBalancer createLoadBalancer(Azure azureService, Region region, ResourceGroup resourceGroup,
+            PublicIpAddress publicIPAddress) {
+        return azureService.loadBalancers()
+                           .define(azureLoadBalancerName)
+                           .withRegion(region)
+                           .withExistingResourceGroup(resourceGroup)
+                           // assign a public IP address to the load balancer
+                           .definePublicFrontend(azureFrontendName)
+                           .withExistingPublicIpAddress(publicIPAddress)
+                           .attach()
+                           // Add one backend address pools
+                           .defineBackend(azureBackendPoolName)
+                           .attach()
+                           // Define mock TCP probe and HTTP rule
+                           .defineTcpProbe(azureTCPProbeName)
+                           .withPort(22)
+                           .withNumberOfProbes(1)
+                           .attach()
+                           .defineLoadBalancingRule(azureHTTPLoadBalancingRule)
+                           .withProtocol(TransportProtocol.TCP)
+                           .withFrontend(azureFrontendName)
+                           .withFrontendPort(81)
+                           .withProbe(azureTCPProbeName)
+                           .withBackend(azureBackendPoolName)
+                           .attach()
+                           // Define NAT pools for SSH, PNP and PNPS
+                           .defineInboundNatPool(azureNATPoolSSHName)
+                           .withProtocol(TransportProtocol.TCP)
+                           .withFrontend(azureFrontendName)
+                           .withFrontendPortRange(50000, 50099)
+                           .withBackendPort(22) // SSH
+                           .attach()
+
+                           .defineInboundNatPool(azureNATPoolPNPName)
+                           .withProtocol(TransportProtocol.TCP)
+                           .withFrontend(azureFrontendName)
+                           .withFrontendPortRange(30000, 30099)
+                           .withBackendPort(64738) // PNP
+                           .attach()
+                           .defineInboundNatPool(azureNATPoolPNPSName)
+                           .withProtocol(TransportProtocol.TCP)
+                           .withFrontend(azureFrontendName)
+                           .withFrontendPortRange(40000, 40099)
+                           .withBackendPort(64739) // PNPS
+                           .attach()
+                           .create();
     }
 
     private VirtualMachineScaleSetSkuTypes selectScaleSetSku(String instanceType) {

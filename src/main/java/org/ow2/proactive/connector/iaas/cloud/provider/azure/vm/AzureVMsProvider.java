@@ -30,14 +30,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.log4j.Logger;
-import org.ow2.proactive.connector.iaas.cloud.TagManager;
-import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProvider;
-import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProviderNetworkingUtils;
-import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProviderUtils;
-import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureServiceCache;
 import org.ow2.proactive.connector.iaas.model.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
@@ -45,12 +39,9 @@ import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.*;
 import com.microsoft.azure.management.network.*;
 import com.microsoft.azure.management.network.Network;
-import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
-import com.microsoft.azure.management.network.model.HasPublicIpAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
-import com.microsoft.azure.management.resources.fluentcore.utils.SdkContext;
 
 import lombok.Getter;
 
@@ -72,9 +63,9 @@ import lombok.Getter;
 public class AzureVMsProvider extends AzureProvider {
 
     @Getter
-    protected final String type = "azure";
+    private String type = "azure";
 
-    private final Logger logger = Logger.getLogger(AzureVMsProvider.class);
+    private static final Logger logger = Logger.getLogger(AzureVMsProvider.class);
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -89,15 +80,11 @@ public class AzureVMsProvider extends AzureProvider {
                                        .orElseThrow(() -> new RuntimeException("ERROR missing Image name/id from instance: '" +
                                                                                instance + "'"));
 
-        // TODO: no custom image allowed currently
         VirtualMachineCustomImage image = getImageByName(azureService,
                                                          imageNameOrId).orElseGet(() -> getImageById(azureService,
                                                                                                      imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
                                                                                                                                                            instance.getImage() +
                                                                                                                                                            "'")));
-
-        // Retrieve tags
-        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -112,6 +99,30 @@ public class AzureVMsProvider extends AzureProvider {
         // Try to get region from provided name, otherwise get it from image
         Region region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion()))
                                .orElseGet(image::region);
+
+        // Prepare the VM(s)
+        Optional<Boolean> optionalStaticPublicIP = options.map(Options::getStaticPublicIP);
+        List<Creatable<VirtualMachine>> creatableVirtualMachines = prepareCreatableVirtualMachines(azureService,
+                                                                                                   options,
+                                                                                                   region,
+                                                                                                   resourceGroup,
+                                                                                                   instanceTag,
+                                                                                                   instance,
+                                                                                                   image,
+                                                                                                   optionalStaticPublicIP);
+
+        // Create all VMs in parallel and collect IDs
+        return azureService.virtualMachines()
+                           .create(creatableVirtualMachines)
+                           .values()
+                           .stream()
+                           .map(vm -> instance.withTag(vm.name()).withId(vm.vmId()).withNumber(SINGLE_INSTANCE_NUMBER))
+                           .collect(Collectors.toSet());
+    }
+
+    private List<Creatable<VirtualMachine>> prepareCreatableVirtualMachines(Azure azureService,
+            Optional<Options> options, Region region, ResourceGroup resourceGroup, String instanceTag,
+            Instance instance, VirtualMachineCustomImage image, Optional<Boolean> optionalStaticPublicIP) {
 
         // Prepare a new virtual private network (same for all VMs)
         Optional<String> optionalPrivateNetworkCIDR = options.map(Options::getPrivateNetworkCIDR);
@@ -146,54 +157,43 @@ public class AzureVMsProvider extends AzureProvider {
                                                                                                                                         publicIpAddress)
                                                                                                              .get());
 
-        // Prepare the VM(s)
-        Optional<Boolean> optionalStaticPublicIP = options.map(Options::getStaticPublicIP);
-        List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
-                                                                                         Integer.valueOf(Optional.ofNullable(instance.getNumber())
-                                                                                                                 .orElse(SINGLE_INSTANCE_NUMBER)))
-                                                                            .mapToObj(instanceNumber -> {
-                                                                                // Create a new public IP address (one per VM)
-                                                                                String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
-                                                                                                                                                              instanceNumber));
-                                                                                Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
-                                                                                                                                                                                          region,
-                                                                                                                                                                                          resourceGroup,
-                                                                                                                                                                                          publicIPAddressName,
-                                                                                                                                                                                          optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
+        return IntStream.rangeClosed(1,
+                                     Integer.valueOf(Optional.ofNullable(instance.getNumber())
+                                                             .orElse(SINGLE_INSTANCE_NUMBER)))
+                        .mapToObj(instanceNumber -> {
+                            // Create a new public IP address (one per VM)
+                            String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag,
+                                                                                                          instanceNumber));
+                            Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+                                                                                                                                      region,
+                                                                                                                                      resourceGroup,
+                                                                                                                                      publicIPAddressName,
+                                                                                                                                      optionalStaticPublicIP.orElse(DEFAULT_STATIC_PUBLIC_IP));
 
-                                                                                // Prepare a new network interface (one per VM)
-                                                                                String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
-                                                                                                                                                                       instanceNumber));
-                                                                                Creatable<NetworkInterface> creatableNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
-                                                                                                                                                                                             region,
-                                                                                                                                                                                             resourceGroup,
-                                                                                                                                                                                             networkInterfaceName,
-                                                                                                                                                                                             creatableVirtualNetwork,
-                                                                                                                                                                                             optionalVirtualNetwork.orElse(null),
-                                                                                                                                                                                             creatableNetworkSecurityGroup,
-                                                                                                                                                                                             optionalNetworkSecurityGroup.orElse(null),
-                                                                                                                                                                                             creatablePublicIpAddress,
-                                                                                                                                                                                             instanceNumber == 1 ? optionalPublicIpAddress.orElse(null)
-                                                                                                                                                                                                                 : null);
+                            // Prepare a new network interface (one per VM)
+                            String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
+                                                                                                                   instanceNumber));
+                            Creatable<NetworkInterface> creatableNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
+                                                                                                                                         region,
+                                                                                                                                         resourceGroup,
+                                                                                                                                         networkInterfaceName,
+                                                                                                                                         creatableVirtualNetwork,
+                                                                                                                                         optionalVirtualNetwork.orElse(null),
+                                                                                                                                         creatableNetworkSecurityGroup,
+                                                                                                                                         optionalNetworkSecurityGroup.orElse(null),
+                                                                                                                                         creatablePublicIpAddress,
+                                                                                                                                         instanceNumber == 1 ? optionalPublicIpAddress.orElse(null)
+                                                                                                                                                             : null);
 
-                                                                                return prepareVirtualMachine(instance,
-                                                                                                             azureService,
-                                                                                                             resourceGroup,
-                                                                                                             region,
-                                                                                                             createUniqueInstanceTag(instanceTag,
-                                                                                                                                     instanceNumber),
-                                                                                                             image,
-                                                                                                             creatableNetworkInterface);
-                                                                            })
-                                                                            .collect(Collectors.toList());
-
-        // Create all VMs in parallel and collect IDs
-        return azureService.virtualMachines()
-                           .create(creatableVirtualMachines)
-                           .values()
-                           .stream()
-                           .map(vm -> instance.withTag(vm.name()).withId(vm.vmId()).withNumber(SINGLE_INSTANCE_NUMBER))
-                           .collect(Collectors.toSet());
+                            return prepareVirtualMachine(instance,
+                                                         azureService,
+                                                         resourceGroup,
+                                                         region,
+                                                         createUniqueInstanceTag(instanceTag, instanceNumber),
+                                                         image,
+                                                         creatableNetworkInterface);
+                        })
+                        .collect(Collectors.toList());
     }
 
     private Creatable<VirtualMachine> prepareVitualMachine(Instance instance, Azure azureService,
