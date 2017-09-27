@@ -618,12 +618,11 @@ public abstract class AzureProvider implements CloudProvider {
             // executed script.
             UUID scriptExecutionId = UUID.randomUUID();
             String concatenatedScriptsWithExecutionId = concatenatedScripts.insert(0,
-                                                                                   "echo \"Script execution ID: " +
-                                                                                      scriptExecutionId + "\"" +
+                                                                                   "echo script-ID" + SCRIPT_SEPARATOR +
+                                                                                      "echo " + scriptExecutionId +
                                                                                       SCRIPT_SEPARATOR)
                                                                            .toString();
-            logger.info("Request Azure provider to execute script " + scriptExecutionId + ": " +
-                        concatenatedScriptsWithExecutionId);
+            logger.info("Request Azure provider to execute script: " + concatenatedScriptsWithExecutionId);
             vm.update()
               .updateExtension(vmExtension.get().name())
               .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScriptsWithExecutionId)
