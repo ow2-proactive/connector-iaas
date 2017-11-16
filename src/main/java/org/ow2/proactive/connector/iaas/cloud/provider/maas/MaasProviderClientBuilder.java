@@ -23,41 +23,29 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.model;
+package org.ow2.proactive.connector.iaas.cloud.provider.maas;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.maas.MaasClient;
+import org.springframework.remoting.RemoteConnectFailureException;
+import org.springframework.stereotype.Component;
 
 
-@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "authenticationEndpoint", "managementEndpoint",
-                               "resourceManagerEndpoint", "graphEndpoint", "toBeRemovedOnShutdown",
-                               "allowSelfSignedSSLCertificate" })
-@Getter
-@AllArgsConstructor
-@ToString
-@NoArgsConstructor
-public class Infrastructure {
+/**
+ * @author ActiveEon Team
+ * @since 12/01/17
+ */
+@Component
+public class MaasProviderClientBuilder {
 
-    private String id;
+    public MaasClient buildMaasClientFromInfrastructure(Infrastructure infrastructure) {
 
-    private String type;
-
-    private String endpoint;
-
-    private InfrastructureCredentials credentials;
-
-    private String authenticationEndpoint;
-
-    private String managementEndpoint;
-
-    private String resourceManagerEndpoint;
-
-    private String graphEndpoint;
-
-    private boolean allowSelfSignedSSLCertificate;
-
-    private boolean toBeRemovedOnShutdown;
+        try {
+            return new MaasClient(infrastructure.getEndpoint(),
+                                  infrastructure.getCredentials().getPassword(),
+                                  infrastructure.isAllowSelfSignedSSLCertificate());
+        } catch (RemoteConnectFailureException e) {
+            throw new RuntimeException("ERROR trying to create MaasClient with infrastructure : " + infrastructure, e);
+        }
+    }
 }

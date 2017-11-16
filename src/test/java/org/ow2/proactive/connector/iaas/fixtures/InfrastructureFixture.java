@@ -47,6 +47,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   false);
     }
 
@@ -64,6 +65,7 @@ public class InfrastructureFixture {
                                   managementEndpoint,
                                   resourceManagerEndpoint,
                                   graphEndpoint,
+                                  false,
                                   false);
     }
 
@@ -80,6 +82,21 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
+                                  false);
+    }
+
+    public static Infrastructure getMaasInfrastructure(String name, String type, String apiToken, String endpoint,
+            boolean ignoreCertificateCheck) {
+        return new Infrastructure(name,
+                                  type,
+                                  endpoint,
+                                  CredentialsFixtures.getInfrastructureCredentials(null, apiToken, null, null),
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  ignoreCertificateCheck,
                                   false);
     }
 
@@ -92,6 +109,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   false);
     }
 
@@ -104,6 +122,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
+                                  false,
                                   removeOnShutdown);
     }
 

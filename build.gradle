@@ -21,6 +21,9 @@ install {
 }
 
 repositories {
+    maven {
+        url "http://repository.activeeon.com/content/groups/proactive/"
+    }
     // Needed by Microsoft Azure Java SDK
     maven {
         url "http://repository.springsource.com/maven/bundles/release"
@@ -103,6 +106,8 @@ compileJava {
 }
 
 dependencies {
+    compile 'org.ow2.proactive:maas-rest-client:1.0-SNAPSHOT'
+
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.6'
     // Guava allows immutable classes/objects
