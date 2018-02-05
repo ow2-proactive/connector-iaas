@@ -103,6 +103,16 @@ compileJava {
 }
 
 dependencies {
+
+    // Jackson dependencies
+    compile('com.fasterxml.jackson.core:jackson-databind:2.7.9')
+    compile('com.fasterxml.jackson.core:jackson-core:2.7.9')
+    compile('com.fasterxml.jackson.core:jackson-annotations:2.7.9')
+    compile('com.fasterxml.jackson.datatype:jackson-datatype-joda:2.7.9')
+    compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.7.9')
+    compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.7.9')
+    compile('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.7.9')
+
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.6'
     // Guava allows immutable classes/objects
