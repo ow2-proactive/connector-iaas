@@ -14,7 +14,7 @@ apply plugin: 'maven'
 install {
     repositories.mavenInstaller {
             // Set the version
-            pom.version = connectorIaaSVersio
+            pom.version = connectorIaaSVersion
             // Set the group/namespace for the maven repository deployment.
             pom.groupId = 'org.ow2.proactive'
     }
@@ -105,13 +105,17 @@ compileJava {
 dependencies {
 
     // Jackson dependencies
-    compile('com.fasterxml.jackson.core:jackson-databind:2.7.9')
-    compile('com.fasterxml.jackson.core:jackson-core:2.7.9')
-    compile('com.fasterxml.jackson.core:jackson-annotations:2.7.9')
-    compile('com.fasterxml.jackson.datatype:jackson-datatype-joda:2.7.9')
-    compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.7.9')
-    compile('com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.7.9')
-    compile('com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.7.9')
+    def jacksonVersion = "2.7.9"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:${jacksonVersion}"
+    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"
+    compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
 
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.6'
@@ -159,7 +163,6 @@ dependencies {
     //Logger
     compile 'org.apache.logging.log4j:log4j:2.7'
     compile 'org.apache.logging.log4j:log4j-web:2.7'
-
 
     // Imports for JUnit tests
     testCompile 'junit:junit:4.12'
@@ -226,8 +229,8 @@ allprojects {
             property "sonar.sources", "src/main/java"
             property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
             property 'sonar.junit.reportsPath', "${buildDir}/test-results"
-        property "sonar.java.binaries", "**/classes"
-        property "sonar.java.libraries", "**/*.jar"
+            property "sonar.java.binaries", "**/classes"
+            property "sonar.java.libraries", "**/*.jar"
         }
     }
 
