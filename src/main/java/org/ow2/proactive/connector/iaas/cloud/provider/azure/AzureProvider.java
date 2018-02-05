@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -51,6 +53,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractFuture;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.OperatingSystemTypes;
 import com.microsoft.azure.management.compute.VirtualMachine;
@@ -60,10 +63,10 @@ import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
-import com.microsoft.azure.management.network.NicIpConfiguration;
-import com.microsoft.azure.management.network.PublicIpAddress;
-import com.microsoft.azure.management.network.model.HasPrivateIpAddress;
-import com.microsoft.azure.management.network.model.HasPublicIpAddress;
+import com.microsoft.azure.management.network.NicIPConfiguration;
+import com.microsoft.azure.management.network.PublicIPAddress;
+import com.microsoft.azure.management.network.model.HasPrivateIPAddress;
+import com.microsoft.azure.management.network.model.HasPublicIPAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
@@ -76,7 +79,7 @@ import lombok.extern.log4j.Log4j2;
 /**
  * Provides Microsoft Azure clouds' management using the official java SDK.
  *
- * This class has been tested by ActiveEon to be thread safe (using Azure SDK release version 1.0.0-beta5).
+ * This class has been tested by ActiveEon to be thread safe.
  * However this need to be carefully double-checked after every SDK upgrades, as mentioned by Microsoft:
  * ------------------------------------------------------------------------------------------------------------
  * We do not make any thread-safety guarantees about our libraries. We also do not test them for thread-safety.
@@ -88,14 +91,17 @@ import lombok.extern.log4j.Log4j2;
  */
 @Component
 @Log4j2
-public abstract class AzureProvider implements CloudProvider {
+public class AzureProvider implements CloudProvider {
 
     @Getter
-    protected final String type = "azureAbstract";
+    protected final String type = "azure";
 
     protected static final VirtualMachineSizeTypes DEFAULT_VM_SIZE = VirtualMachineSizeTypes.STANDARD_D1_V2;
 
     protected static final int RESOURCES_NAME_EXTRA_CHARS = 10;
+
+    // Timeout in minutes
+    protected static final int TIMEOUT_SCRIPT_EXECUTION = 5;
 
     protected static final String VIRTUAL_NETWORK_NAME_BASE = "vnet";
 
@@ -109,11 +115,17 @@ public abstract class AzureProvider implements CloudProvider {
 
     protected static final Boolean DEFAULT_STATIC_PUBLIC_IP = true;
 
-    protected static final String SCRIPT_EXTENSION_PUBLISHER = "Microsoft.Azure.Extensions";
+    protected static final String SCRIPT_EXTENSION_PUBLISHER_LINUX = "Microsoft.Azure.Extensions";
 
-    protected static final String SCRIPT_EXTENSION_TYPE = "CustomScript";
+    protected static final String SCRIPT_EXTENSION_PUBLISHER_WINDOWS = "Microsoft.Compute";
 
-    protected static final String SCRIPT_EXTENSION_VERSION = "2.0";
+    protected static final String SCRIPT_EXTENSION_TYPE_LINUX = "CustomScript";
+
+    protected static final String SCRIPT_EXTENSION_TYPE_WINDOWS = "CustomScriptExtension";
+
+    protected static final String SCRIPT_EXTENSION_VERSION_LINUX = "2.0";
+
+    protected static final String SCRIPT_EXTENSION_VERSION_WINDOWS = "1.9";
 
     protected static final String SCRIPT_EXTENSION_CMD_KEY = "commandToExecute";
 
@@ -152,25 +164,32 @@ public abstract class AzureProvider implements CloudProvider {
                                      .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
                                                                              instance + "'"));
 
-        // Check for Image by name first and then by id
+        // Get the options (Optional by design)
+        Optional<Options> options = Optional.ofNullable(instance.getOptions());
+
+        // Retrieve the image name/ID (mandatory parameter)
         String imageNameOrId = Optional.ofNullable(instance.getImage())
                                        .orElseThrow(() -> new RuntimeException("ERROR missing Image name/id from instance: '" +
                                                                                instance + "'"));
+
+        // Try to retrieve the resource group from provided name, otherwise get it from image ID
+        ResourceGroup resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
+                                                                                   options.map(Options::getResourceGroup)
+                                                                                          .orElseGet(() -> getImageById(azureService,
+                                                                                                                        imageNameOrId).map(VirtualMachineCustomImage::resourceGroupName)
+                                                                                                                                      .orElseThrow(() -> new RuntimeException("ERROR a resource group and/or an image ID must be specified from instance: '" +
+                                                                                                                                                                              instance +
+                                                                                                                                                                              "'"))))
+                                                        .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resource group from instance: '" +
+                                                                                                instance + "'"));
+
+        // Check for Image by name first and then by id
         VirtualMachineCustomImage image = getImageByName(azureService,
+                                                         resourceGroup.name(),
                                                          imageNameOrId).orElseGet(() -> getImageById(azureService,
                                                                                                      imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
                                                                                                                                                            instance.getImage() +
                                                                                                                                                            "'")));
-
-        // Get the options (Optional by design)
-        Optional<Options> options = Optional.ofNullable(instance.getOptions());
-
-        // Try to retrieve the resourceGroup from provided name, otherwise get it from image
-        ResourceGroup resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
-                                                                                   options.map(Options::getResourceGroup)
-                                                                                          .orElseGet(image::resourceGroupName))
-                                                        .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resourceGroup from instance: '" +
-                                                                                                instance + "'"));
 
         // Try to get region from provided name, otherwise get it from image
         Region region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion()))
@@ -187,6 +206,7 @@ public abstract class AzureProvider implements CloudProvider {
         // Get existing virtual private network if specified
         Optional<Network> optionalVirtualNetwork = options.map(Options::getSubnetId)
                                                           .map(subnetId -> azureProviderUtils.searchVirtualNetworkByName(azureService,
+                                                                                                                         resourceGroup.name(),
                                                                                                                          subnetId)
                                                                                              .get());
 
@@ -200,13 +220,14 @@ public abstract class AzureProvider implements CloudProvider {
         Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)
                                                                              .map(secGrpNames -> secGrpNames.get(0))
                                                                              .map(secGrpName -> azureProviderUtils.searchNetworkSecurityGroupByName(azureService,
+                                                                                                                                                    resourceGroup.name(),
                                                                                                                                                     secGrpName)
                                                                                                                   .get());
 
         // Get existing public IP address if specified
-        Optional<PublicIpAddress> optionalPublicIpAddress = options.map(Options::getPublicIpAddress)
-                                                                   .map(publicIpAddress -> azureProviderUtils.searchPublicIpAddressByIp(azureService,
-                                                                                                                                        publicIpAddress)
+        Optional<PublicIPAddress> optionalPublicIPAddress = options.map(Options::getPublicIpAddress)
+                                                                   .map(PublicIPAddress -> azureProviderUtils.searchPublicIpAddressByIp(azureService,
+                                                                                                                                        PublicIPAddress)
                                                                                                              .get());
 
         // Prepare the VM(s)
@@ -216,7 +237,7 @@ public abstract class AzureProvider implements CloudProvider {
                                                                      optionalVirtualNetwork,
                                                                      creatableNetworkSecurityGroup,
                                                                      optionalNetworkSecurityGroup,
-                                                                     optionalPublicIpAddress,
+                                                                     optionalPublicIPAddress,
                                                                      optionalStaticPublicIP);
 
         List<Creatable<VirtualMachine>> creatableVirtualMachines = IntStream.rangeClosed(1,
@@ -240,11 +261,15 @@ public abstract class AzureProvider implements CloudProvider {
                                                                             })
                                                                             .collect(Collectors.toList());
 
-        // Create all VMs in parallel and collect IDs
+        // Execute init scripts asynchronously on VMs
+        //vms.forEach(vm -> executeScriptOnVM(vm, instance.getInitScript()));
+
+        // Create all VMs in parallel
         return azureService.virtualMachines()
                            .create(creatableVirtualMachines)
                            .values()
                            .stream()
+                           // Use vmId() instead of id() for clarity (id() contains full resource path)
                            .map(vm -> instance.withTag(vm.name()).withId(vm.vmId()).withNumber(SINGLE_INSTANCE_NUMBER))
                            .collect(Collectors.toSet());
     }
@@ -252,11 +277,11 @@ public abstract class AzureProvider implements CloudProvider {
     protected Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService, String instanceTag,
             ResourceGroup resourceGroup, Region region, AzureNetworkOptions networkOptions, int instanceNumber) {
         // Create a new public IP address (one per VM)
-        String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
-        Creatable<PublicIpAddress> creatablePublicIpAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
+        String PublicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
+        Creatable<PublicIPAddress> creatablePublicIPAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
                                                                                                                   region,
                                                                                                                   resourceGroup,
-                                                                                                                  publicIPAddressName,
+                                                                                                                  PublicIPAddressName,
                                                                                                                   networkOptions.getOptionalStaticPublicIP()
                                                                                                                                 .orElse(DEFAULT_STATIC_PUBLIC_IP));
 
@@ -273,26 +298,19 @@ public abstract class AzureProvider implements CloudProvider {
                                                                     networkOptions.getCreatableNetworkSecurityGroup(),
                                                                     networkOptions.getOptionalNetworkSecurityGroup()
                                                                                   .orElse(null),
-                                                                    creatablePublicIpAddress,
+                                                                    creatablePublicIPAddress,
                                                                     instanceNumber == 1 ? networkOptions.getOptionalPublicIpAddress()
                                                                                                         .orElse(null)
                                                                                         : null);
     }
 
-    protected Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String name) {
-        return azureService.virtualMachineCustomImages()
-                           .list()
-                           .stream()
-                           .filter(customImage -> customImage.name().equals(name))
-                           .findAny();
+    protected Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String resourceGroup,
+            String name) {
+        return Optional.ofNullable(azureService.virtualMachineCustomImages().getByResourceGroup(resourceGroup, name));
     }
 
     protected Optional<VirtualMachineCustomImage> getImageById(Azure azureService, String id) {
-        return azureService.virtualMachineCustomImages()
-                           .list()
-                           .stream()
-                           .filter(customImage -> customImage.id().equals(id))
-                           .findAny();
+        return Optional.ofNullable(azureService.virtualMachineCustomImages().getById(id));
     }
 
     protected Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
@@ -324,9 +342,11 @@ public abstract class AzureProvider implements CloudProvider {
         }
 
         // Set VM size (or type) and name of OS' disk
-        Optional<String> optionalHardwareType = Optional.ofNullable(instance.getHardware()).map(Hardware::getType);
-        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(new VirtualMachineSizeTypes(optionalHardwareType.orElse(DEFAULT_VM_SIZE.toString())))
-                                                                                                         .withOsDiskName(createUniqOSDiskName(instanceTag));
+        Optional<VirtualMachineSizeTypes> optionalHardwareType = Optional.ofNullable(instance.getHardware())
+                                                                         .map(Hardware::getType)
+                                                                         .map(VirtualMachineSizeTypes::fromString);
+        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(optionalHardwareType.orElse(DEFAULT_VM_SIZE))
+                                                                                                         .withOSDiskName(createUniqOSDiskName(instanceTag));
 
         // Add init script(s) using dedicated Microsoft extension
         Optional.ofNullable(instance.getInitScript()).map(InstanceScript::getScripts).ifPresent(scripts -> {
@@ -334,13 +354,26 @@ public abstract class AzureProvider implements CloudProvider {
                 StringBuilder concatenatedScripts = new StringBuilder();
                 Lists.newArrayList(scripts)
                      .forEach(script -> concatenatedScripts.append(script).append(SCRIPT_SEPARATOR));
-                creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
-                                   .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
-                                   .withType(SCRIPT_EXTENSION_TYPE)
-                                   .withVersion(SCRIPT_EXTENSION_VERSION)
-                                   .withMinorVersionAutoUpgrade()
-                                   .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
-                                   .attach();
+                if (operatingSystemType.equals(OperatingSystemTypes.LINUX)) {
+                    creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
+                                       .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
+                                       .withType(SCRIPT_EXTENSION_TYPE_LINUX)
+                                       .withVersion(SCRIPT_EXTENSION_VERSION_LINUX)
+                                       .withMinorVersionAutoUpgrade()
+                                       .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
+                                       .attach();
+                } else if (operatingSystemType.equals(OperatingSystemTypes.WINDOWS)) {
+                    creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
+                                       .withPublisher(SCRIPT_EXTENSION_PUBLISHER_WINDOWS)
+                                       .withType(SCRIPT_EXTENSION_TYPE_WINDOWS)
+                                       .withVersion(SCRIPT_EXTENSION_VERSION_WINDOWS)
+                                       .withMinorVersionAutoUpgrade()
+                                       .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
+                                       .attach();
+                } else {
+                    throw new RuntimeException("ERROR Operating System of type '" + operatingSystemType.toString() +
+                                               "' is not yet supported");
+                }
             }
         });
 
@@ -455,7 +488,7 @@ public abstract class AzureProvider implements CloudProvider {
                                                                                                                    vm);
         List<NetworkSecurityGroup> networkSecurityGroups = azureProviderNetworkingUtils.getVMSecurityGroups(azureService,
                                                                                                             vm);
-        List<PublicIpAddress> publicIPAddresses = azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService, vm);
+        List<PublicIPAddress> PublicIPAddresses = azureProviderNetworkingUtils.getVMPublicIPAddresses(azureService, vm);
         String osDiskID = vm.osDiskId();
 
         // Delete the VM first
@@ -465,9 +498,9 @@ public abstract class AzureProvider implements CloudProvider {
         vm.networkInterfaceIds().forEach(id -> azureService.networkInterfaces().deleteById(id));
 
         // Delete all public IP addresses
-        publicIPAddresses.stream()
-                         .map(PublicIpAddress::id)
-                         .forEach(id -> azureService.publicIpAddresses().deleteById(id));
+        PublicIPAddresses.stream()
+                         .map(PublicIPAddress::id)
+                         .forEach(id -> azureService.publicIPAddresses().deleteById(id));
 
         // Delete its main disk (OS), *and keep data disks*
         azureService.disks().deleteById(osDiskID);
@@ -505,7 +538,7 @@ public abstract class AzureProvider implements CloudProvider {
                                                                                        .values()
                                                                                        .stream())
                                           .filter(Objects::nonNull)
-                                          .map(NicIpConfiguration::getNetwork)
+                                          .map(NicIPConfiguration::getNetwork)
                                           .filter(Objects::nonNull)
                                           .noneMatch(network -> network.id().equals(id)))
                 .forEach(id -> azureService.networks().deleteById(id));
@@ -555,7 +588,7 @@ public abstract class AzureProvider implements CloudProvider {
                  .map(networkInterfaceId -> azureService.networkInterfaces().getById(networkInterfaceId))
                  .flatMap(networkInterface -> networkInterface.ipConfigurations().values().stream())
                  .filter(Objects::nonNull)
-                 .map(HasPrivateIpAddress::privateIpAddress)
+                 .map(HasPrivateIPAddress::privateIPAddress)
                  .collect(Collectors.toList());
     }
 
@@ -563,11 +596,11 @@ public abstract class AzureProvider implements CloudProvider {
         return vm.networkInterfaceIds()
                  .stream()
                  .map(networkInterfaceId -> azureService.networkInterfaces().getById(networkInterfaceId))
-                 .map(NetworkInterface::primaryIpConfiguration)
+                 .map(NetworkInterface::primaryIPConfiguration)
                  .filter(Objects::nonNull)
-                 .map(HasPublicIpAddress::getPublicIpAddress)
+                 .map(HasPublicIPAddress::getPublicIPAddress)
                  .filter(Objects::nonNull)
-                 .map(PublicIpAddress::ipAddress)
+                 .map(PublicIPAddress::ipAddress)
                  .collect(Collectors.toList());
     }
 
@@ -599,48 +632,98 @@ public abstract class AzureProvider implements CloudProvider {
             concatenatedScripts.append(script).append(SCRIPT_SEPARATOR);
         });
 
-        Optional<VirtualMachineExtension> vmExtension = vm.extensions()
-                                                          .values()
-                                                          .stream()
-                                                          .filter(extension -> extension.publisherName()
-                                                                                        .equals(SCRIPT_EXTENSION_PUBLISHER) &&
-                                                                               extension.typeName()
-                                                                                        .equals(SCRIPT_EXTENSION_TYPE))
-                                                          .findAny();
+        Optional<VirtualMachineExtension> vmExtension;
+
+        if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
+            vmExtension = vm.listExtensions()
+                            .values()
+                            .stream()
+                            .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_LINUX) &&
+                                                 extension.typeName().equals(SCRIPT_EXTENSION_TYPE_LINUX))
+                            .findAny();
+        } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
+            vmExtension = vm.listExtensions()
+                            .values()
+                            .stream()
+                            .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_WINDOWS) &&
+                                                 extension.typeName().equals(SCRIPT_EXTENSION_TYPE_WINDOWS))
+                            .findAny();
+        } else {
+            throw new RuntimeException("ERROR Operating System of type '" + vm.osType().toString() +
+                                       "' is not yet supported");
+        }
+
         if (vmExtension.isPresent()) {
-            // if the script didn't change compared to the previous update,
-            // then the script will not be run by the Azure provider.
-            // Moreover, the 'forceUpdateTag' is not available in the Azure
-            // Java SDK. So in order to make sure that the script slightly
-            // changes, we make the scripts begin with a command that prints
-            // a new ID each time a script needs to be run after the first
-            // executed script.
-            UUID scriptExecutionId = UUID.randomUUID();
-            String concatenatedScriptsWithExecutionId = concatenatedScripts.insert(0,
-                                                                                   "echo script-ID" + SCRIPT_SEPARATOR +
-                                                                                      "echo " + scriptExecutionId +
-                                                                                      SCRIPT_SEPARATOR)
-                                                                           .toString();
-            log.info("Request Azure provider to execute script: " + concatenatedScriptsWithExecutionId);
-            vm.update()
-              .updateExtension(vmExtension.get().name())
-              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScriptsWithExecutionId)
-              .parent()
-              .apply();
+            log.info("Request Azure provider to execute script: " + concatenatedScripts);
+            AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                        .updateExtension(vmExtension.get().name())
+                                                        .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
+                                                                           concatenatedScripts.toString())
+                                                        .parent()
+                                                        .applyAsync(null);
+            //.addListener(Runnables.doNothing(), Executors.newSingleThreadExecutor());
+            try {
+                vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                log.info("An interruption occurred when updating extension to execute script on a VM.");
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                log.info("An error occurred when updating extension to execute script on a VM.");
+            } catch (TimeoutException e) {
+                log.info("Timeout reached when updating extension to execute script on a VM.");
+            }
             log.debug("Execution of script has been requested.");
+
         } else {
             log.info("Request Azure provider to install script extension and to execute script: " +
-                     concatenatedScripts.toString());
-            vm.update()
-              .defineNewExtension(createUniqueScriptName(vm.name()))
-              .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
-              .withType(SCRIPT_EXTENSION_TYPE)
-              .withVersion(SCRIPT_EXTENSION_VERSION)
-              .withMinorVersionAutoUpgrade()
-              .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
-              .attach()
-              .apply();
-            log.debug("Installation of script extension and execution of script has been requested.");
+                        concatenatedScripts.toString());
+            if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
+                AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                            .defineNewExtension(createUniqueScriptName(vm.name()))
+                                                            .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
+                                                            .withType(SCRIPT_EXTENSION_TYPE_LINUX)
+                                                            .withVersion(SCRIPT_EXTENSION_VERSION_LINUX)
+                                                            .withMinorVersionAutoUpgrade()
+                                                            .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
+                                                                               concatenatedScripts.toString())
+                                                            .attach()
+                                                            .applyAsync(null);
+                try {
+                    vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+                } catch (InterruptedException e) {
+                    log.error("An interruption occurred while installing extension and executing script to a Linux VM.");
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    log.error("An error occurred when installing extension and executing script to a Linux VM.");
+                } catch (TimeoutException e) {
+                    log.info("Timeout reached when installing extension and executing script to a Linux VM.");
+                }
+
+            } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
+                AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                            .defineNewExtension(createUniqueScriptName(vm.name()))
+                                                            .withPublisher(SCRIPT_EXTENSION_PUBLISHER_WINDOWS)
+                                                            .withType(SCRIPT_EXTENSION_TYPE_WINDOWS)
+                                                            .withVersion(SCRIPT_EXTENSION_VERSION_WINDOWS)
+                                                            .withMinorVersionAutoUpgrade()
+                                                            .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
+                                                                               concatenatedScripts.toString())
+                                                            .attach()
+                                                            .applyAsync(null);
+                try {
+                    vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+                } catch (InterruptedException | ExecutionException e) {
+                    log.info("An error occurred when installing extension and executing script to the Windows VM.");
+                    e.printStackTrace();
+                } catch (TimeoutException e) {
+                    log.info("Timeout reached when installing extension and executing script to the Windows VM.");
+                }
+            } else {
+                throw new RuntimeException("ERROR Operating System of type '" + vm.osType().toString() +
+                                           "' is not supported.");
+            }
+            log.debug("Installation of script extension and execution of script is terminated.");
         }
 
         // Unable to retrieve scripts output, returns empty results instead
@@ -673,8 +756,8 @@ public abstract class AzureProvider implements CloudProvider {
         ResourceGroup resourceGroup = azureService.resourceGroups().getByName(vm.resourceGroupName());
 
         // Try to retrieve the desired public IP address or create a new one
-        PublicIpAddress publicIpAddress = Optional.ofNullable(optionalDesiredIp)
-                                                  .map(opt -> azureService.publicIpAddresses()
+        PublicIPAddress PublicIPAddress = Optional.ofNullable(optionalDesiredIp)
+                                                  .map(opt -> azureService.publicIPAddresses()
                                                                           .list()
                                                                           .stream()
                                                                           .filter(availablePublicIP -> availablePublicIP.ipAddress()
@@ -695,39 +778,39 @@ public abstract class AzureProvider implements CloudProvider {
 
         // If all existing network interfaces already have a public IP, then create a new/secondary network interface
         if (networkInterfaces.stream()
-                             .allMatch(netIf -> Optional.ofNullable(netIf.primaryIpConfiguration()).isPresent() &&
-                                                Optional.ofNullable(netIf.primaryIpConfiguration().getPublicIpAddress())
+                             .allMatch(netIf -> Optional.ofNullable(netIf.primaryIPConfiguration()).isPresent() &&
+                                                Optional.ofNullable(netIf.primaryIPConfiguration().getPublicIPAddress())
                                                         .isPresent())) {
             // Reuse the network configuration (virtual private network & security group) of the primary network interface
-            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, publicIpAddress);
+            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, PublicIPAddress);
             // Otherwise add the public address to the first network interface without public IP
         } else {
             networkInterfaces.stream()
-                             .filter(netIf -> !Optional.ofNullable(netIf.primaryIpConfiguration()).isPresent() ||
-                                              !Optional.ofNullable(netIf.primaryIpConfiguration().getPublicIpAddress())
+                             .filter(netIf -> !Optional.ofNullable(netIf.primaryIPConfiguration()).isPresent() ||
+                                              !Optional.ofNullable(netIf.primaryIPConfiguration().getPublicIPAddress())
                                                        .isPresent())
                              .findFirst()
                              .ifPresent(pubIpAddr -> pubIpAddr.update()
-                                                              .withExistingPrimaryPublicIpAddress(publicIpAddress)
+                                                              .withExistingPrimaryPublicIPAddress(PublicIPAddress)
                                                               .apply());
         }
 
-        return publicIpAddress.ipAddress();
+        return PublicIPAddress.ipAddress();
     }
 
     protected void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
-            ResourceGroup resourceGroup, PublicIpAddress publicIpAddress) {
+            ResourceGroup resourceGroup, PublicIPAddress PublicIPAddress) {
         // Reuse the network configuration (virtual private network & security group) of the primary network interface
         NetworkInterface networkInterface = vm.getPrimaryNetworkInterface();
         NetworkSecurityGroup networkSecurityGroup = networkInterface.getNetworkSecurityGroup();
-        com.microsoft.azure.management.network.Network network = networkInterface.primaryIpConfiguration().getNetwork();
+        com.microsoft.azure.management.network.Network network = networkInterface.primaryIPConfiguration().getNetwork();
         NetworkInterface newSecondaryNetworkInterface = azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
                                                                                                              vm.region(),
                                                                                                              resourceGroup,
                                                                                                              createUniqueNetworkInterfaceName(vm.name()),
                                                                                                              network,
                                                                                                              networkSecurityGroup,
-                                                                                                             publicIpAddress)
+                                                                                                             PublicIPAddress)
                                                                                     .create();
         try {
             vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
@@ -736,28 +819,28 @@ public abstract class AzureProvider implements CloudProvider {
                      ex);
             handleAddPublicIpWithNewSecondaryNetworkInterfaceException(azureService,
                                                                        vm,
-                                                                       publicIpAddress,
+                                                                       PublicIPAddress,
                                                                        newSecondaryNetworkInterface);
         }
     }
 
     protected void handleAddPublicIpWithNewSecondaryNetworkInterfaceException(Azure azureService, VirtualMachine vm,
-            PublicIpAddress publicIpAddress, NetworkInterface newSecondaryNetworkInterface) {
+            PublicIPAddress PublicIPAddress, NetworkInterface newSecondaryNetworkInterface) {
         removePublicIpFromNetworkInterface(azureService, newSecondaryNetworkInterface);
-        replaceVMPrimaryPublicIpAddress(azureService, vm, publicIpAddress);
+        replaceVMPrimaryPublicIPAddress(azureService, vm, PublicIPAddress);
     }
 
     protected void removePublicIpFromNetworkInterface(Azure azureService, NetworkInterface networkInterface) {
-        networkInterface.update().withoutPrimaryPublicIpAddress().apply();
+        networkInterface.update().withoutPrimaryPublicIPAddress().apply();
         azureService.networkInterfaces().deleteById(networkInterface.id());
     }
 
-    protected void replaceVMPrimaryPublicIpAddress(Azure azureService, VirtualMachine vm,
-            PublicIpAddress newPublicIpAddress) {
-        PublicIpAddress existingPublicIPAddress = vm.getPrimaryPublicIpAddress();
-        vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
-        azureService.publicIpAddresses().deleteById(existingPublicIPAddress.id());
-        vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIpAddress(newPublicIpAddress).apply();
+    protected void replaceVMPrimaryPublicIPAddress(Azure azureService, VirtualMachine vm,
+            PublicIPAddress newPublicIPAddress) {
+        PublicIPAddress existingPublicIPAddress = vm.getPrimaryPublicIPAddress();
+        vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIPAddress().apply();
+        azureService.publicIPAddresses().deleteById(existingPublicIPAddress.id());
+        vm.getPrimaryNetworkInterface().update().withExistingPrimaryPublicIPAddress(newPublicIPAddress).apply();
     }
 
     @Override
@@ -766,8 +849,8 @@ public abstract class AzureProvider implements CloudProvider {
         VirtualMachine vm = azureProviderUtils.searchVirtualMachineByID(azureService, instanceId)
                                               .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
-        Optional<PublicIpAddress> optionalPublicIpAddress = Optional.ofNullable(optionalDesiredIp)
-                                                                    .map(opt -> azureService.publicIpAddresses()
+        Optional<PublicIPAddress> optionalPublicIPAddress = Optional.ofNullable(optionalDesiredIp)
+                                                                    .map(opt -> azureService.publicIPAddresses()
                                                                                             .list()
                                                                                             .stream()
                                                                                             .filter(availablePublicIP -> availablePublicIP.ipAddress()
@@ -776,8 +859,8 @@ public abstract class AzureProvider implements CloudProvider {
                                                                                             .get());
 
         // Delete the desired IP address if present
-        if (optionalPublicIpAddress.isPresent()) {
-            azureService.publicIpAddresses().deleteById(optionalPublicIpAddress.get().id());
+        if (optionalPublicIPAddress.isPresent()) {
+            azureService.publicIPAddresses().deleteById(optionalPublicIPAddress.get().id());
             return;
         }
 
@@ -786,24 +869,24 @@ public abstract class AzureProvider implements CloudProvider {
                                                                          .stream()
                                                                          .map(networkInterfaceId -> azureService.networkInterfaces()
                                                                                                                 .getById(networkInterfaceId))
-                                                                         .filter(networkInterface -> Optional.ofNullable(networkInterface.primaryIpConfiguration()
-                                                                                                                                         .getPublicIpAddress())
+                                                                         .filter(networkInterface -> Optional.ofNullable(networkInterface.primaryIPConfiguration()
+                                                                                                                                         .getPublicIPAddress())
                                                                                                              .isPresent())
                                                                          .filter(networkInterface -> !networkInterface.id()
-                                                                                                                      .equals(vm.getPrimaryPublicIpAddressId()))
+                                                                                                                      .equals(vm.getPrimaryPublicIPAddressId()))
                                                                          .findAny();
         if (optionalSecondaryNetworkInterface.isPresent()) {
-            PublicIpAddress publicIPAddress = optionalSecondaryNetworkInterface.get()
-                                                                               .primaryIpConfiguration()
-                                                                               .getPublicIpAddress();
-            optionalSecondaryNetworkInterface.get().update().withoutPrimaryPublicIpAddress().apply();
-            azureService.publicIpAddresses().deleteById(publicIPAddress.id());
+            PublicIPAddress PublicIPAddress = optionalSecondaryNetworkInterface.get()
+                                                                               .primaryIPConfiguration()
+                                                                               .getPublicIPAddress();
+            optionalSecondaryNetworkInterface.get().update().withoutPrimaryPublicIPAddress().apply();
+            azureService.publicIPAddresses().deleteById(PublicIPAddress.id());
         }
         // Otherwise remove the public IP address from the primary interface if present
-        else if (Optional.ofNullable(vm.getPrimaryPublicIpAddress()).isPresent()) {
-            PublicIpAddress publicIPAddress = vm.getPrimaryPublicIpAddress();
-            vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIpAddress().apply();
-            azureService.publicIpAddresses().deleteById(publicIPAddress.id());
+        else if (Optional.ofNullable(vm.getPrimaryPublicIPAddress()).isPresent()) {
+            PublicIPAddress PublicIPAddress = vm.getPrimaryPublicIPAddress();
+            vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIPAddress().apply();
+            azureService.publicIPAddresses().deleteById(PublicIPAddress.id());
         }
     }
 

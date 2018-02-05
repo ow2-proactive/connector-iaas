@@ -214,6 +214,7 @@ task local {
 allprojects {
     apply plugin: "sonar-runner"
     apply plugin: 'jacoco'
+    apply plugin: 'project-report'
 
     sonarRunner {
         sonarProperties {

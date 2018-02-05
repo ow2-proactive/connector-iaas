@@ -29,7 +29,7 @@ import java.util.Optional;
 
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
-import com.microsoft.azure.management.network.PublicIpAddress;
+import com.microsoft.azure.management.network.PublicIPAddress;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 
 import lombok.Getter;
@@ -54,7 +54,7 @@ public class AzureNetworkOptions {
     private Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup;
 
     @Getter
-    private Optional<PublicIpAddress> optionalPublicIpAddress;
+    private Optional<PublicIPAddress> optionalPublicIpAddress;
 
     @Getter
     private Optional<Boolean> optionalStaticPublicIP;
@@ -62,7 +62,7 @@ public class AzureNetworkOptions {
     public AzureNetworkOptions(Creatable<Network> creatableVirtualNetwork, Optional<Network> optionalVirtualNetwork,
             Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
             Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup,
-            Optional<PublicIpAddress> optionalPublicIpAddress, Optional<Boolean> optionalStaticPublicIP) {
+            Optional<PublicIPAddress> optionalPublicIpAddress, Optional<Boolean> optionalStaticPublicIP) {
         this.creatableVirtualNetwork = creatableVirtualNetwork;
         this.optionalVirtualNetwork = optionalVirtualNetwork;
         this.creatableNetworkSecurityGroup = creatableNetworkSecurityGroup;

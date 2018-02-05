@@ -34,14 +34,7 @@ import org.springframework.stereotype.Component;
 
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.network.Network;
-import com.microsoft.azure.management.network.NetworkInterface;
-import com.microsoft.azure.management.network.NetworkInterfaceBase;
-import com.microsoft.azure.management.network.NetworkSecurityGroup;
-import com.microsoft.azure.management.network.NicIpConfiguration;
-import com.microsoft.azure.management.network.NicIpConfigurationBase;
-import com.microsoft.azure.management.network.PublicIpAddress;
-import com.microsoft.azure.management.network.SecurityRuleProtocol;
+import com.microsoft.azure.management.network.*;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
@@ -63,20 +56,20 @@ public class AzureProviderNetworkingUtils {
                            .withAddressSpace(cidr);
     }
 
-    public Creatable<PublicIpAddress> preparePublicIPAddress(Azure azureService, Region region,
+    public Creatable<PublicIPAddress> preparePublicIPAddress(Azure azureService, Region region,
             ResourceGroup resourceGroup, String name, Boolean isStatic) {
         if (isStatic) {
-            return azureService.publicIpAddresses()
+            return azureService.publicIPAddresses()
                                .define(name)
                                .withRegion(region)
                                .withExistingResourceGroup(resourceGroup)
-                               .withStaticIp();
+                               .withStaticIP();
         } else {
-            return azureService.publicIpAddresses()
+            return azureService.publicIPAddresses()
                                .define(name)
                                .withRegion(region)
                                .withExistingResourceGroup(resourceGroup)
-                               .withDynamicIp();
+                               .withDynamicIP();
         }
     }
 
@@ -194,7 +187,7 @@ public class AzureProviderNetworkingUtils {
 
     public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
             ResourceGroup resourceGroup, String name, Network virtualNetwork, NetworkSecurityGroup networkSecurityGroup,
-            PublicIpAddress publicIpAddress) {
+            PublicIPAddress publicIpAddress) {
         return azureService.networkInterfaces()
                            .define(name)
                            .withRegion(region)
@@ -208,16 +201,16 @@ public class AzureProviderNetworkingUtils {
                                                                                              virtualNetwork.name() +
                                                                                              "'"))
                                                      .name())
-                           .withPrimaryPrivateIpAddressDynamic()
+                           .withPrimaryPrivateIPAddressDynamic()
                            .withExistingNetworkSecurityGroup(networkSecurityGroup)
-                           .withExistingPrimaryPublicIpAddress(publicIpAddress);
+                           .withExistingPrimaryPublicIPAddress(publicIpAddress);
     }
 
     public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,
             ResourceGroup resourceGroup, String name, Creatable<Network> creatableVirtualNetwork,
             Network optionalVirtualNetwork, Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup,
-            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIpAddress> creatablePublicIpAddress,
-            PublicIpAddress optionalPublicIpAddress) {
+            NetworkSecurityGroup optionalNetworkSecurityGroup, Creatable<PublicIPAddress> creatablePublicIpAddress,
+            PublicIPAddress optionalPublicIpAddress) {
 
         // Initialize configuration
         NetworkInterface.DefinitionStages.WithPrimaryNetwork networkInterfaceCreationStage1 = azureService.networkInterfaces()
@@ -234,7 +227,7 @@ public class AzureProviderNetworkingUtils {
                                                                                                                                                                        .findFirst()
                                                                                                                                                                        .get()))
                                                                                               .orElseGet(() -> networkInterfaceCreationStage1.withNewPrimaryNetwork(creatableVirtualNetwork))
-                                                                                              .withPrimaryPrivateIpAddressDynamic();
+                                                                                              .withPrimaryPrivateIPAddressDynamic();
 
         // Configure network security group
         NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage3 = Optional.ofNullable(optionalNetworkSecurityGroup)
@@ -243,8 +236,8 @@ public class AzureProviderNetworkingUtils {
 
         // Configure public IP address
         NetworkInterface.DefinitionStages.WithCreate networkInterfaceCreationStage4 = Optional.ofNullable(optionalPublicIpAddress)
-                                                                                              .map(networkInterfaceCreationStage3::withExistingPrimaryPublicIpAddress)
-                                                                                              .orElseGet(() -> networkInterfaceCreationStage3.withNewPrimaryPublicIpAddress(creatablePublicIpAddress));
+                                                                                              .map(networkInterfaceCreationStage3::withExistingPrimaryPublicIPAddress)
+                                                                                              .orElseGet(() -> networkInterfaceCreationStage3.withNewPrimaryPublicIPAddress(creatablePublicIpAddress));
 
         return networkInterfaceCreationStage4;
     }
@@ -261,7 +254,7 @@ public class AzureProviderNetworkingUtils {
                                                        .flatMap(networkInterface -> networkInterface.ipConfigurations()
                                                                                                     .values()
                                                                                                     .stream())
-                                                       .map(NicIpConfigurationBase::getNetwork)
+                                                       .map(NicIPConfigurationBase::getNetwork)
                                                        .filter(Objects::nonNull)
                                                        .distinct()
                                                        .collect(Collectors.toList());
@@ -275,11 +268,11 @@ public class AzureProviderNetworkingUtils {
                                                        .collect(Collectors.toList());
     }
 
-    public List<PublicIpAddress> getVMPublicIPAddresses(Azure azureService, VirtualMachine vm) {
+    public List<PublicIPAddress> getVMPublicIPAddresses(Azure azureService, VirtualMachine vm) {
         return getVMNetworkInterfaces(azureService, vm).stream()
-                                                       .map(NetworkInterface::primaryIpConfiguration)
+                                                       .map(NetworkInterface::primaryIPConfiguration)
                                                        .filter(Objects::nonNull)
-                                                       .map(NicIpConfiguration::getPublicIpAddress)
+                                                       .map(NicIPConfiguration::getPublicIPAddress)
                                                        .filter(Objects::nonNull)
                                                        .collect(Collectors.toList());
     }

@@ -39,7 +39,6 @@ import lombok.NoArgsConstructor;
                    @PropertySource(value = "file:${proactive.home}/config/connector-iaas/application.properties", ignoreResourceNotFound = true) })
 public class ConnectorIaaSApp {
     public static void main(String[] args) throws InterruptedException {
-
         SpringApplication.run(ConnectorIaaSApp.class, args);
     }
 }

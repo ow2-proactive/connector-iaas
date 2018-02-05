@@ -25,9 +25,9 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -37,7 +37,7 @@ import com.microsoft.azure.management.compute.VirtualMachineScaleSet;
 import com.microsoft.azure.management.network.LoadBalancer;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
-import com.microsoft.azure.management.network.PublicIpAddress;
+import com.microsoft.azure.management.network.PublicIPAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 
 
@@ -45,7 +45,6 @@ import com.microsoft.azure.management.resources.ResourceGroup;
 public class AzureProviderUtils {
 
     public Optional<VirtualMachine> searchVirtualMachineByName(Azure azureService, String name) {
-
         return azureService.virtualMachines()
                            .list()
                            .stream()
@@ -54,8 +53,6 @@ public class AzureProviderUtils {
     }
 
     public Optional<VirtualMachine> searchVirtualMachineByID(Azure azureService, String id) {
-
-        // Get VM by 'relative' ID instead of absolute ID (default Azure's getById method)
         return azureService.virtualMachines()
                            .list()
                            .stream()
@@ -64,31 +61,20 @@ public class AzureProviderUtils {
     }
 
     public Optional<ResourceGroup> searchResourceGroupByName(Azure azureService, String name) {
-        return azureService.resourceGroups()
-                           .list()
-                           .stream()
-                           .filter(resourceGroup -> resourceGroup.name().equals(name))
-                           .findAny();
+        return Optional.ofNullable(azureService.resourceGroups().getByName(name));
     }
 
-    public Optional<NetworkSecurityGroup> searchNetworkSecurityGroupByName(Azure azureService, String name) {
-        return azureService.networkSecurityGroups()
-                           .list()
-                           .stream()
-                           .filter(networkSecurityGroups -> networkSecurityGroups.name().equals(name))
-                           .findAny();
+    public Optional<NetworkSecurityGroup> searchNetworkSecurityGroupByName(Azure azureService, String resourceGroup,
+            String name) {
+        return Optional.ofNullable(azureService.networkSecurityGroups().getByResourceGroup(resourceGroup, name));
     }
 
-    public Optional<Network> searchVirtualNetworkByName(Azure azureService, String name) {
-        return azureService.networks()
-                           .list()
-                           .stream()
-                           .filter(virtualNetwork -> virtualNetwork.name().equals(name))
-                           .findAny();
+    public Optional<Network> searchVirtualNetworkByName(Azure azureService, String resourceGroup, String name) {
+        return Optional.ofNullable(azureService.networks().getByResourceGroup(resourceGroup, name));
     }
 
-    public Optional<PublicIpAddress> searchPublicIpAddressByIp(Azure azureService, String ip) {
-        return azureService.publicIpAddresses()
+    public Optional<PublicIPAddress> searchPublicIpAddressByIp(Azure azureService, String ip) {
+        return azureService.publicIPAddresses()
                            .list()
                            .stream()
                            .filter(publicIpAddress -> publicIpAddress.ipAddress().equals(ip))
@@ -96,27 +82,20 @@ public class AzureProviderUtils {
     }
 
     public Set<VirtualMachine> getAllVirtualMachines(Azure azureService) {
-
-        return azureService.virtualMachines().list().stream().collect(Collectors.toSet());
+        return new HashSet<>(azureService.virtualMachines().list());
     }
 
-    public Optional<LoadBalancer> searchLoadBalancerByName(Azure azureService, String name) {
-        return azureService.loadBalancers().list().stream().filter(lb -> lb.name().equals(name)).findAny();
+    public Optional<LoadBalancer> searchLoadBalancerByName(Azure azureService, String resourceGroup, String name) {
+        return Optional.ofNullable(azureService.loadBalancers().getByResourceGroup(resourceGroup, name));
     }
 
-    public Optional<VirtualMachineScaleSet> searchVirtualMachineScaleSetByName(Azure azureService, String name) {
-        return azureService.virtualMachineScaleSets()
-                           .list()
-                           .stream()
-                           .filter(vmss -> vmss.name().equals(name))
-                           .findAny();
+    public Optional<VirtualMachineScaleSet> searchVirtualMachineScaleSetByName(Azure azureService, String resourceGroup,
+            String name) {
+        return Optional.ofNullable(azureService.virtualMachineScaleSets().getByResourceGroup(resourceGroup, name));
     }
 
-    public Optional<PublicIpAddress> searchPublicIpAddressByName(Azure azureService, String name) {
-        return azureService.publicIpAddresses()
-                           .list()
-                           .stream()
-                           .filter(publicIpAddress -> publicIpAddress.name().equals(name))
-                           .findAny();
+    public Optional<PublicIPAddress> searchPublicIpAddressByName(Azure azureService, String resourceGroup,
+            String name) {
+        return Optional.ofNullable(azureService.publicIPAddresses().getByResourceGroup(resourceGroup, name));
     }
 }
