@@ -29,7 +29,6 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProvider;
 import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +42,7 @@ import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -59,6 +59,7 @@ import lombok.Getter;
  * @since 01/03/17
  */
 @Component
+@Log4j2
 public class AzureScaleSetProvider extends AzureProvider {
 
     /*
@@ -70,8 +71,6 @@ public class AzureScaleSetProvider extends AzureProvider {
 
     @Getter
     private final String type = "azureScaleSet";
-
-    private static final Logger logger = Logger.getLogger(AzureScaleSetProvider.class);
 
     private int azureResourcesUUID;
 
@@ -117,7 +116,7 @@ public class AzureScaleSetProvider extends AzureProvider {
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
         genAzureResourcesNames(infrastructure);
 
-        logger.info("Starting creation of Azure Scale set '" + azureScaleSetName + "'.");
+        log.info("Starting creation of Azure Scale set '" + azureScaleSetName + "'.");
 
         // Retrieve Linux image to be used (but have to comply with the Azure VMSS policy and supported images)
         // see selectLinuxImage() below.
@@ -207,7 +206,7 @@ public class AzureScaleSetProvider extends AzureProvider {
                                                                    fileUris,
                                                                    installCommand);
 
-        logger.info("Azure Scale set '" + azureScaleSetName + "'" + " created inside resource group " + resourceGroup);
+        log.info("Azure Scale set '" + azureScaleSetName + "'" + " created inside resource group " + resourceGroup);
 
         // Return the list of VMs of the Scale Set
         return virtualMachineScaleSet.virtualMachines()

@@ -27,16 +27,16 @@ package org.ow2.proactive.connector.iaas;
 
 import javax.annotation.PreDestroy;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.service.InfrastructureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Component
+@Log4j2
 public class ShutdownHandler {
-
-    private final Logger logger = Logger.getLogger(ShutdownHandler.class);
 
     @Autowired
     private InfrastructureService infrastructureService;
@@ -51,7 +51,7 @@ public class ShutdownHandler {
                     infrastructureService.deleteInfrastructure(infrastructure);
                 }
             } catch (Exception e) {
-                logger.error("Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
+                log.error("Shutdown ERROR when trying to delete infrastructure : " + infrastructure, e);
             }
         });
     }

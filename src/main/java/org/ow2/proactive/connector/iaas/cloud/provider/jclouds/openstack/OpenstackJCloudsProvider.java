@@ -36,7 +36,6 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Response;
 
-import org.apache.log4j.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
@@ -59,12 +58,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 @Component
+@Log4j2
 public class OpenstackJCloudsProvider extends JCloudsProvider {
-
-    private static final Logger logger = Logger.getLogger(OpenstackJCloudsProvider.class);
 
     private static final String REGION = "RegionOne";
 
@@ -223,7 +222,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     @Override
     public RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
-        logger.info("Script options: username=" + credentials.getUsername() + " and given password");
+        log.info("Script options: username=" + credentials.getUsername() + " and given password");
         return RunScriptOptions.Builder.runAsRoot(false)
                                        .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
                                                                                                .password(credentials.getPassword())

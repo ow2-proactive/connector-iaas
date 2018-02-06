@@ -29,7 +29,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.provider.azure.AzureProvider;
 import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.stereotype.Component;
@@ -44,6 +43,7 @@ import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -60,12 +60,11 @@ import lombok.Getter;
  * @since 01/03/17
  */
 @Component
+@Log4j2
 public class AzureVMsProvider extends AzureProvider {
 
     @Getter
     private String type = "azure";
-
-    private static final Logger logger = Logger.getLogger(AzureVMsProvider.class);
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -259,8 +258,8 @@ public class AzureVMsProvider extends AzureProvider {
                                               .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
 
-        logger.info("Deletion of all Azure resources of instance " + instanceId +
-                    " is being requested to the provider (infrastructure: " + infrastructure.getId() + ")");
+        log.info("Deletion of all Azure resources of instance " + instanceId +
+                 " is being requested to the provider (infrastructure: " + infrastructure.getId() + ")");
 
         // Retrieve all resources attached to the instance
         List<com.microsoft.azure.management.network.Network> networks = azureProviderNetworkingUtils.getVMNetworks(azureService,
@@ -290,6 +289,6 @@ public class AzureVMsProvider extends AzureProvider {
         // Delete the virtual networks if not attached to any remaining network interface
         deleteNetworks(azureService, networks);
 
-        logger.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
+        log.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
     }
 }
