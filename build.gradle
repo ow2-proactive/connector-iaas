@@ -214,6 +214,8 @@ allprojects {
             property "sonar.sources", "src/main/java"
             property 'sonar.jacoco.reportPath', "${buildDir}/jacoco/testDebug.exec"
             property 'sonar.junit.reportsPath', "${buildDir}/test-results"
+        property "sonar.java.binaries", "**/classes"
+        property "sonar.java.libraries", "**/*.jar"
         }
     }
 
