@@ -35,7 +35,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
@@ -63,12 +62,12 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Sets;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 @Component
+@Log4j2
 public class AWSEC2JCloudsProvider extends JCloudsProvider {
-
-    private static final Logger logger = Logger.getLogger(AWSEC2JCloudsProvider.class);
 
     @Getter
     private final String type = "aws-ec2";
@@ -246,7 +245,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 elasticIPAddressApi.associateAddressInRegion(region, unassignedIp.getPublicIp(), id);
                 associated = true;
             } catch (RuntimeException e) {
-                logger.warn("Cannot associate address " + unassignedIp.getPublicIp() + " in region " + region, e);
+                log.warn("Cannot associate address " + unassignedIp.getPublicIp() + " in region " + region, e);
             }
             if (associated) {
                 ip = unassignedIp.getPublicIp();
@@ -293,10 +292,10 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         String keyPairName = "default-" + region + "-" + UUID.randomUUID();
         try {
             KeyPair keyPair = keyPairApi.createKeyPairInRegion(region, keyPairName);
-            logger.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
+            log.info("Created key pair '" + keyPairName + "' in region '" + region + "'");
             return new SimpleImmutableEntry<>(keyPairName, keyPair.getKeyMaterial());
         } catch (RuntimeException e) {
-            logger.warn("Cannot create key pair in region '" + region, e);
+            log.warn("Cannot create key pair in region '" + region, e);
             return null;
         }
     }
@@ -323,7 +322,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .filter(StringUtils::isNotEmpty)
                                   .filter(StringUtils::isNotBlank)
                                   .orElse(getVmUserLogin());
-        logger.info("Script options: username=" + username + ", private-key=(given in credentials)");
+        log.info("Script options: username=" + username + ", private-key=(given in credentials)");
         // Currently in AWS EC2 root login is forbidden, as well as
         // username/password login. So the only way to login to run the script
         // is by giving username/private key credentials
@@ -341,7 +340,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         String subdividedRegion = getRegionFromNode(computeService, node);
         String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
 
-        logger.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
+        log.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
         return buildDefaultRunScriptOptions(keyPairRegion);
     }
 
@@ -360,7 +359,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
         String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
 
-        logger.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
+        log.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
         return buildDefaultRunScriptOptions(keyPairRegion);
     }
 
@@ -377,7 +376,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         // example eu-west-1c for the region eu-west-1, so we need to remove
         // the subdivision to have the exact region name of the key
         String region = subdividedRegion.substring(0, subdividedRegion.length() - 1);
-        logger.debug("Subdivided region=" + subdividedRegion + ", extracted region=" + region);
+        log.debug("Subdivided region=" + subdividedRegion + ", extracted region=" + region);
         return region;
     }
 

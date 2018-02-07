@@ -35,7 +35,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.log4j.Logger;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -71,6 +70,7 @@ import com.microsoft.azure.management.resources.fluentcore.model.Creatable;
 import com.microsoft.azure.management.resources.fluentcore.utils.SdkContext;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 /**
@@ -87,9 +87,8 @@ import lombok.Getter;
  * @since 01/03/17
  */
 @Component
+@Log4j2
 public abstract class AzureProvider implements CloudProvider {
-
-    private static final Logger logger = Logger.getLogger(AzureProvider.class);
 
     @Getter
     protected final String type = "azureAbstract";
@@ -448,8 +447,8 @@ public abstract class AzureProvider implements CloudProvider {
                                               .orElseThrow(() -> new RuntimeException(INSTANCE_NOT_FOUND_ERROR + "'" +
                                                                                       instanceId + "'"));
 
-        logger.info("Deletion of all Azure resources of instance " + instanceId +
-                    " is being requested to the provider (infrastructure: " + infrastructure.getId() + ")");
+        log.info("Deletion of all Azure resources of instance " + instanceId +
+                 " is being requested to the provider (infrastructure: " + infrastructure.getId() + ")");
 
         // Retrieve all resources attached to the instance
         List<com.microsoft.azure.management.network.Network> networks = azureProviderNetworkingUtils.getVMNetworks(azureService,
@@ -479,7 +478,7 @@ public abstract class AzureProvider implements CloudProvider {
         // Delete the virtual networks if not attached to any remaining network interface
         deleteNetworks(azureService, networks);
 
-        logger.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
+        log.info("Deletion of all Azure resources of instance " + instanceId + " has been executed.");
     }
 
     protected void deleteSecurityGroups(Azure azureService, List<NetworkSecurityGroup> networkSecurityGroups) {
@@ -622,16 +621,16 @@ public abstract class AzureProvider implements CloudProvider {
                                                                                       "echo " + scriptExecutionId +
                                                                                       SCRIPT_SEPARATOR)
                                                                            .toString();
-            logger.info("Request Azure provider to execute script: " + concatenatedScriptsWithExecutionId);
+            log.info("Request Azure provider to execute script: " + concatenatedScriptsWithExecutionId);
             vm.update()
               .updateExtension(vmExtension.get().name())
               .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScriptsWithExecutionId)
               .parent()
               .apply();
-            logger.debug("Execution of script has been requested.");
+            log.debug("Execution of script has been requested.");
         } else {
-            logger.info("Request Azure provider to install script extension and to execute script: " +
-                        concatenatedScripts.toString());
+            log.info("Request Azure provider to install script extension and to execute script: " +
+                     concatenatedScripts.toString());
             vm.update()
               .defineNewExtension(createUniqueScriptName(vm.name()))
               .withPublisher(SCRIPT_EXTENSION_PUBLISHER)
@@ -641,7 +640,7 @@ public abstract class AzureProvider implements CloudProvider {
               .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
               .attach()
               .apply();
-            logger.debug("Installation of script extension and execution of script has been requested.");
+            log.debug("Installation of script extension and execution of script has been requested.");
         }
 
         // Unable to retrieve scripts output, returns empty results instead
@@ -733,8 +732,8 @@ public abstract class AzureProvider implements CloudProvider {
         try {
             vm.update().withExistingSecondaryNetworkInterface(newSecondaryNetworkInterface).apply();
         } catch (RuntimeException ex) {
-            logger.warn("Cannot add new network interface. Remove it and modify the primary network interface instead",
-                        ex);
+            log.warn("Cannot add new network interface. Remove it and modify the primary network interface instead",
+                     ex);
             handleAddPublicIpWithNewSecondaryNetworkInterfaceException(azureService,
                                                                        vm,
                                                                        publicIpAddress,
