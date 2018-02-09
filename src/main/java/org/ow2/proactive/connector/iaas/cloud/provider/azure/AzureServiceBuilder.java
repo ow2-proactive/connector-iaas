@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Optional;
 
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -98,10 +99,14 @@ public class AzureServiceBuilder {
         Optional<String> optionalGraphEndpoint = Optional.ofNullable(infrastructure.getGraphEndpoint());
         if (optionalAuthenticationEndpoint.isPresent() && optionalManagementEndpoint.isPresent() &&
             optionalResourceManagerEndpoint.isPresent() && optionalGraphEndpoint.isPresent()) {
-            return new AzureEnvironment(optionalAuthenticationEndpoint.get(),
-                                        optionalManagementEndpoint.get(),
-                                        optionalResourceManagerEndpoint.get(),
-                                        optionalGraphEndpoint.get());
+            HashMap<String, String> customAzureEnvironment = new HashMap<>();
+            //customAzureEnvironment.put(AzureEnvironment.Endpoint.ACTIVE_DIRECTORY.toString(), optionalAuthenticationEndpoint.get());
+            customAzureEnvironment.put(AzureEnvironment.Endpoint.MANAGEMENT.toString(),
+                                       optionalManagementEndpoint.get());
+            customAzureEnvironment.put(AzureEnvironment.Endpoint.RESOURCE_MANAGER.toString(),
+                                       optionalResourceManagerEndpoint.get());
+            customAzureEnvironment.put(AzureEnvironment.Endpoint.GRAPH.toString(), optionalGraphEndpoint.get());
+            return new AzureEnvironment(customAzureEnvironment);
         } else {
             return AzureEnvironment.AZURE;
         }

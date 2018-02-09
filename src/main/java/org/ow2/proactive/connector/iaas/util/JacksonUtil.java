@@ -23,22 +23,25 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas;
+package org.ow2.proactive.connector.iaas.util;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.PropertySources;
+import java.io.IOException;
 
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-@NoArgsConstructor
-@SpringBootApplication
-@PropertySources({ @PropertySource(value = "classpath:application.properties"),
-                   @PropertySource(value = "file:${proactive.home}/config/connector-iaas/application.properties", ignoreResourceNotFound = true) })
-public class ConnectorIaaSApp {
-    public static void main(String[] args) throws InterruptedException {
-        SpringApplication.run(ConnectorIaaSApp.class, args);
+/**
+ * @author ActiveEon Team
+ * @since 18/01/18
+ */
+public class JacksonUtil {
+
+    public static <T> T convertFromJson(String json, Class<T> clazz) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(json, clazz);
+        } catch (IOException e) {
+            throw new RuntimeException("Error while parsing json =" + json, e);
+        }
     }
 }
