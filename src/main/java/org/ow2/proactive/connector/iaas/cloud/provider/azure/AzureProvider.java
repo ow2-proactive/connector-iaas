@@ -277,11 +277,11 @@ public class AzureProvider implements CloudProvider {
     protected Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService, String instanceTag,
             ResourceGroup resourceGroup, Region region, AzureNetworkOptions networkOptions, int instanceNumber) {
         // Create a new public IP address (one per VM)
-        String PublicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
+        String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
         Creatable<PublicIPAddress> creatablePublicIPAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
                                                                                                                   region,
                                                                                                                   resourceGroup,
-                                                                                                                  PublicIPAddressName,
+                                                                                                                  publicIPAddressName,
                                                                                                                   networkOptions.getOptionalStaticPublicIP()
                                                                                                                                 .orElse(DEFAULT_STATIC_PUBLIC_IP));
 
@@ -337,8 +337,7 @@ public class AzureProvider implements CloudProvider {
                                                                               image,
                                                                               creatableNetworkInterface);
         } else {
-            throw new RuntimeException("ERROR Operating System of type '" + operatingSystemType.toString() +
-                                       "' is not yet supported");
+            throw new RuntimeException(unsupportedOperatingSystemError(operatingSystemType.toString()));
         }
 
         // Set VM size (or type) and name of OS' disk
@@ -371,8 +370,7 @@ public class AzureProvider implements CloudProvider {
                                        .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, concatenatedScripts.toString())
                                        .attach();
                 } else {
-                    throw new RuntimeException("ERROR Operating System of type '" + operatingSystemType.toString() +
-                                               "' is not yet supported");
+                    throw new RuntimeException(unsupportedOperatingSystemError(operatingSystemType.toString()));
                 }
             }
         });
@@ -624,6 +622,101 @@ public class AzureProvider implements CloudProvider {
         return executeScriptOnVM(vm, instanceScript);
     }
 
+    private Optional<VirtualMachineExtension> retrieveExistingExtension(VirtualMachine vm) {
+
+        if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
+            return vm.listExtensions()
+                     .values()
+                     .stream()
+                     .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_LINUX) &&
+                                          extension.typeName().equals(SCRIPT_EXTENSION_TYPE_LINUX))
+                     .findAny();
+        } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
+            return vm.listExtensions()
+                     .values()
+                     .stream()
+                     .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_WINDOWS) &&
+                                          extension.typeName().equals(SCRIPT_EXTENSION_TYPE_WINDOWS))
+                     .findAny();
+        } else {
+            throw new RuntimeException(unsupportedOperatingSystemError(vm.osType().toString()));
+        }
+    }
+
+    private void updateExistingExtension(VirtualMachine vm, VirtualMachineExtension extension, String script) {
+        log.info("Request Azure provider to execute script: " + script);
+        AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                    .updateExtension(extension.name())
+                                                    .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, script)
+                                                    .parent()
+                                                    .applyAsync(null);
+        try {
+            vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            log.info("An interruption occurred when updating extension to execute script on a VM.");
+            Thread.currentThread().interrupt();
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            log.info("An error occurred when updating extension to execute script on a VM.");
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            log.info("Timeout reached when updating extension to execute script on a VM.");
+        }
+        log.debug("Execution of script has been requested.");
+    }
+
+    private void installNewExtension(VirtualMachine vm, String script) {
+        log.info("Request Azure provider to install script extension and to execute script: " + script);
+        if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
+            AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                        .defineNewExtension(createUniqueScriptName(vm.name()))
+                                                        .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
+                                                        .withType(SCRIPT_EXTENSION_TYPE_LINUX)
+                                                        .withVersion(SCRIPT_EXTENSION_VERSION_LINUX)
+                                                        .withMinorVersionAutoUpgrade()
+                                                        .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, script)
+                                                        .attach()
+                                                        .applyAsync(null);
+            try {
+                vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                log.error("An interruption occurred while installing extension and executing script to a Linux VM.");
+                Thread.currentThread().interrupt();
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                log.error("An error occurred when installing extension and executing script to a Linux VM.");
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                log.info("Timeout reached when installing extension and executing script to a Linux VM.");
+            }
+
+        } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
+            AbstractFuture<VirtualMachine> vmfuture = vm.update()
+                                                        .defineNewExtension(createUniqueScriptName(vm.name()))
+                                                        .withPublisher(SCRIPT_EXTENSION_PUBLISHER_WINDOWS)
+                                                        .withType(SCRIPT_EXTENSION_TYPE_WINDOWS)
+                                                        .withVersion(SCRIPT_EXTENSION_VERSION_WINDOWS)
+                                                        .withMinorVersionAutoUpgrade()
+                                                        .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY, script)
+                                                        .attach()
+                                                        .applyAsync(null);
+            try {
+                vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                log.error("An interruption occurred while installing extension and executing script to a Windows VM.");
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                log.info("An error occurred when installing extension and executing script to a Windows VM.");
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                log.info("Timeout reached when installing extension and executing script to a Windows VM.");
+            }
+        } else {
+            throw new RuntimeException(unsupportedOperatingSystemError(vm.osType().toString()));
+        }
+        log.debug("Installation of script extension and execution of script is terminated.");
+    }
+
     protected List<ScriptResult> executeScriptOnVM(VirtualMachine vm, InstanceScript instanceScript) {
 
         // Concatenate all provided scripts in one (Multiple VMExtensions per handler not supported)
@@ -632,98 +725,12 @@ public class AzureProvider implements CloudProvider {
             concatenatedScripts.append(script).append(SCRIPT_SEPARATOR);
         });
 
-        Optional<VirtualMachineExtension> vmExtension;
-
-        if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
-            vmExtension = vm.listExtensions()
-                            .values()
-                            .stream()
-                            .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_LINUX) &&
-                                                 extension.typeName().equals(SCRIPT_EXTENSION_TYPE_LINUX))
-                            .findAny();
-        } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
-            vmExtension = vm.listExtensions()
-                            .values()
-                            .stream()
-                            .filter(extension -> extension.publisherName().equals(SCRIPT_EXTENSION_PUBLISHER_WINDOWS) &&
-                                                 extension.typeName().equals(SCRIPT_EXTENSION_TYPE_WINDOWS))
-                            .findAny();
-        } else {
-            throw new RuntimeException("ERROR Operating System of type '" + vm.osType().toString() +
-                                       "' is not yet supported");
-        }
-
+        // Update existing or install new extension
+        Optional<VirtualMachineExtension> vmExtension = retrieveExistingExtension(vm);
         if (vmExtension.isPresent()) {
-            log.info("Request Azure provider to execute script: " + concatenatedScripts);
-            AbstractFuture<VirtualMachine> vmfuture = vm.update()
-                                                        .updateExtension(vmExtension.get().name())
-                                                        .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
-                                                                           concatenatedScripts.toString())
-                                                        .parent()
-                                                        .applyAsync(null);
-            //.addListener(Runnables.doNothing(), Executors.newSingleThreadExecutor());
-            try {
-                vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
-            } catch (InterruptedException e) {
-                log.info("An interruption occurred when updating extension to execute script on a VM.");
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                log.info("An error occurred when updating extension to execute script on a VM.");
-            } catch (TimeoutException e) {
-                log.info("Timeout reached when updating extension to execute script on a VM.");
-            }
-            log.debug("Execution of script has been requested.");
-
+            updateExistingExtension(vm, vmExtension.get(), concatenatedScripts.toString());
         } else {
-            log.info("Request Azure provider to install script extension and to execute script: " +
-                        concatenatedScripts.toString());
-            if (vm.osType().equals(OperatingSystemTypes.LINUX)) {
-                AbstractFuture<VirtualMachine> vmfuture = vm.update()
-                                                            .defineNewExtension(createUniqueScriptName(vm.name()))
-                                                            .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
-                                                            .withType(SCRIPT_EXTENSION_TYPE_LINUX)
-                                                            .withVersion(SCRIPT_EXTENSION_VERSION_LINUX)
-                                                            .withMinorVersionAutoUpgrade()
-                                                            .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
-                                                                               concatenatedScripts.toString())
-                                                            .attach()
-                                                            .applyAsync(null);
-                try {
-                    vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
-                } catch (InterruptedException e) {
-                    log.error("An interruption occurred while installing extension and executing script to a Linux VM.");
-                    Thread.currentThread().interrupt();
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    log.error("An error occurred when installing extension and executing script to a Linux VM.");
-                } catch (TimeoutException e) {
-                    log.info("Timeout reached when installing extension and executing script to a Linux VM.");
-                }
-
-            } else if (vm.osType().equals(OperatingSystemTypes.WINDOWS)) {
-                AbstractFuture<VirtualMachine> vmfuture = vm.update()
-                                                            .defineNewExtension(createUniqueScriptName(vm.name()))
-                                                            .withPublisher(SCRIPT_EXTENSION_PUBLISHER_WINDOWS)
-                                                            .withType(SCRIPT_EXTENSION_TYPE_WINDOWS)
-                                                            .withVersion(SCRIPT_EXTENSION_VERSION_WINDOWS)
-                                                            .withMinorVersionAutoUpgrade()
-                                                            .withPublicSetting(SCRIPT_EXTENSION_CMD_KEY,
-                                                                               concatenatedScripts.toString())
-                                                            .attach()
-                                                            .applyAsync(null);
-                try {
-                    vmfuture.get(TIMEOUT_SCRIPT_EXECUTION, TimeUnit.MINUTES);
-                } catch (InterruptedException | ExecutionException e) {
-                    log.info("An error occurred when installing extension and executing script to the Windows VM.");
-                    e.printStackTrace();
-                } catch (TimeoutException e) {
-                    log.info("Timeout reached when installing extension and executing script to the Windows VM.");
-                }
-            } else {
-                throw new RuntimeException("ERROR Operating System of type '" + vm.osType().toString() +
-                                           "' is not supported.");
-            }
-            log.debug("Installation of script extension and execution of script is terminated.");
+            installNewExtension(vm, concatenatedScripts.toString());
         }
 
         // Unable to retrieve scripts output, returns empty results instead
@@ -756,7 +763,7 @@ public class AzureProvider implements CloudProvider {
         ResourceGroup resourceGroup = azureService.resourceGroups().getByName(vm.resourceGroupName());
 
         // Try to retrieve the desired public IP address or create a new one
-        PublicIPAddress PublicIPAddress = Optional.ofNullable(optionalDesiredIp)
+        PublicIPAddress publicIPAddress = Optional.ofNullable(optionalDesiredIp)
                                                   .map(opt -> azureService.publicIPAddresses()
                                                                           .list()
                                                                           .stream()
@@ -782,7 +789,7 @@ public class AzureProvider implements CloudProvider {
                                                 Optional.ofNullable(netIf.primaryIPConfiguration().getPublicIPAddress())
                                                         .isPresent())) {
             // Reuse the network configuration (virtual private network & security group) of the primary network interface
-            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, PublicIPAddress);
+            addPublicIpWithNewSecondaryNetworkInterface(azureService, vm, resourceGroup, publicIPAddress);
             // Otherwise add the public address to the first network interface without public IP
         } else {
             networkInterfaces.stream()
@@ -791,11 +798,11 @@ public class AzureProvider implements CloudProvider {
                                                        .isPresent())
                              .findFirst()
                              .ifPresent(pubIpAddr -> pubIpAddr.update()
-                                                              .withExistingPrimaryPublicIPAddress(PublicIPAddress)
+                                                              .withExistingPrimaryPublicIPAddress(publicIPAddress)
                                                               .apply());
         }
 
-        return PublicIPAddress.ipAddress();
+        return publicIPAddress.ipAddress();
     }
 
     protected void addPublicIpWithNewSecondaryNetworkInterface(Azure azureService, VirtualMachine vm,
@@ -876,22 +883,26 @@ public class AzureProvider implements CloudProvider {
                                                                                                                       .equals(vm.getPrimaryPublicIPAddressId()))
                                                                          .findAny();
         if (optionalSecondaryNetworkInterface.isPresent()) {
-            PublicIPAddress PublicIPAddress = optionalSecondaryNetworkInterface.get()
+            PublicIPAddress publicIPAddress = optionalSecondaryNetworkInterface.get()
                                                                                .primaryIPConfiguration()
                                                                                .getPublicIPAddress();
             optionalSecondaryNetworkInterface.get().update().withoutPrimaryPublicIPAddress().apply();
-            azureService.publicIPAddresses().deleteById(PublicIPAddress.id());
+            azureService.publicIPAddresses().deleteById(publicIPAddress.id());
         }
         // Otherwise remove the public IP address from the primary interface if present
         else if (Optional.ofNullable(vm.getPrimaryPublicIPAddress()).isPresent()) {
-            PublicIPAddress PublicIPAddress = vm.getPrimaryPublicIPAddress();
+            PublicIPAddress publicIPAddress = vm.getPrimaryPublicIPAddress();
             vm.getPrimaryNetworkInterface().update().withoutPrimaryPublicIPAddress().apply();
-            azureService.publicIPAddresses().deleteById(PublicIPAddress.id());
+            azureService.publicIPAddresses().deleteById(publicIPAddress.id());
         }
     }
 
     @Override
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         throw new UnsupportedOperationException();
+    }
+
+    private static String unsupportedOperatingSystemError(String operatingSystem) {
+        return "ERROR Operating System of type '" + operatingSystem + "' is not yet supported";
     }
 }
