@@ -42,6 +42,8 @@ import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.log4j.Log4j2;
+
 
 /**
  * @author ActiveEon Team
@@ -49,6 +51,7 @@ import org.springframework.stereotype.Component;
  */
 @Path("/infrastructures")
 @Component
+@Log4j2
 public class KeyPairRest {
 
     @Autowired
@@ -59,6 +62,7 @@ public class KeyPairRest {
     @Produces("application/json")
     @Path("{infrastructureId}/keypairs")
     public Response createKeyPair(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
+        log.info("Receive create request for infrastructure " + infrastructureId + " with parameter " + instanceJson);
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
         SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
         return Optional.ofNullable(privateKey)

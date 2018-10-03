@@ -36,9 +36,12 @@ import org.ow2.proactive.connector.iaas.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Path("/infrastructures")
 @Component
+@Log4j2
 public class ImageRest {
 
     @Autowired
@@ -48,6 +51,7 @@ public class ImageRest {
     @Path("{infrastructureId}/images")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
+        log.debug("Receive get all request for infrastructure " + infrastructureId);
         return Response.ok(imageService.getAllImages(infrastructureId)).build();
 
     }

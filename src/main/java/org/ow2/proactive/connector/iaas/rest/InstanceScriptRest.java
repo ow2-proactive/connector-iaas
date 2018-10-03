@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,9 +47,12 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Path("/infrastructures")
 @Component
+@Log4j2
 public class InstanceScriptRest {
 
     @Autowired
@@ -61,9 +65,9 @@ public class InstanceScriptRest {
     public Response executeScript(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             final String instanceScriptJson) {
-
+        log.info("Receive request for infrastructure " + infrastructureId + " and instance id " + instanceId +
+                 " and instance tag " + instanceTag + " with parameters " + instanceScriptJson);
         InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
-
         final List<ScriptResult> scriptResults = Optional.ofNullable(instanceId)
                                                          .map(i -> Lists.newArrayList(instanceScriptService.executeScriptOnInstance(infrastructureId,
                                                                                                                                     instanceId,
@@ -71,7 +75,7 @@ public class InstanceScriptRest {
                                                          .orElseGet(() -> Lists.newArrayList(instanceScriptService.executeScriptOnInstanceTag(infrastructureId,
                                                                                                                                               instanceTag,
                                                                                                                                               instanceScript)));
-
+        log.info("Script results " + Arrays.toString(scriptResults.toArray()));
         return Response.ok(scriptResults).build();
     }
 
