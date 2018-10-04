@@ -322,7 +322,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .filter(StringUtils::isNotEmpty)
                                   .filter(StringUtils::isNotBlank)
                                   .orElse(getVmUserLogin());
-        log.info("Script options: username=" + username + ", private-key=(given in credentials)");
+        log.info("Script options: username=" + username + ", privateKey=" + credentials.getPrivateKey());
         // Currently in AWS EC2 root login is forbidden, as well as
         // username/password login. So the only way to login to run the script
         // is by giving username/private key credentials
@@ -340,7 +340,6 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         String subdividedRegion = getRegionFromNode(computeService, node);
         String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
 
-        log.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
         return buildDefaultRunScriptOptions(keyPairRegion);
     }
 
@@ -356,18 +355,20 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                                                    .orElseThrow(() -> new IllegalArgumentException("Unable to create script options: cannot retrieve instance id from tag " +
                                                                                                                                    instanceTag));
         String subdividedRegion = getRegionFromImage(taggedInstance);
-
         String keyPairRegion = extractRegionFromSubdividedRegion(subdividedRegion);
 
-        log.info("Default script options: username=" + getVmUserLogin() + ", private-key=(generated)");
         return buildDefaultRunScriptOptions(keyPairRegion);
     }
 
     private RunScriptOptions buildDefaultRunScriptOptions(String keyPairRegion) {
-        return Optional.ofNullable(generatedKeyPairsPerAwsRegion.get(keyPairRegion))
-                       .map(keypair -> RunScriptOptions.Builder.runAsRoot(false)
+        SimpleImmutableEntry<String, String> defaultKeyPairInRegion = generatedKeyPairsPerAwsRegion.get(keyPairRegion);
+        Optional.ofNullable(defaultKeyPairInRegion)
+                .ifPresent(keyPair -> log.info("Default script options: username=" + getVmUserLogin() +
+                                               ", privateKey=" + keyPair.getValue()));
+        return Optional.ofNullable(defaultKeyPairInRegion)
+                       .map(keyPair -> RunScriptOptions.Builder.runAsRoot(false)
                                                                .overrideLoginUser(getVmUserLogin())
-                                                               .overrideLoginPrivateKey(keypair.getValue()))
+                                                               .overrideLoginPrivateKey(keyPair.getValue()))
                        .orElse(RunScriptOptions.NONE);
     }
 
