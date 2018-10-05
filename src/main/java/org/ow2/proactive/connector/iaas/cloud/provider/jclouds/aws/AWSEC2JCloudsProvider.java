@@ -156,6 +156,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private void addCredential(Template template, InstanceCredentials credentials) {
+        log.info("Username given for instance creation: " + credentials.getUsername());
         Optional.ofNullable(credentials.getUsername())
                 .filter(StringUtils::isNotEmpty)
                 .filter(StringUtils::isNotBlank)
@@ -163,6 +164,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                .as(AWSEC2TemplateOptions.class)
                                                .overrideLoginUser(credentials.getUsername()));
 
+        log.info("Public key name given for instance creation: " + credentials.getPublicKeyName());
         Optional.ofNullable(credentials.getPublicKeyName())
                 .filter(keyName -> !keyName.isEmpty())
                 .ifPresent(keyName -> template.getOptions()
@@ -322,7 +324,8 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .filter(StringUtils::isNotEmpty)
                                   .filter(StringUtils::isNotBlank)
                                   .orElse(getVmUserLogin());
-        log.info("Script options: username=" + username + ", privateKey=" + credentials.getPrivateKey());
+        log.info("Credentials used to execute script on instance: [username=" + username + ", privateKey=" +
+                 credentials.getPrivateKey() + "]");
         // Currently in AWS EC2 root login is forbidden, as well as
         // username/password login. So the only way to login to run the script
         // is by giving username/private key credentials
