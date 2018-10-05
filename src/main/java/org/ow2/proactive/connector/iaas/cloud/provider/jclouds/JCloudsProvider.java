@@ -62,9 +62,11 @@ import com.google.common.collect.Lists;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 
 @Component
+@Log4j2
 public abstract class JCloudsProvider implements CloudProvider {
 
     @Autowired
@@ -124,14 +126,16 @@ public abstract class JCloudsProvider implements CloudProvider {
     public List<ScriptResult> executeScriptOnInstanceId(Infrastructure infrastructure, String instanceId,
             InstanceScript instanceScript) {
         ExecResponse execResponse;
-
+        RunScriptOptions runScriptOptions = null;
         try {
+            String scriptToExecuteString = buildScriptToExecuteString(instanceScript);
+            runScriptOptions = buildScriptOptionsWithInstanceId(instanceScript, instanceId, infrastructure);
             execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
-                                                                                              buildScriptToExecuteString(instanceScript),
-                                                                                              buildScriptOptionsWithInstanceId(instanceScript,
-                                                                                                                               instanceId,
-                                                                                                                               infrastructure));
+                                                                                              scriptToExecuteString,
+                                                                                              runScriptOptions);
         } catch (Exception e) {
+            log.error("Script cannot be run on instance with id: " + instanceId + ". RunScriptOptions=" +
+                      runScriptOptions, e);
             throw new RuntimeException("Script cannot be run on instance with id: " + instanceId, e);
         }
 
@@ -143,14 +147,16 @@ public abstract class JCloudsProvider implements CloudProvider {
             InstanceScript instanceScript) {
 
         Map<? extends NodeMetadata, ExecResponse> execResponses;
-
+        RunScriptOptions runScriptOptions = null;
         try {
+            String scriptToExecuteString = buildScriptToExecuteString(instanceScript);
+            runScriptOptions = buildScriptOptionsWithInstanceTag(instanceScript, instanceTag, infrastructure);
             execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
-                                                                                                        buildScriptToExecuteString(instanceScript),
-                                                                                                        buildScriptOptionsWithInstanceTag(instanceScript,
-                                                                                                                                          instanceTag,
-                                                                                                                                          infrastructure));
+                                                                                                        scriptToExecuteString,
+                                                                                                        runScriptOptions);
         } catch (Exception e) {
+            log.error("Script cannot be run on instance with tag: " + instanceTag + ". RunScriptOptions=" +
+                      runScriptOptions, e);
             throw new RuntimeException("Script cannot be run on instances with tag: " + instanceTag, e);
         }
 
