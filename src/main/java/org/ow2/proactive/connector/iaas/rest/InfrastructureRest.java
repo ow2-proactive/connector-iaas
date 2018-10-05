@@ -44,9 +44,12 @@ import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Path("/infrastructures")
 @Component
+@Log4j2
 public class InfrastructureRest {
 
     @Autowired
@@ -55,6 +58,7 @@ public class InfrastructureRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllSupportedInfrastructure() {
+        log.info("Received get all request");
         return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
     }
 
@@ -62,6 +66,7 @@ public class InfrastructureRest {
     @Path("/{infrastructureId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInfrastructure(@PathParam("infrastructureId") String infrastructureId) {
+        log.debug("Received get request for infrastructure " + infrastructureId);
         return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
     }
 
@@ -70,6 +75,8 @@ public class InfrastructureRest {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("deleteInstances") Boolean deleteInstances) {
+        log.info("Received delete request for infrastructure " + infrastructureId + " with delete instances = " +
+                 deleteInstances);
         Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
             if (Optional.ofNullable(deleteInstances).orElse(false)) {
                 infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
@@ -84,6 +91,7 @@ public class InfrastructureRest {
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response registerInfrastructure(final String infrastructureJson) {
+        log.info("Received create request with parameters " + infrastructureJson);
         Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
         return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
     }
