@@ -51,7 +51,7 @@ public class ImageRest {
     @Path("{infrastructureId}/images")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        log.debug("Receive get all request for infrastructure " + infrastructureId);
+        log.debug("Received get all request for infrastructure " + infrastructureId);
         return Response.ok(imageService.getAllImages(infrastructureId)).build();
 
     }

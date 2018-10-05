@@ -63,7 +63,7 @@ public class InstanceRest {
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        log.info("Receive create request for infrastructure " + infrastructureId + " with parameters " + instanceJson);
+        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instanceJson);
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
         return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
     }
@@ -76,17 +76,17 @@ public class InstanceRest {
             @QueryParam("allInstances") Boolean allInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.debug("Receive get request for infrastructure " + infrastructureId + " and instance id " + instanceId);
+            log.debug("Received get request for infrastructure " + infrastructureId + " and instance id " + instanceId);
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.debug("Receive get request for infrastructure " + infrastructureId + " and instance tag " +
+            log.debug("Received get request for infrastructure " + infrastructureId + " and instance tag " +
                       instanceTag);
             return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
         } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
-            log.debug("Receive get all request for infrastructure " + infrastructureId);
+            log.debug("Received get all request for infrastructure " + infrastructureId);
             return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
         } else {
-            log.debug("Receive get all created request for infrastructure " + infrastructureId);
+            log.debug("Received get all created request for infrastructure " + infrastructureId);
             return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
         }
     }
@@ -99,15 +99,15 @@ public class InstanceRest {
             @QueryParam("allCreatedInstances") Boolean allCreatedInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Receive delete request for infrastructure " + infrastructureId + " and instance id " +
+            log.info("Received delete request for infrastructure " + infrastructureId + " and instance id " +
                      instanceId);
             instanceService.deleteInstance(infrastructureId, instanceId);
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Receive delete request for infrastructure " + infrastructureId + " and instance tag " +
+            log.info("Received delete request for infrastructure " + infrastructureId + " and instance tag " +
                      instanceTag);
             instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
         } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
-            log.info("Receive delete all request for infrastructure " + infrastructureId);
+            log.info("Received delete all request for infrastructure " + infrastructureId);
             instanceService.deleteCreatedInstances(infrastructureId);
         }
 
@@ -122,12 +122,12 @@ public class InstanceRest {
             @QueryParam("desiredIp") String optionalDesiredIp) {
         Map<String, String> response = new HashMap<>();
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Receive create public IP request for infrastructure " + infrastructureId + " and instance id " +
+            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance id " +
                      instanceId);
             response.put("publicIp",
                          instanceService.addToInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp));
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Receive create public IP request for infrastructure " + infrastructureId + " and instance tag " +
+            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance tag " +
                      instanceTag);
             instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
         } else {
@@ -145,11 +145,11 @@ public class InstanceRest {
             @QueryParam("desiredIp") String optionalDesiredIp) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Receive delete public IP request for infrastructure " + infrastructureId + " and instance id " +
+            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance id " +
                      instanceId);
             instanceService.removeInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp);
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Receive delete public IP request for infrastructure " + infrastructureId + " and instance tag " +
+            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance tag " +
                      instanceTag);
             instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
         } else {
