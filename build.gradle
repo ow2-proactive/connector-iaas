@@ -140,6 +140,9 @@ dependencies {
     compile ('org.apache.jclouds:jclouds-compute:2.1.0'){
         exclude module : 'jsr311-api'
     }
+    compile ('org.apache.jclouds.api:openstack-keystone:2.1.2'){
+        exclude module : 'jsr311-api'
+    }
     compile ('org.apache.jclouds.api:openstack-nova:2.1.0'){
         exclude module : 'jsr311-api'
     }
