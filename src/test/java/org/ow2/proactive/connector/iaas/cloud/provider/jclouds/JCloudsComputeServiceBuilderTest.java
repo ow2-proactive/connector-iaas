@@ -35,6 +35,7 @@ import org.jclouds.compute.ComputeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
+import org.springframework.test.util.ReflectionTestUtils;
 
 
 public class JCloudsComputeServiceBuilderTest {
@@ -42,8 +43,18 @@ public class JCloudsComputeServiceBuilderTest {
     private JCloudsComputeServiceBuilder computeServiceBuilder;
 
     @Before
-    public void init() {
-        this.computeServiceBuilder = new JCloudsComputeServiceBuilder();
+    public void init() throws Exception {
+        computeServiceBuilder = new JCloudsComputeServiceBuilder();
+        ReflectionTestUtils.setField(computeServiceBuilder, "defaultProject", "admin", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "defaultDomain", "Default", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "defaultRegion", "RegionOne", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "keystoneVersion", "3", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "timeoutPortOpen", "60000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "timeoutScriptComplete", "60000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "requestTimeout", "10000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "connectionTimeout", "18000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "sshMaxRetries", "100", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "maxRetries", "1000", String.class);
     }
 
     @Test

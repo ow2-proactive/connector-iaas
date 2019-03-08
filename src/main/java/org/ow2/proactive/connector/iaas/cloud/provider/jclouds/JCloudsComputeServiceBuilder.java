@@ -32,11 +32,15 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
+import org.jclouds.compute.config.ComputeServiceProperties;
+import org.jclouds.openstack.keystone.config.KeystoneProperties;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableSet;
@@ -46,6 +50,40 @@ import com.google.inject.Module;
 @Component
 public class JCloudsComputeServiceBuilder {
 
+    private static final String SSH_MAX_RETRIES = "jclouds.ssh.max-retries";
+
+    private static final String MAX_RETRIES = "jclouds.max-retries";
+
+    @Value("${connector-iaas.openstack.default-project:admin}")
+    protected String defaultProject;
+
+    @Value("${connector-iaas.openstack.default-domain:Default}")
+    protected String defaultDomain;
+
+    @Value("${connector-iaas.openstack.default-region:RegionOne}")
+    protected String defaultRegion;
+
+    @Value("${connector-iaas.openstack.jclouds.keystone.version:3}")
+    protected String keystoneVersion;
+
+    @Value("${connector-iaas.openstack.jclouds.compute.timeout.port-open:60000}")
+    protected String timeoutPortOpen;
+
+    @Value("${connector-iaas.openstack.jclouds.compute.timeout.script-complete:60000}")
+    protected String timeoutScriptComplete;
+
+    @Value("${  connector-iaas.openstack.jclouds.request-timeout:10000}")
+    protected String requestTimeout;
+
+    @Value("${connector-iaas.openstack.jclouds.connection-timeout:18000}")
+    protected String connectionTimeout;
+
+    @Value("${connector-iaas.aws.jclouds.ssh.max-retries:100}")
+    protected String sshMaxRetries;
+
+    @Value("${connector-iaas.aws.jclouds.max-retries:1000}")
+    protected String maxRetries;
+
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
@@ -53,7 +91,7 @@ public class JCloudsComputeServiceBuilder {
                                                       .credentials(infrastructure.getCredentials().getUsername(),
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
-                                                      .overrides(getTimeoutPolicy());
+                                                      .overrides(getOverrides());
 
         Optional.ofNullable(infrastructure.getEndpoint())
                 .filter(endPoint -> !endPoint.isEmpty())
@@ -67,16 +105,20 @@ public class JCloudsComputeServiceBuilder {
      * 
      * @return Properties object with the timeout policy.
      */
-    private Properties getTimeoutPolicy() {
+    private Properties getOverrides() {
         Properties properties = new Properties();
-        long scriptTimeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
-        properties.setProperty("jclouds.ssh.max-retries", "100");
-        properties.setProperty("jclouds.max-retries", "1000");
-        properties.setProperty("jclouds.request-timeout", "10000");
-        properties.setProperty("jclouds.connection-timeout", "18000");
 
-        properties.setProperty(TIMEOUT_PORT_OPEN, scriptTimeout + "");
-        properties.setProperty(TIMEOUT_SCRIPT_COMPLETE, scriptTimeout + "");
+        properties.put(KeystoneProperties.KEYSTONE_VERSION, keystoneVersion);
+        properties.put(KeystoneProperties.SCOPE, "project:" + defaultProject);
+
+        properties.setProperty(Constants.PROPERTY_REQUEST_TIMEOUT, requestTimeout);
+        properties.setProperty(Constants.PROPERTY_CONNECTION_TIMEOUT, connectionTimeout);
+
+        properties.put(ComputeServiceProperties.TIMEOUT_PORT_OPEN, timeoutPortOpen);
+        properties.put(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, timeoutScriptComplete);
+
+        properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
+        properties.setProperty(MAX_RETRIES, maxRetries);
 
         return properties;
     }
