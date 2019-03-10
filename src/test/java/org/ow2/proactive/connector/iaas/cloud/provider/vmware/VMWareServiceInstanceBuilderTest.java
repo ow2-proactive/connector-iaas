@@ -45,7 +45,10 @@ public class VMWareServiceInstanceBuilderTest {
                                                                                                              "vmware",
                                                                                                              "http://127.0.0.1/sdk",
                                                                                                              "userName",
-                                                                                                             "password"));
+                                                                                                             "password",
+                                                                                                             null,
+                                                                                                             null,
+                                                                                                             null));
 
     }
 

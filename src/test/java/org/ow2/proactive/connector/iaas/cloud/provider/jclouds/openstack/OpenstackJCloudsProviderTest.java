@@ -120,6 +120,9 @@ public class OpenstackJCloudsProviderTest {
     private Resource resource;
 
     @Mock
+    OpenstackUtil openstackUtil;
+
+    @Mock
     private TagManager tagManager;
 
     private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
@@ -139,7 +142,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               "admin",
+                                                                               "RegionOne",
+                                                                               "3");
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
@@ -157,6 +163,8 @@ public class OpenstackJCloudsProviderTest {
         when(computeService.getContext()).thenReturn(contextMock);
 
         when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
+
+        when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
 
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
 
@@ -218,7 +226,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
@@ -261,7 +272,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -290,7 +304,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -307,7 +324,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -335,7 +355,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -359,7 +382,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -379,7 +405,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -412,7 +441,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

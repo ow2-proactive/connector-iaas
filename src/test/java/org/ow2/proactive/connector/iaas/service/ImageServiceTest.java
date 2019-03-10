@@ -68,7 +68,10 @@ public class ImageServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Set<Image> images = Sets.newHashSet();
@@ -93,7 +96,10 @@ public class ImageServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         imageService.getAllImages(infrastructure.getId());

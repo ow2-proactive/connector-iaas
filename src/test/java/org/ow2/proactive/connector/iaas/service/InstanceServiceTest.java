@@ -71,7 +71,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Instance instance = InstanceFixture.getInstance("instance-id",
@@ -99,7 +102,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
                                                         "image",
@@ -125,7 +131,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         Instance instance = InstanceFixture.simpleInstance("instance-id");
 
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
@@ -142,7 +151,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         instanceService.deleteInstance(infrastructure.getId(), "instanceID");
@@ -157,7 +169,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Instance instance1 = InstanceFixture.simpleInstanceWithTag("id1", "tag1");
@@ -181,7 +196,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Instance instance1 = InstanceFixture.simpleInstance("id1");
@@ -211,7 +229,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         Instance instance1 = InstanceFixture.simpleInstance("id1");
@@ -238,7 +259,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         instanceService.deleteInstanceByTag(infrastructure.getId(), "someTag");
@@ -254,7 +278,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
@@ -274,7 +301,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         Instance instance1 = InstanceFixture.simpleInstance("id1");
         Instance instance2 = InstanceFixture.simpleInstance("id2");
@@ -298,7 +328,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         instanceService.getAllInstances(infrastructure.getId());
@@ -314,7 +347,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));
@@ -332,7 +368,10 @@ public class InstanceServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         when(cloudManager.getAllInfrastructureInstances(infrastructure)).thenReturn(Sets.newHashSet(InstanceFixture.simpleInstance("id")));

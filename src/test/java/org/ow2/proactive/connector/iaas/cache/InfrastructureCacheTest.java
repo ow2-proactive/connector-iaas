@@ -59,7 +59,10 @@ public class InfrastructureCacheTest {
                                                                                                                                       "openstack",
                                                                                                                                       "endPoint",
                                                                                                                                       "userName",
-                                                                                                                                      "password"));
+                                                                                                                                      "password",
+                                                                                                                                      "admin",
+                                                                                                                                      "RegionOne",
+                                                                                                                                      "3"));
     }
 
     @Test
@@ -68,14 +71,20 @@ public class InfrastructureCacheTest {
                                                                                            "openstack",
                                                                                            "endPoint",
                                                                                            "userName",
-                                                                                           "password"));
+                                                                                           "password",
+                                                                                           "admin",
+                                                                                           "RegionOne",
+                                                                                           "3"));
         assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
         assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"),
                    is(InfrastructureFixture.getInfrastructure("id-openstack",
                                                               "openstack",
                                                               "endPoint",
                                                               "userName",
-                                                              "password")));
+                                                              "password",
+                                                              "admin",
+                                                              "RegionOne",
+                                                              "3")));
     }
 
     @Test
@@ -84,13 +93,19 @@ public class InfrastructureCacheTest {
                                                                                            "openstack",
                                                                                            "endPoint",
                                                                                            "userName",
-                                                                                           "password"));
+                                                                                           "password",
+                                                                                           "admin",
+                                                                                           "RegionOne",
+                                                                                           "3"));
 
         infrastructureCache.deleteInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack",
                                                                                          "openstack",
                                                                                          "endPoint",
                                                                                          "userName",
-                                                                                         "password"));
+                                                                                         "password",
+                                                                                         "admin",
+                                                                                         "RegionOne",
+                                                                                         "3"));
 
         assertThat(infrastructureCache.getSupportedInfrastructures(), is(not(nullValue())));
         assertThat(infrastructureCache.getSupportedInfrastructures().isEmpty(), is(true));

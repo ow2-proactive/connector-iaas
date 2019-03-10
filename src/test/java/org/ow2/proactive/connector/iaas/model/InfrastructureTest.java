@@ -55,7 +55,10 @@ public class InfrastructureTest {
                                                            null,
                                                            null,
                                                            null,
-                                                           false);
+                                                           false,
+                                                           null,
+                                                           null,
+                                                           null);
         assertThat(infrastructure.getId(), is("id-openstack"));
     }
 
@@ -70,7 +73,10 @@ public class InfrastructureTest {
                                                             null,
                                                             null,
                                                             null,
-                                                            false);
+                                                            false,
+                                                            null,
+                                                            null,
+                                                            null);
         Infrastructure infrastructure2 = new Infrastructure("id-openstack",
                                                             "openstack",
                                                             "openstackEndpoint",
@@ -80,7 +86,10 @@ public class InfrastructureTest {
                                                             null,
                                                             null,
                                                             null,
-                                                            false);
+                                                            false,
+                                                            null,
+                                                            null,
+                                                            null);
 
         Set<Infrastructure> infrastructures = Sets.newHashSet(infrastructure1, infrastructure2);
 

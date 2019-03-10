@@ -25,73 +25,65 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
-import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_PORT_OPEN;
-import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE;
-
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.config.ComputeServiceProperties;
-import org.jclouds.openstack.keystone.config.KeystoneProperties;
 import org.jclouds.sshj.config.SshjSshClientModule;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Component
+@Log4j2
 public class JCloudsComputeServiceBuilder {
 
     private static final String SSH_MAX_RETRIES = "jclouds.ssh.max-retries";
 
     private static final String MAX_RETRIES = "jclouds.max-retries";
 
-    @Value("${connector-iaas.openstack.default-project:admin}")
-    protected String defaultProject;
+    @Value("${  connector-iaas.jclouds.request-timeout:10000}")
+    private String requestTimeout;
 
-    @Value("${connector-iaas.openstack.default-domain:Default}")
-    protected String defaultDomain;
-
-    @Value("${connector-iaas.openstack.default-region:RegionOne}")
-    protected String defaultRegion;
-
-    @Value("${connector-iaas.openstack.jclouds.keystone.version:3}")
-    protected String keystoneVersion;
+    @Value("${connector-iaas.jclouds.connection-timeout:18000}")
+    private String connectionTimeout;
 
     @Value("${connector-iaas.openstack.jclouds.compute.timeout.port-open:60000}")
-    protected String timeoutPortOpen;
+    private String timeoutPortOpen;
 
     @Value("${connector-iaas.openstack.jclouds.compute.timeout.script-complete:60000}")
-    protected String timeoutScriptComplete;
-
-    @Value("${  connector-iaas.openstack.jclouds.request-timeout:10000}")
-    protected String requestTimeout;
-
-    @Value("${connector-iaas.openstack.jclouds.connection-timeout:18000}")
-    protected String connectionTimeout;
+    private String timeoutScriptComplete;
 
     @Value("${connector-iaas.aws.jclouds.ssh.max-retries:100}")
-    protected String sshMaxRetries;
+    private String sshMaxRetries;
 
     @Value("${connector-iaas.aws.jclouds.max-retries:1000}")
-    protected String maxRetries;
+    private String maxRetries;
+
+    @Autowired
+    private OpenstackUtil openstackUtil;
 
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
-        ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
 
-                                                      .credentials(infrastructure.getCredentials().getUsername(),
+        ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
+                                                      .credentials(infrastructure.getCredentials().getDomain() + ":" +
+                                                                   infrastructure.getCredentials().getUsername(),
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
-                                                      .overrides(getOverrides());
+                                                      .overrides(getOverrides(infrastructure));
 
         Optional.ofNullable(infrastructure.getEndpoint())
                 .filter(endPoint -> !endPoint.isEmpty())
@@ -105,11 +97,13 @@ public class JCloudsComputeServiceBuilder {
      * 
      * @return Properties object with the timeout policy.
      */
-    private Properties getOverrides() {
+    private Properties getOverrides(Infrastructure infrastructure) {
         Properties properties = new Properties();
 
-        properties.put(KeystoneProperties.KEYSTONE_VERSION, keystoneVersion);
-        properties.put(KeystoneProperties.SCOPE, "project:" + defaultProject);
+        // Add custom properties for Openstack with identity version 3
+        if (infrastructure.getType().equals(OpenstackUtil.OPENSTACK_TYPE)) {
+            openstackUtil.addCustomProperties(infrastructure, properties);
+        }
 
         properties.setProperty(Constants.PROPERTY_REQUEST_TIMEOUT, requestTimeout);
         properties.setProperty(Constants.PROPERTY_CONNECTION_TIMEOUT, connectionTimeout);
@@ -119,6 +113,8 @@ public class JCloudsComputeServiceBuilder {
 
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
+
+        log.info("Infrastructure properties: " + properties.toString());
 
         return properties;
     }

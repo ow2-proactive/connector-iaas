@@ -72,12 +72,18 @@ public class InfrastructureRestTest {
                                                                                        "openstack",
                                                                                        "endPoint",
                                                                                        "userName",
-                                                                                       "password");
+                                                                                       "password",
+                                                                                       null,
+                                                                                       null,
+                                                                                       null);
         infrastructureFixture = InfrastructureFixture.getInfrastructure("id-openstack",
                                                                         "openstack",
                                                                         "endPoint",
                                                                         "userName",
-                                                                        "password");
+                                                                        "password",
+                                                                        null,
+                                                                        null,
+                                                                        null);
 
         instanceFixture = InstanceFixture.getInstance("instance-id",
                                                       "name",

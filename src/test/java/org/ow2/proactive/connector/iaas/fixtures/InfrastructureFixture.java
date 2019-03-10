@@ -32,13 +32,20 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 public class InfrastructureFixture {
 
     public static String getInfrastructureAsaString(String name, String type, String endPoint, String userName,
-            String password) {
-        JSONObject jsonObject = new JSONObject(getInfrastructure(name, type, endPoint, userName, password));
+            String password, String project, String region, String identityVersion) {
+        JSONObject jsonObject = new JSONObject(getInfrastructure(name,
+                                                                 type,
+                                                                 endPoint,
+                                                                 userName,
+                                                                 password,
+                                                                 project,
+                                                                 region,
+                                                                 identityVersion));
         return jsonObject.toString();
     }
 
     public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
-            String password) {
+            String password, String project, String region, String identityVersion) {
         return new Infrastructure(name,
                                   type,
                                   endPoint,
@@ -47,7 +54,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  project,
+                                  region,
+                                  identityVersion);
     }
 
     public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,
@@ -64,7 +74,10 @@ public class InfrastructureFixture {
                                   managementEndpoint,
                                   resourceManagerEndpoint,
                                   graphEndpoint,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String secret,
@@ -80,7 +93,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type) {
@@ -92,7 +108,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type, boolean removeOnShutdown) {
@@ -104,7 +123,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  removeOnShutdown);
+                                  removeOnShutdown,
+                                  null,
+                                  null,
+                                  null);
     }
 
 }

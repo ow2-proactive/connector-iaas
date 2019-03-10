@@ -57,4 +57,10 @@ public class Infrastructure {
     private String graphEndpoint;
 
     private boolean toBeRemovedOnShutdown;
+
+    private String project;
+
+    private String region;
+
+    private String identityVersion;
 }

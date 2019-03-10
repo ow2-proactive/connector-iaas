@@ -65,10 +65,13 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class OpenstackJCloudsProvider extends JCloudsProvider {
 
-    private static final String REGION = "RegionOne";
-
     @Getter
     private final String type = "openstack-nova";
+
+    private String region;
+
+    @Autowired
+    private OpenstackUtil openstackUtil;
 
     @Autowired
     private TagManager tagManager;
@@ -76,11 +79,14 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
+        openstackUtil.validateOpenstackInfrastructureParameters(infrastructure);
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
-        ServerApi serverApi = novaApi.getServerApi(REGION);
+        region = openstackUtil.getInfrastructureRegion(infrastructure);
+
+        ServerApi serverApi = novaApi.getServerApi(region);
 
         // Retrieve and add tags to the VM
         List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
@@ -122,7 +128,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         validatePlateformOperation(novaApi);
 
-        FloatingIPApi api = novaApi.getFloatingIPApi(REGION).get();
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
         // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
         List<FloatingIP> floatingIPs = api.list().toList();
@@ -164,7 +170,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
 
-        FloatingIPApi api = novaApi.getFloatingIPApi(REGION).get();
+        FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
         // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
         List<FloatingIP> floatingIPs = api.list().toList();
@@ -195,12 +201,13 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     private void validatePlateformOperation(NovaApi novaApi) {
-        if (!novaApi.getFloatingIPApi(REGION).isPresent()) {
+        if (!novaApi.getFloatingIPApi(region).isPresent()) {
             throw new NotSupportedException("Operation not supported for this Openstack cloud");
         }
     }
 
     private Server createOpenstackInstance(Instance instance, ServerApi serverApi, CreateServerOptions serverOptions) {
+        openstackUtil.validateOpenstackInstanceParameters(instance);
         ServerCreated serverCreated = serverApi.create(instance.getTag(),
                                                        instance.getImage(),
                                                        instance.getHardware().getType(),
@@ -211,7 +218,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     private final Instance createInstanceFromNode(Server server) {
         return Instance.builder()
-                       .id(REGION + "/" + server.getId())
+                       .id(region + "/" + server.getId())
                        .tag(server.getName())
                        .image(server.getImage().getName())
                        .number("1")
