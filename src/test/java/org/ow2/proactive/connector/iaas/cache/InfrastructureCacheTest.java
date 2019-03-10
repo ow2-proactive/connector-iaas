@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class InfrastructureCacheTest {
@@ -60,7 +61,8 @@ public class InfrastructureCacheTest {
                                                                                                                                       "endPoint",
                                                                                                                                       "userName",
                                                                                                                                       "password",
-                                                                                                                                      "admin",
+                                                                                                                                      new InfrastructureScope("project",
+                                                                                                                                                              "admin"),
                                                                                                                                       "RegionOne",
                                                                                                                                       "3"));
     }
@@ -72,7 +74,8 @@ public class InfrastructureCacheTest {
                                                                                            "endPoint",
                                                                                            "userName",
                                                                                            "password",
-                                                                                           "admin",
+                                                                                           new InfrastructureScope("project",
+                                                                                                                   "admin"),
                                                                                            "RegionOne",
                                                                                            "3"));
         assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
@@ -82,7 +85,7 @@ public class InfrastructureCacheTest {
                                                               "endPoint",
                                                               "userName",
                                                               "password",
-                                                              "admin",
+                                                              new InfrastructureScope("project", "admin"),
                                                               "RegionOne",
                                                               "3")));
     }
@@ -94,7 +97,8 @@ public class InfrastructureCacheTest {
                                                                                            "endPoint",
                                                                                            "userName",
                                                                                            "password",
-                                                                                           "admin",
+                                                                                           new InfrastructureScope("project",
+                                                                                                                   "admin"),
                                                                                            "RegionOne",
                                                                                            "3"));
 
@@ -103,7 +107,8 @@ public class InfrastructureCacheTest {
                                                                                          "endPoint",
                                                                                          "userName",
                                                                                          "password",
-                                                                                         "admin",
+                                                                                         new InfrastructureScope("project",
+                                                                                                                 "admin"),
                                                                                          "RegionOne",
                                                                                          "3"));
 

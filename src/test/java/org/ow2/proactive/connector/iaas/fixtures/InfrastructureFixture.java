@@ -27,25 +27,26 @@ package org.ow2.proactive.connector.iaas.fixtures;
 
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class InfrastructureFixture {
 
     public static String getInfrastructureAsaString(String name, String type, String endPoint, String userName,
-            String password, String project, String region, String identityVersion) {
+            String password, InfrastructureScope scope, String region, String identityVersion) {
         JSONObject jsonObject = new JSONObject(getInfrastructure(name,
                                                                  type,
                                                                  endPoint,
                                                                  userName,
                                                                  password,
-                                                                 project,
+                                                                 scope,
                                                                  region,
                                                                  identityVersion));
         return jsonObject.toString();
     }
 
     public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
-            String password, String project, String region, String identityVersion) {
+            String password, InfrastructureScope scope, String region, String identityVersion) {
         return new Infrastructure(name,
                                   type,
                                   endPoint,
@@ -55,7 +56,7 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   false,
-                                  project,
+                                  scope,
                                   region,
                                   identityVersion);
     }

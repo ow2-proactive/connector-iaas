@@ -45,14 +45,13 @@ public class OpenstackUtil {
 
     private static final String OPENSTACK_KEYSTONE_V3 = "3";
 
-    @Value("${connector-iaas.openstack.scope-prefix:project}")
-    protected String scopePrefix;
+    private static final String SEPARATOR = ":";
 
-    @Value("${connector-iaas.openstack.default-project:admin}")
-    protected String defaultProject;
+    @Value("${connector-iaas.openstack.default-scope-prefix:project}")
+    protected String defaultScopePrefix;
 
-    @Value("${connector-iaas.openstack.default-domain:Default}")
-    protected String defaultDomain;
+    @Value("${connector-iaas.openstack.default-scope-value:admin}")
+    protected String defaultScopeValue;
 
     @Value("${connector-iaas.openstack.default-region:RegionOne}")
     protected String defaultRegion;
@@ -66,13 +65,15 @@ public class OpenstackUtil {
             properties.put(KeystoneProperties.KEYSTONE_VERSION, OPENSTACK_KEYSTONE_V3);
             log.info("Using Openstack infrastructure with identity (Keystone) version: " + OPENSTACK_KEYSTONE_V3);
 
-            if (infrastructure.getProject() != null) {
-                properties.put(KeystoneProperties.SCOPE, scopePrefix + ":" + infrastructure.getProject());
-                log.info("Using Openstack infrastructure with scope: " + scopePrefix + ":" +
-                         infrastructure.getProject());
+            if (infrastructure.getScope() != null) {
+                String prefix = infrastructure.getScope().getPrefix();
+                String value = infrastructure.getScope().getValue();
+                properties.put(KeystoneProperties.SCOPE, prefix + SEPARATOR + value);
+                log.info("Using Openstack infrastructure with scope: " + prefix + SEPARATOR + value);
             } else {
-                properties.put(KeystoneProperties.SCOPE, scopePrefix + ":" + defaultProject);
-                log.info("Using default scope for Openstack infrastructure: " + scopePrefix + ":" + defaultProject);
+                properties.put(KeystoneProperties.SCOPE, defaultScopePrefix + SEPARATOR + defaultScopeValue);
+                log.info("Using default scope for Openstack infrastructure: " + defaultScopePrefix + SEPARATOR +
+                         defaultScopeValue);
             }
         }
     }

@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -49,8 +50,8 @@ public class JCloudsComputeServiceBuilderTest {
     public void init() throws Exception {
         computeServiceBuilder = new JCloudsComputeServiceBuilder();
         openstackUtil = new OpenstackUtil();
-        ReflectionTestUtils.setField(openstackUtil, "defaultProject", "admin", String.class);
-        ReflectionTestUtils.setField(openstackUtil, "defaultDomain", "Default", String.class);
+        ReflectionTestUtils.setField(openstackUtil, "defaultScopePrefix", "project", String.class);
+        ReflectionTestUtils.setField(openstackUtil, "defaultScopeValue", "admin", String.class);
         ReflectionTestUtils.setField(openstackUtil, "defaultRegion", "RegionOne", String.class);
 
         ReflectionTestUtils.setField(computeServiceBuilder, "timeoutPortOpen", "60000", String.class);
@@ -97,7 +98,8 @@ public class JCloudsComputeServiceBuilderTest {
                                                                                                                                              "endPoint",
                                                                                                                                              "userName",
                                                                                                                                              "password",
-                                                                                                                                             "admin",
+                                                                                                                                             new InfrastructureScope("project",
+                                                                                                                                                                     "admin"),
                                                                                                                                              "RegionOne",
                                                                                                                                              "3"));
 

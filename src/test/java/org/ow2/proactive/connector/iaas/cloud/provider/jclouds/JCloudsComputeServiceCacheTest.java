@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class JCloudsComputeServiceCacheTest {
@@ -152,9 +153,10 @@ public class JCloudsComputeServiceCacheTest {
                                                                                       "endPoint",
                                                                                       "userName",
                                                                                       "password",
-                                                                                      null,
-                                                                                      null,
-                                                                                      null));
+                                                                                      new InfrastructureScope("project",
+                                                                                                              "admin"),
+                                                                                      "RegionOne",
+                                                                                      "3"));
 
         verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(any(Infrastructure.class));
     }

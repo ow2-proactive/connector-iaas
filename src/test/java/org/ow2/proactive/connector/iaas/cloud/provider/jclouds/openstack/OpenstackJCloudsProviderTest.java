@@ -73,12 +73,7 @@ import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeSer
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.Options;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -143,7 +138,8 @@ public class OpenstackJCloudsProviderTest {
                                                                                "endPoint",
                                                                                "userName",
                                                                                "password",
-                                                                               "admin",
+                                                                               new InfrastructureScope("project",
+                                                                                                       "admin"),
                                                                                "RegionOne",
                                                                                "3");
 
