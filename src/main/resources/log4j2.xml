@@ -22,7 +22,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="org.ow2.proactive.connectoriaas" level="info" additivity="false">
+        <Logger name="org.ow2.proactive.connector.iaas" level="info" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
 

@@ -149,6 +149,21 @@ public class InstanceFixture {
                             null);
     }
 
+    public static Instance getInstanceWithKeyName(String id, String tag, String image, String number, String minRam,
+            String minCores, String networkId, String publicAddress, String privateAddress, String status) {
+        return new Instance(id,
+                            tag,
+                            image,
+                            number,
+                            status,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
+                            CredentialsFixtures.getInstanceCredentialsWithKeyName("keyName"),
+                            null,
+                            InstanceScriptFixture.simpleInstanceScriptNoscripts(),
+                            null);
+    }
+
     public static Instance getInstanceWithCustomScript(String id, String tag, String image, String number,
             String minRam, String minCores, String networkId, String publicAddress, String privateAddress,
             String customScriptUrl) {

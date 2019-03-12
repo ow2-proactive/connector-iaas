@@ -31,7 +31,6 @@ import org.apache.commons.lang3.Validate;
 import org.jclouds.openstack.keystone.config.KeystoneProperties;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.log4j.Log4j2;
@@ -47,15 +46,6 @@ public class OpenstackUtil {
 
     private static final String SEPARATOR = ":";
 
-    @Value("${connector-iaas.openstack.default-scope-prefix:project}")
-    protected String defaultScopePrefix;
-
-    @Value("${connector-iaas.openstack.default-scope-value:admin}")
-    protected String defaultScopeValue;
-
-    @Value("${connector-iaas.openstack.default-region:RegionOne}")
-    protected String defaultRegion;
-
     public void addCustomProperties(Infrastructure infrastructure, Properties properties) {
 
         if (infrastructure.getIdentityVersion().equals(OPENSTACK_KEYSTONE_V3)) {
@@ -65,16 +55,24 @@ public class OpenstackUtil {
             properties.put(KeystoneProperties.KEYSTONE_VERSION, OPENSTACK_KEYSTONE_V3);
             log.info("Using Openstack infrastructure with identity (Keystone) version: " + OPENSTACK_KEYSTONE_V3);
 
-            if (infrastructure.getScope() != null) {
-                String prefix = infrastructure.getScope().getPrefix();
-                String value = infrastructure.getScope().getValue();
-                properties.put(KeystoneProperties.SCOPE, prefix + SEPARATOR + value);
-                log.info("Using Openstack infrastructure with scope: " + prefix + SEPARATOR + value);
-            } else {
-                properties.put(KeystoneProperties.SCOPE, defaultScopePrefix + SEPARATOR + defaultScopeValue);
-                log.info("Using default scope for Openstack infrastructure: " + defaultScopePrefix + SEPARATOR +
-                         defaultScopeValue);
-            }
+            Validate.notNull(infrastructure.getScope(), "Infrastructure parameter 'scope' cannot be null");
+
+            Validate.notNull(infrastructure.getScope().getPrefix(),
+                             "Infrastructure parameter 'scope prefix' cannot be null");
+            Validate.notBlank(infrastructure.getScope().getPrefix(),
+                              "Infrastructure parameter 'scope prefix' cannot be empty");
+
+            Validate.notNull(infrastructure.getScope().getValue(),
+                             "Infrastructure parameter 'scope value' cannot be null");
+            Validate.notBlank(infrastructure.getScope().getValue(),
+                              "Infrastructure parameter 'scope prefix' cannot be empty");
+
+            String prefix = infrastructure.getScope().getPrefix();
+            String value = infrastructure.getScope().getValue();
+
+            properties.put(KeystoneProperties.SCOPE, prefix + SEPARATOR + value);
+            log.info("Using Openstack infrastructure with scope: " + prefix + SEPARATOR + value);
+
         }
     }
 
@@ -82,13 +80,11 @@ public class OpenstackUtil {
 
         String region;
 
-        if (infrastructure.getRegion() != null) {
-            region = infrastructure.getRegion();
-            log.info("Using Openstack infrastructure with region: " + region);
-        } else {
-            region = defaultRegion;
-            log.info("Using default region for Openstack infrastructure: " + region);
-        }
+        Validate.notNull(infrastructure.getRegion(), "Infrastructure parameter 'region' cannot be null");
+        Validate.notBlank(infrastructure.getRegion(), "Infrastructure parameter 'region' cannot be empty");
+
+        region = infrastructure.getRegion();
+        log.info("Using Openstack infrastructure with region: " + region);
 
         return region;
     }
@@ -129,10 +125,5 @@ public class OpenstackUtil {
 
         Validate.notNull(instance.getNumber(), "Instance parameter 'number' cannot be null");
         Validate.notBlank(instance.getNumber(), "Instance parameter 'number type' cannot be empty");
-
-        Validate.notNull(instance.getCredentials().getPublicKeyName(),
-                         "Instance parameter 'publicKeyName' (in credentials) cannot be null");
-        Validate.notBlank(instance.getCredentials().getPublicKeyName(),
-                          "Instance parameter 'publicKeyName' (in credentials) cannot be empty");
     }
 }

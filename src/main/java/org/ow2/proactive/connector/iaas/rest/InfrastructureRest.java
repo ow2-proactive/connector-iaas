@@ -66,7 +66,7 @@ public class InfrastructureRest {
     @Path("/{infrastructureId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInfrastructure(@PathParam("infrastructureId") String infrastructureId) {
-        log.debug("Received get request for infrastructure " + infrastructureId);
+        log.info("Received get request for infrastructure " + infrastructureId);
         return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
     }
 

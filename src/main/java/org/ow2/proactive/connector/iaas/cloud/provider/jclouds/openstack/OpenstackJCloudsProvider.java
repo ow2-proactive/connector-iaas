@@ -29,6 +29,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -41,6 +42,7 @@ import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
+import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
@@ -68,6 +70,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     @Getter
     private final String type = "openstack-nova";
 
+    private static final String KEY_PAIR_PREFIX = "openstack-key-pair";
+
     private String region;
 
     @Autowired
@@ -80,17 +84,13 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         openstackUtil.validateOpenstackInfrastructureParameters(infrastructure);
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-
-        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
+        NovaApi novaApi = buildNovaApi(infrastructure);
 
         region = openstackUtil.getInfrastructureRegion(infrastructure);
-
         ServerApi serverApi = novaApi.getServerApi(region);
 
-        // Retrieve and add tags to the VM
-        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
-        CreateServerOptions serverOptions = createOptions(instance);
+        CreateServerOptions serverOptions = createOptions(infrastructure, instance);
+        log.info("Openstack instance will use options: " + serverOptions.toString());
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
                         .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
@@ -99,12 +99,20 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     }
 
-    private CreateServerOptions createOptions(Instance instance) {
+    private CreateServerOptions createOptions(Infrastructure infrastructure, Instance instance) {
 
-        CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(instance.getCredentials()
-                                                                                                .getPublicKeyName())
+        // Acquire or generate KeyPair name
+        String publicKeyName;
+        if ((instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null)) {
+            publicKeyName = createKeyPair(infrastructure, instance).getKey();
+            log.info("Openstack instance will use generated key-pair: " + publicKeyName);
+        } else {
+            publicKeyName = instance.getCredentials().getPublicKeyName();
+        }
+
+        // Create options
+        CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(publicKeyName)
                                                                            .userData(buildScriptToExecuteString(instance.getInitScript()).getBytes());
-
         if (isNetworkIdSet(instance.getNetwork())) {
             createServerOptions = createServerOptions.networks(instance.getNetwork().getNetworkIds());
         }
@@ -122,10 +130,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     @Override
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
 
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
-
-        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
-
+        NovaApi novaApi = buildNovaApi(infrastructure);
         validatePlateformOperation(novaApi);
 
         FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
@@ -161,15 +166,12 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         }
 
         return ip.getIp();
-
     }
 
     @Override
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
-        NovaApi novaApi = computeService.getContext().unwrapApi(NovaApi.class);
-
+        NovaApi novaApi = buildNovaApi(infrastructure);
         FloatingIPApi api = novaApi.getFloatingIPApi(region).get();
 
         // Try to retrieve a floatingIP that match with the provided IP address, otherwise get the first available
@@ -197,12 +199,17 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     @Override
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
-        throw new UnsupportedOperationException();
+        String keyPairName = KEY_PAIR_PREFIX + "-" + UUID.randomUUID();
+        NovaApi novaApi = buildNovaApi(infrastructure);
+        KeyPair keyPair = novaApi.getKeyPairApi(region).get().create(keyPairName);
+
+        log.info("Openstack key-pair created: " + keyPair.getName() + " [" + keyPair.toString() + "]");
+        return new SimpleImmutableEntry<>(keyPair.getName(), keyPair.toString());
     }
 
     private void validatePlateformOperation(NovaApi novaApi) {
         if (!novaApi.getFloatingIPApi(region).isPresent()) {
-            throw new NotSupportedException("Operation not supported for this Openstack cloud");
+            throw new NotSupportedException("Operation not supported by the targeted Openstack version");
         }
     }
 
@@ -212,6 +219,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                        instance.getImage(),
                                                        instance.getHardware().getType(),
                                                        serverOptions);
+
+        log.info("Server instance created: " + serverCreated.toString());
 
         return serverApi.get(serverCreated.getId());
     }
@@ -236,6 +245,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                                                                .password(credentials.getPassword())
                                                                                                .authenticateSudo(false)
                                                                                                .build());
+    }
+
+    protected NovaApi buildNovaApi(Infrastructure infrastructure) {
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        return computeService.getContext().unwrapApi(NovaApi.class);
     }
 
 }

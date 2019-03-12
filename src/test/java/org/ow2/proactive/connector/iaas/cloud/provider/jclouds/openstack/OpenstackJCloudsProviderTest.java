@@ -38,9 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -56,8 +54,10 @@ import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
+import org.jclouds.openstack.nova.v2_0.extensions.KeyPairApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.v2_0.domain.Resource;
 import org.jclouds.scriptbuilder.ScriptBuilder;
@@ -115,10 +115,15 @@ public class OpenstackJCloudsProviderTest {
     private Resource resource;
 
     @Mock
-    OpenstackUtil openstackUtil;
+    private OpenstackUtil openstackUtil;
 
     @Mock
     private TagManager tagManager;
+
+    private KeyPair keyPair = KeyPair.builder()
+                                     .name("openstack-key-pair-" + UUID.randomUUID())
+                                     .publicKey("openstack-key-pair-public-key")
+                                     .build();
 
     private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
 
@@ -143,22 +148,34 @@ public class OpenstackJCloudsProviderTest {
                                                                                "RegionOne",
                                                                                "3");
 
-        Instance instance = InstanceFixture.getInstance("instance-id",
-                                                        "instance-name",
-                                                        "image",
-                                                        "2",
-                                                        "512",
-                                                        "2",
-                                                        "network_id_1",
-                                                        "77.154.227.148",
-                                                        "1.0.0.2",
-                                                        "running");
+        Instance instance = InstanceFixture.getInstanceWithKeyName("instance-id",
+                                                                   "instance-name",
+                                                                   "image",
+                                                                   "2",
+                                                                   "512",
+                                                                   "2",
+                                                                   "network_id_1",
+                                                                   "77.154.227.148",
+                                                                   "1.0.0.2",
+                                                                   "running");
+
+        //System.out.println(jcloudsProvider.getType());
+
+        //System.out.println(keyPair.getName());
+
+        //System.out.println( keyPair.toString());
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
         when(computeService.getContext()).thenReturn(contextMock);
 
         when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
+
+        //when(jcloudsProvider.buildNovaApi(any())).thenReturn(novaApi);
+
+        //when(jcloudsProvider.createKeyPair(infratructure,
+        //                                 instance)).thenReturn(new AbstractMap.SimpleImmutableEntry<>(keyPair.getName(),
+        //                                                                                            keyPair.toString()));
 
         when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
 

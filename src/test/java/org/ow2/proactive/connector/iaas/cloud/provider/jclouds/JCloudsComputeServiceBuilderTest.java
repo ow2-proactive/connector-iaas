@@ -44,15 +44,9 @@ public class JCloudsComputeServiceBuilderTest {
 
     private JCloudsComputeServiceBuilder computeServiceBuilder;
 
-    private OpenstackUtil openstackUtil;
-
     @Before
     public void init() throws Exception {
         computeServiceBuilder = new JCloudsComputeServiceBuilder();
-        openstackUtil = new OpenstackUtil();
-        ReflectionTestUtils.setField(openstackUtil, "defaultScopePrefix", "project", String.class);
-        ReflectionTestUtils.setField(openstackUtil, "defaultScopeValue", "admin", String.class);
-        ReflectionTestUtils.setField(openstackUtil, "defaultRegion", "RegionOne", String.class);
 
         ReflectionTestUtils.setField(computeServiceBuilder, "timeoutPortOpen", "60000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "timeoutScriptComplete", "60000", String.class);
@@ -60,7 +54,7 @@ public class JCloudsComputeServiceBuilderTest {
         ReflectionTestUtils.setField(computeServiceBuilder, "connectionTimeout", "18000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "sshMaxRetries", "100", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "maxRetries", "1000", String.class);
-        ReflectionTestUtils.setField(computeServiceBuilder, "openstackUtil", openstackUtil, OpenstackUtil.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "openstackUtil", new OpenstackUtil(), OpenstackUtil.class);
     }
 
     @Test

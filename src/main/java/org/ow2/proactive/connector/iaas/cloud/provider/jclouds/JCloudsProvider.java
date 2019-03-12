@@ -90,7 +90,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
-
+        log.info("Instance deleted successfully: " + instanceId);
     }
 
     @Override
@@ -184,6 +184,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
         jCloudsComputeServiceCache.removeComputeService(infrastructure);
+        log.info("Infrastructure deleted successfully: " + infrastructure.getId());
     }
 
     protected final Instance createInstanceFromNode(NodeMetadataImpl nodeMetadataImpl) {
