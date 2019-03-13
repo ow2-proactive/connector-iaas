@@ -54,10 +54,8 @@ import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
-import org.jclouds.openstack.nova.v2_0.extensions.KeyPairApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.v2_0.domain.Resource;
 import org.jclouds.scriptbuilder.ScriptBuilder;
@@ -77,7 +75,6 @@ import org.ow2.proactive.connector.iaas.model.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.microsoft.azure.management.compute.VirtualMachineExtension;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -120,13 +117,6 @@ public class OpenstackJCloudsProviderTest {
     @Mock
     private TagManager tagManager;
 
-    private KeyPair keyPair = KeyPair.builder()
-                                     .name("openstack-key-pair-" + UUID.randomUUID())
-                                     .publicKey("openstack-key-pair-public-key")
-                                     .build();
-
-    private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
-
     private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
     @Before
@@ -136,7 +126,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testCreateInstance() throws NumberFormatException, RunNodesException {
+    public void testCreateInstance() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
@@ -159,23 +149,11 @@ public class OpenstackJCloudsProviderTest {
                                                                    "1.0.0.2",
                                                                    "running");
 
-        //System.out.println(jcloudsProvider.getType());
-
-        //System.out.println(keyPair.getName());
-
-        //System.out.println( keyPair.toString());
-
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
         when(computeService.getContext()).thenReturn(contextMock);
 
         when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
-
-        //when(jcloudsProvider.buildNovaApi(any())).thenReturn(novaApi);
-
-        //when(jcloudsProvider.createKeyPair(infratructure,
-        //                                 instance)).thenReturn(new AbstractMap.SimpleImmutableEntry<>(keyPair.getName(),
-        //                                                                                            keyPair.toString()));
 
         when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
 
@@ -279,7 +257,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
+    public void testDeleteInfrastructure() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
@@ -311,7 +289,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testDeleteInstance() throws NumberFormatException, RunNodesException {
+    public void testDeleteInstance() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
@@ -331,7 +309,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
+    public void testGetAllInfrastructureInstances() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
@@ -412,7 +390,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
+    public void testExecuteScriptOnInstanceId() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                 "aws",
@@ -447,8 +425,7 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testExecuteScriptOnInstanceTag()
-            throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
+    public void testExecuteScriptOnInstanceTag() throws RunNodesException, RunScriptOnNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                 "aws",
