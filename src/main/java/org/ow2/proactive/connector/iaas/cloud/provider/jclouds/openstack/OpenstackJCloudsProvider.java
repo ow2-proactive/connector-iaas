@@ -103,7 +103,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         // Acquire or generate KeyPair name
         String publicKeyName;
-        if ((instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null)) {
+        if ((instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null) ||
+            (instance.getCredentials().getPublicKeyName().equals(""))) {
             publicKeyName = createKeyPair(infrastructure, instance).getKey();
             log.info("Openstack instance will use generated key-pair: " + publicKeyName);
         } else {
@@ -226,14 +227,18 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     private final Instance createInstanceFromNode(Server server) {
-        return Instance.builder()
-                       .id(region + "/" + server.getId())
-                       .tag(server.getName())
-                       .image(server.getImage().getName())
-                       .number("1")
-                       .hardware(Hardware.builder().type(server.getFlavor().getName()).build())
-                       .status(server.getStatus().name())
-                       .build();
+        Instance instance = Instance.builder()
+                                    .id(region + "/" + server.getId())
+                                    .tag(server.getName())
+                                    .image(server.getImage().getName())
+                                    .number("1")
+                                    .hardware(Hardware.builder().type(server.getFlavor().getName()).build())
+                                    .status(server.getStatus().name())
+                                    .build();
+
+        log.info("Created instance: " + instance.toString());
+
+        return instance;
     }
 
     @Override
