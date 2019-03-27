@@ -146,6 +146,9 @@ dependencies {
     compile ('org.apache.jclouds.provider:aws-ec2:2.1.0'){
         exclude module : 'jsr311-api'
     }
+    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.0'){
+        exclude module : 'jsr311-api'
+    }
 
     // Prevent the usage of an old version of SSHJ
     compile 'org.apache.jclouds.driver:jclouds-sshj:2.1.0'
