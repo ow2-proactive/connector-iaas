@@ -27,29 +27,64 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.google;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
+import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
+import org.ow2.proactive.connector.iaas.model.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
-import lombok.extern.log4j.Log4j2;
 
 
 @Component
-@Log4j2
 public class GCEJCloudsProvider extends JCloudsProvider {
 
     @Getter
     private final String type = "google-compute-engine";
 
+    @Autowired
+    private TagManager tagManager;
+
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-        throw new NotImplementedException("This method is not yet implemented.");
+        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+
+        TemplateBuilder templateBuilder = computeService.templateBuilder();
+
+        Template template = templateBuilder.build();
+
+        GoogleComputeEngineTemplateOptions templateOptions = template.getOptions()
+                                                                     .as(GoogleComputeEngineTemplateOptions.class);
+
+        // Add the tag key connector-iaas to mark the instance as a createdInstance managed by ProActive
+        templateOptions.userMetadata(tagManager.retrieveAllTags(instance.getOptions())
+                                               .stream()
+                                               .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+
+        try {
+            return computeService.createNodesInGroup(instance.getTag(),
+                                                     Integer.parseInt(instance.getNumber()),
+                                                     template)
+                                 .stream()
+                                 .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                                 .map(this::createInstanceFromNode)
+                                 .collect(Collectors.toSet());
+        } catch (RunNodesException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

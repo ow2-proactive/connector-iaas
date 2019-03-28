@@ -149,7 +149,10 @@ dependencies {
     compile ('org.apache.jclouds.provider:aws-ec2:2.1.2'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.0'){
+    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.2'){
+        exclude module : 'jsr311-api'
+    }
+    compile ('org.apache.jclouds:jclouds-allcompute:2.1.2'){
         exclude module : 'jsr311-api'
     }
 
