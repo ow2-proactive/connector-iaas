@@ -32,7 +32,7 @@ import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 public class InfrastructureFixture {
 
-    public static String getInfrastructureAsaString(String name, String type, String endPoint, String userName,
+    public static String getInfrastructureAsString(String name, String type, String endPoint, String userName,
             String password, InfrastructureScope scope, String region, String identityVersion) {
         JSONObject jsonObject = new JSONObject(getInfrastructure(name,
                                                                  type,
@@ -43,6 +43,11 @@ public class InfrastructureFixture {
                                                                  region,
                                                                  identityVersion));
         return jsonObject.toString();
+    }
+
+    public static String getInfrastructureAsString(String name, String type, String endPoint, String userName,
+            String password) {
+        return getInfrastructureAsString(name, type, endPoint, userName, password, null, null, null);
     }
 
     public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
@@ -59,6 +64,13 @@ public class InfrastructureFixture {
                                   scope,
                                   region,
                                   identityVersion);
+    }
+
+    public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
+            String password) {
+
+        return getInfrastructure(name, type, endPoint, username, password, null, null, null);
+
     }
 
     public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,

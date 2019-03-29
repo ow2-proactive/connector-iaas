@@ -72,6 +72,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     private static final String KEY_PAIR_PREFIX = "openstack-key-pair";
 
+    private static final String SINGLE_INSTANCE = "1";
+
     private String region;
 
     @Autowired
@@ -104,7 +106,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         // Acquire or generate KeyPair name
         String publicKeyName;
         if ((instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null) ||
-            (instance.getCredentials().getPublicKeyName().equals(""))) {
+            (instance.getCredentials().getPublicKeyName().isEmpty())) {
             publicKeyName = createKeyPair(infrastructure, instance).getKey();
             log.info("Openstack instance will use generated key-pair: " + publicKeyName);
         } else {
@@ -155,16 +157,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                                              .orElseThrow(() -> new ClientErrorException("No floating IP available in the floating IP pool",
                                                                                                                          Response.Status.BAD_REQUEST)));
 
-        try {
-            api.addToServer(ip.getIp(), instanceId);
-        } catch (Exception e) {
-            if (e.getMessage().contains("Unable to associate floating ip")) {
-                throw new ClientErrorException("A floating IP is already associated to the instance " + instanceId,
-                                               Response.Status.BAD_REQUEST);
-            } else {
-                throw new RuntimeException(e);
-            }
-        }
+        api.addToServer(ip.getIp(), instanceId);
 
         return ip.getIp();
     }
@@ -191,11 +184,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                                              .orElseThrow(() -> new ClientErrorException("No floating IP associated with this instance",
                                                                                                                          Response.Status.BAD_REQUEST)));
 
-        try {
-            api.removeFromServer(ip.getIp(), instanceId);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        api.removeFromServer(ip.getIp(), instanceId);
     }
 
     @Override
@@ -231,7 +220,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                     .id(region + "/" + server.getId())
                                     .tag(server.getName())
                                     .image(server.getImage().getName())
-                                    .number("1")
+                                    .number(SINGLE_INSTANCE)
                                     .hardware(Hardware.builder().type(server.getFlavor().getName()).build())
                                     .status(server.getStatus().name())
                                     .build();

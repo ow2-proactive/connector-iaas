@@ -83,7 +83,7 @@ public class JCloudsComputeServiceBuilder {
                                                                    infrastructure.getCredentials().getUsername(),
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
-                                                      .overrides(getOverrides(infrastructure));
+                                                      .overrides(getDefinedProperties(infrastructure));
 
         Optional.ofNullable(infrastructure.getEndpoint())
                 .filter(endPoint -> !endPoint.isEmpty())
@@ -97,7 +97,7 @@ public class JCloudsComputeServiceBuilder {
      * 
      * @return Properties object with the timeout policy.
      */
-    private Properties getOverrides(Infrastructure infrastructure) {
+    private Properties getDefinedProperties(Infrastructure infrastructure) {
         Properties properties = new Properties();
 
         // Add custom properties for Openstack with identity version 3

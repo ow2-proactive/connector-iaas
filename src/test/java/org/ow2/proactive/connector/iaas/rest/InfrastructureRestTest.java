@@ -68,22 +68,17 @@ public class InfrastructureRestTest {
     @Before
     public void init() {
         MockitoAnnotations.initMocks(this);
-        infrastructureStringFixture = InfrastructureFixture.getInfrastructureAsaString("id-openstack",
-                                                                                       "openstack",
-                                                                                       "endPoint",
-                                                                                       "userName",
-                                                                                       "password",
-                                                                                       null,
-                                                                                       null,
-                                                                                       null);
+        infrastructureStringFixture = InfrastructureFixture.getInfrastructureAsString("id-openstack",
+                                                                                      "openstack",
+                                                                                      "endPoint",
+                                                                                      "userName",
+                                                                                      "password");
+
         infrastructureFixture = InfrastructureFixture.getInfrastructure("id-openstack",
                                                                         "openstack",
                                                                         "endPoint",
                                                                         "userName",
-                                                                        "password",
-                                                                        null,
-                                                                        null,
-                                                                        null);
+                                                                        "password");
 
         instanceFixture = InstanceFixture.getInstance("instance-id",
                                                       "name",
