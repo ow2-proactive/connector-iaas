@@ -73,7 +73,10 @@ public class InfrastructureServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         infrastructureService.registerInfrastructure(infrastructure);
         verify(infrastructureCache, times(1)).registerInfrastructure(infrastructure);
     }
@@ -84,7 +87,10 @@ public class InfrastructureServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
         infrastructureService.registerInfrastructure(infrastructure);
@@ -97,7 +103,10 @@ public class InfrastructureServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
         infrastructureService.deleteInfrastructure(infrastructure);
@@ -113,7 +122,10 @@ public class InfrastructureServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         mockSupportedInfrastructures = ImmutableMap.of("id-aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
         infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
@@ -131,7 +143,10 @@ public class InfrastructureServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         mockSupportedInfrastructures = ImmutableMap.of("aws", infrastructure);
         when(infrastructureCache.getSupportedInfrastructures()).thenReturn(mockSupportedInfrastructures);
         assertThat(infrastructureService.getAllSupportedInfrastructure().get("aws"), is(infrastructure));

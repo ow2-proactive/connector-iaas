@@ -42,6 +42,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class JCloudsComputeServiceCacheTest {
@@ -67,14 +68,20 @@ public class JCloudsComputeServiceCacheTest {
                                                                                                                       "aws-ec2",
                                                                                                                       "endPoint",
                                                                                                                       "userName",
-                                                                                                                      "password"));
+                                                                                                                      "password",
+                                                                                                                      null,
+                                                                                                                      null,
+                                                                                                                      null));
         assertThat(computeService, is(not(nullValue())));
         verify(computeServiceBuilder,
                times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                        "aws-ec2",
                                                                                                        "endPoint",
                                                                                                        "userName",
-                                                                                                       "password"));
+                                                                                                       "password",
+                                                                                                       null,
+                                                                                                       null,
+                                                                                                       null));
     }
 
     @Test
@@ -83,34 +90,52 @@ public class JCloudsComputeServiceCacheTest {
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
 
         verify(computeServiceBuilder,
                times(1)).buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                        "aws-ec2",
                                                                                                        "endPoint",
                                                                                                        "userName",
-                                                                                                       "password"));
+                                                                                                       "password",
+                                                                                                       null,
+                                                                                                       null,
+                                                                                                       null));
     }
 
     @Test
@@ -119,12 +144,19 @@ public class JCloudsComputeServiceCacheTest {
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-openstack",
                                                                                       "openstack",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      new InfrastructureScope("project",
+                                                                                                              "admin"),
+                                                                                      "RegionOne",
+                                                                                      "3"));
 
         verify(computeServiceBuilder, times(2)).buildComputeServiceFromInfrastructure(any(Infrastructure.class));
     }
@@ -135,26 +167,38 @@ public class JCloudsComputeServiceCacheTest {
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
 
         computeServiceCache.removeComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                          "aws-ec2",
                                                                                          "endPoint",
                                                                                          "userName",
-                                                                                         "password"));
+                                                                                         "password",
+                                                                                         null,
+                                                                                         null,
+                                                                                         null));
 
         computeServiceCache.getComputeService(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                       "aws-ec2",
                                                                                       "endPoint",
                                                                                       "userName",
-                                                                                      "password"));
+                                                                                      "password",
+                                                                                      null,
+                                                                                      null,
+                                                                                      null));
 
         verify(computeServiceBuilder,
                times(2)).buildComputeServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                        "aws-ec2",
                                                                                                        "endPoint",
                                                                                                        "userName",
-                                                                                                       "password"));
+                                                                                                       "password",
+                                                                                                       null,
+                                                                                                       null,
+                                                                                                       null));
     }
 
 }

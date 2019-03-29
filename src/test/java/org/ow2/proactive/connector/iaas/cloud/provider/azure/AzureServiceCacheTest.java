@@ -72,14 +72,20 @@ public class AzureServiceCacheTest {
                                                                                                   "azure",
                                                                                                   null,
                                                                                                   "userName",
-                                                                                                  "password"));
+                                                                                                  "password",
+                                                                                                  null,
+                                                                                                  null,
+                                                                                                  null));
         assertThat(azureService, is(not(nullValue())));
         verify(azureServiceBuilder,
                times(1)).buildServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-azure",
                                                                                                 "azure",
                                                                                                 "endPoint",
                                                                                                 "userName",
-                                                                                                "password"));
+                                                                                                "password",
+                                                                                                null,
+                                                                                                null,
+                                                                                                null));
     }
 
     @Test
@@ -88,24 +94,36 @@ public class AzureServiceCacheTest {
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
         azureServiceCache.getService(InfrastructureFixture.getInfrastructure("id-azure",
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
         azureServiceCache.getService(InfrastructureFixture.getInfrastructure("id-azure",
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
 
         verify(azureServiceBuilder,
                times(1)).buildServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-azure",
                                                                                                 "azure",
                                                                                                 "endPoint",
                                                                                                 "userName",
-                                                                                                "password"));
+                                                                                                "password",
+                                                                                                null,
+                                                                                                null,
+                                                                                                null));
     }
 
     @Test
@@ -114,12 +132,18 @@ public class AzureServiceCacheTest {
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
         azureServiceCache.getService(InfrastructureFixture.getInfrastructure("id-azure2",
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
 
         verify(azureServiceBuilder, times(2)).buildServiceFromInfrastructure(any(Infrastructure.class));
     }
@@ -130,25 +154,37 @@ public class AzureServiceCacheTest {
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
 
         azureServiceCache.removeService(InfrastructureFixture.getInfrastructure("id-azure",
                                                                                 "azure",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password"));
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null));
 
         azureServiceCache.getService(InfrastructureFixture.getInfrastructure("id-azure",
                                                                              "azure",
                                                                              "endPoint",
                                                                              "userName",
-                                                                             "password"));
+                                                                             "password",
+                                                                             null,
+                                                                             null,
+                                                                             null));
 
         verify(azureServiceBuilder,
                times(2)).buildServiceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-azure",
                                                                                                 "azure",
                                                                                                 "endPoint",
                                                                                                 "userName",
-                                                                                                "password"));
+                                                                                                "password",
+                                                                                                null,
+                                                                                                null,
+                                                                                                null));
     }
 }

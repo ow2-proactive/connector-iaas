@@ -38,9 +38,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -73,16 +71,10 @@ import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeSer
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.Options;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.microsoft.azure.management.compute.VirtualMachineExtension;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -120,9 +112,10 @@ public class OpenstackJCloudsProviderTest {
     private Resource resource;
 
     @Mock
-    private TagManager tagManager;
+    private OpenstackUtil openstackUtil;
 
-    private Map<String, VirtualMachineExtension> virtualMachineExtensionsMap;
+    @Mock
+    private TagManager tagManager;
 
     private Tag connectorIaasTag = Tag.builder().key("connector-iaas-tag-key").value("default-value").build();
 
@@ -133,30 +126,36 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testCreateInstance() throws NumberFormatException, RunNodesException {
+    public void testCreateInstance() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               new InfrastructureScope("project",
+                                                                                                       "admin"),
+                                                                               "RegionOne",
+                                                                               "3");
 
-        Instance instance = InstanceFixture.getInstance("instance-id",
-                                                        "instance-name",
-                                                        "image",
-                                                        "2",
-                                                        "512",
-                                                        "2",
-                                                        "network_id_1",
-                                                        "77.154.227.148",
-                                                        "1.0.0.2",
-                                                        "running");
+        Instance instance = InstanceFixture.getInstanceWithKeyName("instance-id",
+                                                                   "instance-name",
+                                                                   "image",
+                                                                   "2",
+                                                                   "512",
+                                                                   "2",
+                                                                   "network_id_1",
+                                                                   "77.154.227.148",
+                                                                   "1.0.0.2",
+                                                                   "running");
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
         when(computeService.getContext()).thenReturn(contextMock);
 
         when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
+
+        when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
 
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
 
@@ -218,7 +217,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
@@ -255,13 +257,16 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
+    public void testDeleteInfrastructure() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -284,13 +289,16 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testDeleteInstance() throws NumberFormatException, RunNodesException {
+    public void testDeleteInstance() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -301,13 +309,16 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
+    public void testGetAllInfrastructureInstances() throws RunNodesException {
 
         Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -335,7 +346,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -359,7 +373,10 @@ public class OpenstackJCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -373,13 +390,16 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testExecuteScriptOnInstanceId() throws NumberFormatException, RunNodesException {
+    public void testExecuteScriptOnInstanceId() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -405,14 +425,16 @@ public class OpenstackJCloudsProviderTest {
     }
 
     @Test
-    public void testExecuteScriptOnInstanceTag()
-            throws NumberFormatException, RunNodesException, RunScriptOnNodesException {
+    public void testExecuteScriptOnInstanceTag() throws RunNodesException, RunScriptOnNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

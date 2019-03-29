@@ -68,14 +68,20 @@ public class VMWareServiceInstanceCacheTest {
                                                                                                                           "aws-ec2",
                                                                                                                           "endPoint",
                                                                                                                           "userName",
-                                                                                                                          "password"));
+                                                                                                                          "password",
+                                                                                                                          null,
+                                                                                                                          null,
+                                                                                                                          null));
         assertThat(serviceInstance, is(not(nullValue())));
         verify(serviceInstanceBuilder,
                times(1)).buildServiceInstanceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                         "aws-ec2",
                                                                                                         "endPoint",
                                                                                                         "userName",
-                                                                                                        "password"));
+                                                                                                        "password",
+                                                                                                        null,
+                                                                                                        null,
+                                                                                                        null));
     }
 
     @Test
@@ -84,34 +90,52 @@ public class VMWareServiceInstanceCacheTest {
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
 
         verify(serviceInstanceBuilder,
                times(1)).buildServiceInstanceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                         "aws-ec2",
                                                                                                         "endPoint",
                                                                                                         "userName",
-                                                                                                        "password"));
+                                                                                                        "password",
+                                                                                                        null,
+                                                                                                        null,
+                                                                                                        null));
     }
 
     @Test
@@ -120,12 +144,18 @@ public class VMWareServiceInstanceCacheTest {
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-openstack",
                                                                                         "openstack",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
 
         verify(serviceInstanceBuilder, times(2)).buildServiceInstanceFromInfrastructure(any(Infrastructure.class));
     }
@@ -136,26 +166,38 @@ public class VMWareServiceInstanceCacheTest {
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
 
         serviceInstanceCache.removeServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                            "aws-ec2",
                                                                                            "endPoint",
                                                                                            "userName",
-                                                                                           "password"));
+                                                                                           "password",
+                                                                                           null,
+                                                                                           null,
+                                                                                           null));
 
         serviceInstanceCache.getServiceInstance(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                         "aws-ec2",
                                                                                         "endPoint",
                                                                                         "userName",
-                                                                                        "password"));
+                                                                                        "password",
+                                                                                        null,
+                                                                                        null,
+                                                                                        null));
 
         verify(serviceInstanceBuilder,
                times(2)).buildServiceInstanceFromInfrastructure(InfrastructureFixture.getInfrastructure("id-aws-ec2",
                                                                                                         "aws-ec2",
                                                                                                         "endPoint",
                                                                                                         "userName",
-                                                                                                        "password"));
+                                                                                                        "password",
+                                                                                                        null,
+                                                                                                        null,
+                                                                                                        null));
     }
 
 }

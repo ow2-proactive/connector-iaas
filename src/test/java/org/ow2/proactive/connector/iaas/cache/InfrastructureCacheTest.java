@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class InfrastructureCacheTest {
@@ -59,7 +60,11 @@ public class InfrastructureCacheTest {
                                                                                                                                       "openstack",
                                                                                                                                       "endPoint",
                                                                                                                                       "userName",
-                                                                                                                                      "password"));
+                                                                                                                                      "password",
+                                                                                                                                      new InfrastructureScope("project",
+                                                                                                                                                              "admin"),
+                                                                                                                                      "RegionOne",
+                                                                                                                                      "3"));
     }
 
     @Test
@@ -68,14 +73,21 @@ public class InfrastructureCacheTest {
                                                                                            "openstack",
                                                                                            "endPoint",
                                                                                            "userName",
-                                                                                           "password"));
+                                                                                           "password",
+                                                                                           new InfrastructureScope("project",
+                                                                                                                   "admin"),
+                                                                                           "RegionOne",
+                                                                                           "3"));
         assertThat(infrastructureCache.getSupportedInfrastructures().size(), is(1));
         assertThat(infrastructureCache.getSupportedInfrastructures().get("id-openstack"),
                    is(InfrastructureFixture.getInfrastructure("id-openstack",
                                                               "openstack",
                                                               "endPoint",
                                                               "userName",
-                                                              "password")));
+                                                              "password",
+                                                              new InfrastructureScope("project", "admin"),
+                                                              "RegionOne",
+                                                              "3")));
     }
 
     @Test
@@ -84,13 +96,21 @@ public class InfrastructureCacheTest {
                                                                                            "openstack",
                                                                                            "endPoint",
                                                                                            "userName",
-                                                                                           "password"));
+                                                                                           "password",
+                                                                                           new InfrastructureScope("project",
+                                                                                                                   "admin"),
+                                                                                           "RegionOne",
+                                                                                           "3"));
 
         infrastructureCache.deleteInfrastructure(InfrastructureFixture.getInfrastructure("id-openstack",
                                                                                          "openstack",
                                                                                          "endPoint",
                                                                                          "userName",
-                                                                                         "password"));
+                                                                                         "password",
+                                                                                         new InfrastructureScope("project",
+                                                                                                                 "admin"),
+                                                                                         "RegionOne",
+                                                                                         "3"));
 
         assertThat(infrastructureCache.getSupportedInfrastructures(), is(not(nullValue())));
         assertThat(infrastructureCache.getSupportedInfrastructures().isEmpty(), is(true));

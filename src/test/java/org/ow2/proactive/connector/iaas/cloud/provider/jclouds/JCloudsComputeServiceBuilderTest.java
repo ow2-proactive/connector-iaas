@@ -34,7 +34,10 @@ import org.jclouds.aws.ec2.compute.AWSEC2ComputeService;
 import org.jclouds.compute.ComputeService;
 import org.junit.Before;
 import org.junit.Test;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
+import org.springframework.test.util.ReflectionTestUtils;
 
 
 public class JCloudsComputeServiceBuilderTest {
@@ -42,8 +45,16 @@ public class JCloudsComputeServiceBuilderTest {
     private JCloudsComputeServiceBuilder computeServiceBuilder;
 
     @Before
-    public void init() {
-        this.computeServiceBuilder = new JCloudsComputeServiceBuilder();
+    public void init() throws Exception {
+        computeServiceBuilder = new JCloudsComputeServiceBuilder();
+
+        ReflectionTestUtils.setField(computeServiceBuilder, "timeoutPortOpen", "60000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "timeoutScriptComplete", "60000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "requestTimeout", "10000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "connectionTimeout", "18000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "sshMaxRetries", "100", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "maxRetries", "1000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "openstackUtil", new OpenstackUtil(), OpenstackUtil.class);
     }
 
     @Test
@@ -52,7 +63,10 @@ public class JCloudsComputeServiceBuilderTest {
                                                                                                                                              "aws-ec2",
                                                                                                                                              "",
                                                                                                                                              "userName",
-                                                                                                                                             "password"));
+                                                                                                                                             "password",
+                                                                                                                                             null,
+                                                                                                                                             null,
+                                                                                                                                             null));
 
         assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
     }
@@ -63,7 +77,10 @@ public class JCloudsComputeServiceBuilderTest {
                                                                                                                                              "aws-ec2",
                                                                                                                                              null,
                                                                                                                                              "userName",
-                                                                                                                                             "password"));
+                                                                                                                                             "password",
+                                                                                                                                             null,
+                                                                                                                                             null,
+                                                                                                                                             null));
 
         assertThat(computerService, is(instanceOf(AWSEC2ComputeService.class)));
     }
@@ -74,7 +91,11 @@ public class JCloudsComputeServiceBuilderTest {
                                                                                                                                              "openstack-nova",
                                                                                                                                              "endPoint",
                                                                                                                                              "userName",
-                                                                                                                                             "password"));
+                                                                                                                                             "password",
+                                                                                                                                             new InfrastructureScope("project",
+                                                                                                                                                                     "admin"),
+                                                                                                                                             "RegionOne",
+                                                                                                                                             "3"));
 
         assertThat(computerService, is(not(instanceOf(AWSEC2ComputeService.class))));
     }

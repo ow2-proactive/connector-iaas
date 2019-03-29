@@ -25,42 +25,18 @@
  */
 package org.ow2.proactive.connector.iaas.model;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 
-@EqualsAndHashCode(exclude = { "type", "endpoint", "credentials", "authenticationEndpoint", "managementEndpoint",
-                               "resourceManagerEndpoint", "graphEndpoint", "toBeRemovedOnShutdown" })
+@EqualsAndHashCode
 @Getter
 @AllArgsConstructor
 @ToString
 @NoArgsConstructor
-public class Infrastructure {
+public class InfrastructureScope {
 
-    private String id;
+    // Scope prefix should be: [project, projectId, domain, domainId]
+    private String prefix;
 
-    private String type;
-
-    private String endpoint;
-
-    private InfrastructureCredentials credentials;
-
-    private String authenticationEndpoint;
-
-    private String managementEndpoint;
-
-    private String resourceManagerEndpoint;
-
-    private String graphEndpoint;
-
-    private boolean toBeRemovedOnShutdown;
-
-    private InfrastructureScope scope;
-
-    private String region;
-
-    private String identityVersion;
+    private String value;
 }

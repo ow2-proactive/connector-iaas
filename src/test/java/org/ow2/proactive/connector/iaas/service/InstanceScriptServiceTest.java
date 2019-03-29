@@ -71,7 +71,10 @@ public class InstanceScriptServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();
@@ -100,7 +103,10 @@ public class InstanceScriptServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(infrastructure);
 
         InstanceScript instanceScript = InstanceScriptFixture.simpleInstanceScriptNoscripts();
@@ -132,7 +138,10 @@ public class InstanceScriptServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         instanceScriptService.executeScriptOnInstance(infrastructure.getId(), "instanceId", instanceScript);
@@ -150,7 +159,10 @@ public class InstanceScriptServiceTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
         when(infrastructureService.getInfrastructure(infrastructure.getId())).thenReturn(null);
 
         instanceScriptService.executeScriptOnInstanceTag(infrastructure.getId(), "instanceTag", instanceScript);

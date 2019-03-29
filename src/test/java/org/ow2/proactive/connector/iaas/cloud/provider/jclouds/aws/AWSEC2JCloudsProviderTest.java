@@ -123,7 +123,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -192,7 +195,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -265,7 +271,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -310,7 +319,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -339,7 +351,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -409,7 +424,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -479,7 +497,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -496,7 +517,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -524,7 +548,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -552,7 +579,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -576,7 +606,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
-                                                                               "password");
+                                                                               "password",
+                                                                               null,
+                                                                               null,
+                                                                               null);
 
         when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
 
@@ -596,7 +629,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -629,7 +665,10 @@ public class AWSEC2JCloudsProviderTest {
                                                                                 "aws",
                                                                                 "endPoint",
                                                                                 "userName",
-                                                                                "password");
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

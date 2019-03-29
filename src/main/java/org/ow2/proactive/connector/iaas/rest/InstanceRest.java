@@ -76,17 +76,17 @@ public class InstanceRest {
             @QueryParam("allInstances") Boolean allInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.debug("Received get request for infrastructure " + infrastructureId + " and instance id " + instanceId);
+            log.info("Received get request for infrastructure " + infrastructureId + " and instance id " + instanceId);
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.debug("Received get request for infrastructure " + infrastructureId + " and instance tag " +
-                      instanceTag);
+            log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
+                     instanceTag);
             return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
         } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
-            log.debug("Received get all request for infrastructure " + infrastructureId);
+            log.info("Received get all request for infrastructure " + infrastructureId);
             return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
         } else {
-            log.debug("Received get all created request for infrastructure " + infrastructureId);
+            log.info("Received get all created request for infrastructure " + infrastructureId);
             return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
         }
     }

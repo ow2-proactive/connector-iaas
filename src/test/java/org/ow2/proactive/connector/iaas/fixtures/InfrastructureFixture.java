@@ -27,18 +27,31 @@ package org.ow2.proactive.connector.iaas.fixtures;
 
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.InfrastructureScope;
 
 
 public class InfrastructureFixture {
 
-    public static String getInfrastructureAsaString(String name, String type, String endPoint, String userName,
-            String password) {
-        JSONObject jsonObject = new JSONObject(getInfrastructure(name, type, endPoint, userName, password));
+    public static String getInfrastructureAsString(String name, String type, String endPoint, String userName,
+            String password, InfrastructureScope scope, String region, String identityVersion) {
+        JSONObject jsonObject = new JSONObject(getInfrastructure(name,
+                                                                 type,
+                                                                 endPoint,
+                                                                 userName,
+                                                                 password,
+                                                                 scope,
+                                                                 region,
+                                                                 identityVersion));
         return jsonObject.toString();
     }
 
-    public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
+    public static String getInfrastructureAsString(String name, String type, String endPoint, String userName,
             String password) {
+        return getInfrastructureAsString(name, type, endPoint, userName, password, null, null, null);
+    }
+
+    public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
+            String password, InfrastructureScope scope, String region, String identityVersion) {
         return new Infrastructure(name,
                                   type,
                                   endPoint,
@@ -47,7 +60,17 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  scope,
+                                  region,
+                                  identityVersion);
+    }
+
+    public static Infrastructure getInfrastructure(String name, String type, String endPoint, String username,
+            String password) {
+
+        return getInfrastructure(name, type, endPoint, username, password, null, null, null);
+
     }
 
     public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,
@@ -64,7 +87,10 @@ public class InfrastructureFixture {
                                   managementEndpoint,
                                   resourceManagerEndpoint,
                                   graphEndpoint,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String secret,
@@ -80,7 +106,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type) {
@@ -92,7 +121,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  false);
+                                  false,
+                                  null,
+                                  null,
+                                  null);
     }
 
     public static Infrastructure getSimpleInfrastructure(String type, boolean removeOnShutdown) {
@@ -104,7 +136,10 @@ public class InfrastructureFixture {
                                   null,
                                   null,
                                   null,
-                                  removeOnShutdown);
+                                  removeOnShutdown,
+                                  null,
+                                  null,
+                                  null);
     }
 
 }
