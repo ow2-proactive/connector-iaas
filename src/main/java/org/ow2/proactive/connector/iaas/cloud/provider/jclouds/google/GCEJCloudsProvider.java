@@ -26,10 +26,12 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.google;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.Template;
@@ -47,9 +49,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 
 @Component
+@Log4j2
 public class GCEJCloudsProvider extends JCloudsProvider {
 
     @Getter
@@ -73,6 +77,16 @@ public class GCEJCloudsProvider extends JCloudsProvider {
         templateOptions.userMetadata(tagManager.retrieveAllTags(instance.getOptions())
                                                .stream()
                                                .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+
+        Optional.ofNullable(instance.getCredentials())
+                .map(InstanceCredentials::getUsername)
+                .filter(StringUtils::isNotBlank)
+                .ifPresent(templateOptions::overrideLoginUser);
+
+        Optional.ofNullable(instance.getCredentials())
+                .map(InstanceCredentials::getPublicKey)
+                .filter(StringUtils::isNotBlank)
+                .ifPresent(templateOptions::authorizePublicKey);
 
         try {
             return computeService.createNodesInGroup(instance.getTag(),
@@ -104,7 +118,15 @@ public class GCEJCloudsProvider extends JCloudsProvider {
 
     @Override
     protected RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
-        throw new NotImplementedException("This method is not yet implemented.");
+        // retrieve the passed username or read the default username from the property file
+        String username = Optional.ofNullable(credentials.getUsername())
+                                  .filter(StringUtils::isNotBlank)
+                                  .orElse(getVmUserLogin());
+        log.info("Credentials used to execute script on instance: [username=" + username + ", privateKey=" +
+                 credentials.getPrivateKey() + "]");
+        return RunScriptOptions.Builder.runAsRoot(false)
+                                       .overrideLoginUser(username)
+                                       .overrideLoginPrivateKey(credentials.getPrivateKey());
     }
 
 }
