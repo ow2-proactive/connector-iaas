@@ -28,6 +28,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
@@ -78,9 +79,11 @@ public class JCloudsComputeServiceBuilder {
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
 
+        String domain = infrastructure.getCredentials().getDomain();
+        String identityPrefix = StringUtils.isNotBlank(domain) ? (domain + ":") : "";
+        String identity = identityPrefix + infrastructure.getCredentials().getUsername();
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
-                                                      .credentials(infrastructure.getCredentials().getDomain() + ":" +
-                                                                   infrastructure.getCredentials().getUsername(),
+                                                      .credentials(identity,
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
                                                       .overrides(getDefinedProperties(infrastructure));
