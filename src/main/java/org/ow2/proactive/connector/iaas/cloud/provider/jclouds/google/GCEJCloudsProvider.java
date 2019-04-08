@@ -41,9 +41,11 @@ import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
+import org.ow2.proactive.connector.iaas.model.Hardware;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
+import org.ow2.proactive.connector.iaas.model.Options;
 import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -68,6 +70,18 @@ public class GCEJCloudsProvider extends JCloudsProvider {
 
         TemplateBuilder templateBuilder = computeService.templateBuilder();
 
+        Optional.ofNullable(instance.getHardware())
+                .map(Hardware::getMinRam)
+                .filter(StringUtils::isNotBlank)
+                .map(Integer::parseInt)
+                .ifPresent(templateBuilder::minRam);
+
+        Optional.ofNullable(instance.getImage())
+                .filter(StringUtils::isNotBlank)
+                .ifPresent(templateBuilder::imageNameMatches);
+
+        Optional.ofNullable(instance.getOptions()).map(Options::getRegion).ifPresent(templateBuilder::locationId);
+
         Template template = templateBuilder.build();
 
         GoogleComputeEngineTemplateOptions templateOptions = template.getOptions()
@@ -87,6 +101,15 @@ public class GCEJCloudsProvider extends JCloudsProvider {
                 .map(InstanceCredentials::getPublicKey)
                 .filter(StringUtils::isNotBlank)
                 .ifPresent(templateOptions::authorizePublicKey);
+
+        Optional.ofNullable(instance.getCredentials())
+                .map(InstanceCredentials::getPrivateKey)
+                .filter(StringUtils::isNotBlank)
+                .ifPresent(templateOptions::overrideLoginPrivateKey);
+
+        Optional.ofNullable(instance.getInitScript())
+                .map(this::buildScriptToExecuteString)
+                .ifPresent(templateOptions::runScript);
 
         try {
             return computeService.createNodesInGroup(instance.getTag(),
