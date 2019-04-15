@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.google;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,6 +77,12 @@ public class GCEJCloudsProvider extends JCloudsProvider {
                 .map(Integer::parseInt)
                 .ifPresent(templateBuilder::minRam);
 
+        Optional.ofNullable(instance.getHardware())
+                .map(Hardware::getMinCores)
+                .filter(StringUtils::isNotBlank)
+                .map(Double::parseDouble)
+                .ifPresent(templateBuilder::minCores);
+
         Optional.ofNullable(instance.getImage())
                 .filter(StringUtils::isNotBlank)
                 .ifPresent(templateBuilder::imageNameMatches);
@@ -84,41 +91,47 @@ public class GCEJCloudsProvider extends JCloudsProvider {
 
         Template template = templateBuilder.build();
 
-        GoogleComputeEngineTemplateOptions templateOptions = template.getOptions()
-                                                                     .as(GoogleComputeEngineTemplateOptions.class);
+        GoogleComputeEngineTemplateOptions gceTemplateOptions = template.getOptions()
+                                                                        .as(GoogleComputeEngineTemplateOptions.class);
 
         // Add the tag key connector-iaas to mark the instance as a createdInstance managed by ProActive
-        templateOptions.userMetadata(tagManager.retrieveAllTags(instance.getOptions())
-                                               .stream()
-                                               .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+        gceTemplateOptions.userMetadata(tagManager.retrieveAllTags(instance.getOptions())
+                                                  .stream()
+                                                  .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
 
         Optional.ofNullable(instance.getCredentials())
                 .map(InstanceCredentials::getUsername)
                 .filter(StringUtils::isNotBlank)
-                .ifPresent(templateOptions::overrideLoginUser);
+                .ifPresent(gceTemplateOptions::overrideLoginUser);
 
         Optional.ofNullable(instance.getCredentials())
                 .map(InstanceCredentials::getPublicKey)
                 .filter(StringUtils::isNotBlank)
-                .ifPresent(templateOptions::authorizePublicKey);
+                .ifPresent(gceTemplateOptions::authorizePublicKey);
 
         Optional.ofNullable(instance.getCredentials())
                 .map(InstanceCredentials::getPrivateKey)
                 .filter(StringUtils::isNotBlank)
-                .ifPresent(templateOptions::overrideLoginPrivateKey);
+                .ifPresent(gceTemplateOptions::overrideLoginPrivateKey);
 
         Optional.ofNullable(instance.getInitScript())
+                .filter(Objects::nonNull)
                 .map(this::buildScriptToExecuteString)
-                .ifPresent(templateOptions::runScript);
+                .ifPresent(gceTemplateOptions::runScript);
+
+        log.debug(String.format("template for createNodesInGroup(%s): %s", instance.getTag(), template));
 
         try {
-            return computeService.createNodesInGroup(instance.getTag(),
-                                                     Integer.parseInt(instance.getNumber()),
-                                                     template)
-                                 .stream()
-                                 .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
-                                 .map(this::createInstanceFromNode)
-                                 .collect(Collectors.toSet());
+            Set<Instance> createdInstances = computeService.createNodesInGroup(instance.getTag(),
+                                                                               Integer.parseInt(instance.getNumber()),
+                                                                               template)
+                                                           .stream()
+                                                           .map(computeMetadata -> (NodeMetadataImpl) computeMetadata)
+                                                           .peek(log::debug)
+                                                           .map(this::createInstanceFromNode)
+                                                           .collect(Collectors.toSet());
+            log.info("Created Instances: " + createdInstances);
+            return createdInstances;
         } catch (RunNodesException e) {
             throw new RuntimeException(e);
         }
