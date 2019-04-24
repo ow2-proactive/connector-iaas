@@ -180,6 +180,25 @@ public class InstanceFixture {
                             customScriptUrl);
     }
 
+    public static Instance getInstanceWithInitScript(String tag, String image, String number, String minRam,
+            String minCores, String username, String publicKey, String privateKey, String region, String[] initScript) {
+        return new Instance(null,
+                            tag,
+                            image,
+                            number,
+                            null,
+                            HardwareFixtures.getHardware(minRam, minCores),
+                            null,
+                            CredentialsFixtures.getInstanceCredentialsWithKeys(username, publicKey, privateKey),
+                            Options.builder().region(region).build(),
+                            InstanceScriptFixture.getInstanceScript(initScript),
+                            null);
+    }
+
+    public static Instance getInstanceWithNullArgs(String tag, String number) {
+        return new Instance(null, tag, null, number, null, null, null, null, null, null, null);
+    }
+
     public static Instance getInstanceWithSpotPrice(String id, String tag, String image, String number, String minRam,
             String minCores, String publicAddress, String privateAddress, String status, String spotPrice) {
         return new Instance(id,

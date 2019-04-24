@@ -39,6 +39,7 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.Processor;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.scriptbuilder.ScriptBuilder;
@@ -199,7 +200,9 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                                                          .getRam()))
                                                                   .minCores(String.valueOf(nodeMetadataImpl.getHardware()
                                                                                                            .getProcessors()
-                                                                                                           .size()))
+                                                                                                           .stream()
+                                                                                                           .mapToDouble(Processor::getCores)
+                                                                                                           .sum()))
                                                                   .type(nodeMetadataImpl.getHardware().getType().name())
                                                                   .build())
                                          .orElse(new Hardware()))
