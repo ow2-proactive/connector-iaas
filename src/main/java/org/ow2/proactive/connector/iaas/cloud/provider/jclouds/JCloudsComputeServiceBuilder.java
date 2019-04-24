@@ -54,6 +54,8 @@ public class JCloudsComputeServiceBuilder {
 
     private static final String MAX_RETRIES = "jclouds.max-retries";
 
+    private static final String DOMAIN_SEPARATOR = ":";
+
     @Value("${  connector-iaas.jclouds.request-timeout:10000}")
     private String requestTimeout;
 
@@ -78,8 +80,16 @@ public class JCloudsComputeServiceBuilder {
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
 
+        String domain = infrastructure.getCredentials().getDomain();
+
+        if (domain != null && !domain.isEmpty()) {
+            domain = domain.concat(DOMAIN_SEPARATOR);
+        } else {
+            domain = "";
+        }
+
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
-                                                      .credentials(infrastructure.getCredentials().getDomain() + ":" +
+                                                      .credentials(domain +
                                                                    infrastructure.getCredentials().getUsername(),
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
