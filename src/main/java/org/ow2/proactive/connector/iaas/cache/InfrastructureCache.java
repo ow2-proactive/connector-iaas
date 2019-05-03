@@ -45,14 +45,14 @@ public class InfrastructureCache {
         this.supportedInfrastructures = ImmutableMap.of();
     }
 
-    public void registerInfrastructure(Infrastructure infrastructure) {
+    public synchronized void registerInfrastructure(Infrastructure infrastructure) {
         Map<String, Infrastructure> tempInfrastructures = cloneSupportedInfrastructures();
 
         tempInfrastructures.put(infrastructure.getId(), infrastructure);
         supportedInfrastructures = ImmutableMap.copyOf(tempInfrastructures);
     }
 
-    public void deleteInfrastructure(Infrastructure infrastructure) {
+    public synchronized void deleteInfrastructure(Infrastructure infrastructure) {
         Map<String, Infrastructure> tempInfrastructures = cloneSupportedInfrastructures();
 
         tempInfrastructures.remove(infrastructure.getId());
