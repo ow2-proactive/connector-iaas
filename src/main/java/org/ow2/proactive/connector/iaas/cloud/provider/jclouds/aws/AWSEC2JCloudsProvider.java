@@ -183,7 +183,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 .filter(securityGroupName -> !securityGroupName.isEmpty())
                 .ifPresent(securityGroupName -> template.getOptions()
                                                         .as(AWSEC2TemplateOptions.class)
-                                                        .securityGroups(options.getSecurityGroupNames()));
+                                                        .securityGroupIds(options.getSecurityGroupNames()));
 
         Optional.ofNullable(options.getSubnetId())
                 .filter(subnetId -> !subnetId.isEmpty())
