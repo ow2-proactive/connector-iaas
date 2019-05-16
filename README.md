@@ -144,6 +144,25 @@ The generic information for creating one or several instances are :
     $ curl -i -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag":"TAG","image":"IMAGE","number":"1","minCores":"1","minRam":"1024"}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
 ```
 
+### Create an instance with a specific keyname
+```
+$ curl -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag": "instancetest", "image": "eu-west-1/ami-00035f41c82244dab", "number": "1","credentials":{"publicKeyName":"pansaws","username":"ubuntu"}, "hardware": {"minRam":"512", "minCores":"1"}}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
+```
+
+### Create an instance with a specific keyname and group
+If the group is not related to an existing VPC, you are not obliged to mention the network Id
+
+```
+  curl -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag": "instancetest", "image": "eu-west-1/ami-00035f41c82244dab", "number": "1","credentials":{"publicKeyName":"pansaws","username":"ubuntu"}, "options":{"securityGroupNames":["sg-xxxxx"]}, "hardware": {"minRam":"512", "minCores":"1"}}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
+```
+
+### Create an instance with a specific keyname, group and network
+
+```
+ curl -H "Accept: application/json" -H "Content-Type: application/json" -X POST -d '{"tag": "instancetest", "image": "eu-west-1/ami-00035f41c82244dab", "number": "1", "credentials": {"publicKeyName":"pansaws","username":"ubuntu"}, "options" :{"securityGroupNames": ["sg-xxxxx"],"subnetId":"subnet-ed82189a"}, "hardware": {"minRam":"512", "minCores":"1"}}' http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
+```
+
+
 ### List an infrastructure instances
 ```
     $ curl -k -X GET http://IP_ADDRESS:9080/infrastructures/INFRASTRUCTURE_ID/instances
