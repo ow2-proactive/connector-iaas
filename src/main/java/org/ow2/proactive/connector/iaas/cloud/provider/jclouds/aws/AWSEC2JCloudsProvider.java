@@ -101,7 +101,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         Optional.ofNullable(instance.getOptions()).ifPresent(options -> addOptions(template, options));
 
         // Add tags
-        addTags(template, tagManager.retrieveAllTags(instance.getOptions()));
+        addTags(template, tagManager.retrieveAllTags(infrastructure.getId(), instance.getOptions()));
 
         addCredential(template,
                       Optional.ofNullable(instance.getCredentials())

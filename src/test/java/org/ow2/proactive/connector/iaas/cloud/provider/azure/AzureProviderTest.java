@@ -366,7 +366,8 @@ public class AzureProviderTest {
         when(virtualMachineCreatedResources.values()).thenReturn(createdVirtualMachines);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         // Tests
         Infrastructure infrastructure;
@@ -520,7 +521,8 @@ public class AzureProviderTest {
         when(virtualMachineCreatedResources.values()).thenReturn(createdVirtualMachines);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         // Tests
         Infrastructure infrastructure;

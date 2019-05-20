@@ -30,8 +30,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Answers.RETURNS_SELF;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,6 +73,8 @@ import com.google.common.collect.Sets;
  */
 public class GCEJCloudsProviderTest {
     private static final String TYPE = "google-compute-engine";
+
+    private static final String INFRA_ID = "id-google-compute-engine";
 
     private static final String INSTANCE_GROUP = "instance-group";
 
@@ -143,7 +144,7 @@ public class GCEJCloudsProviderTest {
 
     @Test
     public void testCreateInstance() {
-        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure(TYPE);
+        Infrastructure infrastructure = InfrastructureFixture.getSimpleInfrastructure(INFRA_ID, TYPE);
 
         Instance instance = InstanceFixture.getInstanceWithInitScript(INSTANCE_GROUP,
                                                                       IMAGE,
@@ -161,7 +162,8 @@ public class GCEJCloudsProviderTest {
         when(templateBuilder.build()).thenReturn(template);
         when(template.getOptions()).thenReturn(templateOptions);
         when(templateOptions.as(GoogleComputeEngineTemplateOptions.class)).thenReturn(gceTemplateOptions);
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
 
         Set<Instance> createdInstances = gceJCloudsProvider.createInstance(infrastructure, instance);
 
@@ -196,7 +198,7 @@ public class GCEJCloudsProviderTest {
         when(templateBuilder.build()).thenReturn(template);
         when(template.getOptions()).thenReturn(templateOptions);
         when(templateOptions.as(GoogleComputeEngineTemplateOptions.class)).thenReturn(gceTemplateOptions);
-        when(tagManager.retrieveAllTags(any())).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
+        when(tagManager.retrieveAllTags(anyString(), any())).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
 
         Set<Instance> createdInstances = gceJCloudsProvider.createInstance(infrastructure, instance);
 
@@ -243,7 +245,7 @@ public class GCEJCloudsProviderTest {
         when(templateBuilder.build()).thenReturn(template);
         when(template.getOptions()).thenReturn(templateOptions);
         when(templateOptions.as(GoogleComputeEngineTemplateOptions.class)).thenReturn(gceTemplateOptions);
-        when(tagManager.retrieveAllTags(any())).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
+        when(tagManager.retrieveAllTags(anyString(), any())).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
 
         Set<Instance> createdInstances = gceJCloudsProvider.createInstance(infrastructure, instance);
 
@@ -287,7 +289,8 @@ public class GCEJCloudsProviderTest {
         when(templateBuilder.build()).thenReturn(template);
         when(template.getOptions()).thenReturn(templateOptions);
         when(templateOptions.as(GoogleComputeEngineTemplateOptions.class)).thenReturn(gceTemplateOptions);
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(CONNECTOR_IAAS_TAG));
 
         when(computeService.createNodesInGroup(INSTANCE_GROUP,
                                                INSTANCE_NUM,

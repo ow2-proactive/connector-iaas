@@ -46,31 +46,44 @@ public class TagManager {
 
     private static final String DEFAULT_CONNECTOR_IAAS_TAG_VALUE = "default-tag";
 
+    private static final String DEFAULT_INFRASTRUCTURE_ID_TAG_KEY = "proactive-infrastructure-id";
+
     @Getter
     private final Tag connectorIaasTag;
 
+    @Getter
+    private final Tag infrastructureIdTag;
+
     @Autowired
     public TagManager(@Value("${connector-iaas-tag.key}") String connectorIaasTagKey,
-            @Value("${connector-iaas-tag.value}") String connectorIaasTagValue) {
+            @Value("${connector-iaas-tag.value}") String connectorIaasTagValue,
+            @Value("${infrastructure-id-tag.key}") String infrastructureIdTagKey) {
         connectorIaasTag = Tag.builder()
                               .key(Optional.ofNullable(connectorIaasTagKey).orElse(DEFAULT_CONNECTOR_IAAS_TAG_KEY))
                               .value(Optional.ofNullable(connectorIaasTagValue)
                                              .orElse(DEFAULT_CONNECTOR_IAAS_TAG_VALUE))
                               .build();
+        infrastructureIdTag = Tag.builder()
+                                 .key(Optional.ofNullable(infrastructureIdTagKey)
+                                              .orElse(DEFAULT_INFRASTRUCTURE_ID_TAG_KEY))
+                                 .build();
     }
 
     /**
-     * Collect tags and ensure that mandatory connector-iaas tag key is not duplicated
+     * Collect tags and ensure that mandatory tags key connector-iaas and infrastructure-id are not duplicated
      *
      * @param instanceOptions   instance's options that may contain tags
      * @return  the list of all tags
      */
-    public List<Tag> retrieveAllTags(Options instanceOptions) {
+    public List<Tag> retrieveAllTags(String infrastructureId, Options instanceOptions) {
+        infrastructureIdTag.setValue(infrastructureId);
         List<Tag> tags = new ArrayList<>();
         tags.add(connectorIaasTag);
+        tags.add(infrastructureIdTag);
         Optional.ofNullable(instanceOptions).map(Options::getTags).ifPresent(optionalTags -> {
             tags.addAll(optionalTags.stream()
                                     .filter(optionalTag -> !optionalTag.getKey().equals(connectorIaasTag.getKey()))
+                                    .filter(optionalTag -> !optionalTag.getKey().equals(infrastructureIdTag.getKey()))
                                     .collect(Collectors.toList()));
         });
         return tags;

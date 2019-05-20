@@ -250,7 +250,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                                                                region,
                                                                                                                                                                                networkOptions,
                                                                                                                                                                                instanceNumber);
-                                                                                return prepareVirtualMachine(instance,
+                                                                                return prepareVirtualMachine(infrastructure.getId(),
+                                                                                                             instance,
                                                                                                              azureService,
                                                                                                              resourceGroup,
                                                                                                              region,
@@ -313,9 +314,9 @@ public class AzureProvider implements CloudProvider {
         return Optional.ofNullable(azureService.virtualMachineCustomImages().getById(id));
     }
 
-    protected Creatable<VirtualMachine> prepareVirtualMachine(Instance instance, Azure azureService,
-            ResourceGroup resourceGroup, Region region, String instanceTag, VirtualMachineCustomImage image,
-            Creatable<NetworkInterface> creatableNetworkInterface) {
+    protected Creatable<VirtualMachine> prepareVirtualMachine(String infrastructureId, Instance instance,
+            Azure azureService, ResourceGroup resourceGroup, Region region, String instanceTag,
+            VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
 
         // Configure the VM depending on the OS type
         VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged creatableVirtualMachineWithImage;
@@ -376,7 +377,7 @@ public class AzureProvider implements CloudProvider {
         });
 
         // Set tags
-        return creatableVMWithSize.withTags(tagManager.retrieveAllTags(instance.getOptions())
+        return creatableVMWithSize.withTags(tagManager.retrieveAllTags(infrastructureId, instance.getOptions())
                                                       .stream()
                                                       .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }
