@@ -80,7 +80,7 @@ public class JCloudsComputeServiceBuilder {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
 
         String domain = infrastructure.getCredentials().getDomain();
-        
+
         String identityPrefix = StringUtils.isNotBlank(domain) ? (domain + ":") : "";
 
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
