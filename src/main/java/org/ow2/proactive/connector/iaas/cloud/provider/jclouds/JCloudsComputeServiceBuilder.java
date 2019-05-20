@@ -80,10 +80,12 @@ public class JCloudsComputeServiceBuilder {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
 
         String domain = infrastructure.getCredentials().getDomain();
+
         String identityPrefix = StringUtils.isNotBlank(domain) ? (domain + ":") : "";
-        String identity = identityPrefix + infrastructure.getCredentials().getUsername();
+
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
-                                                      .credentials(identity,
+                                                      .credentials(identityPrefix +
+                                                                   infrastructure.getCredentials().getUsername(),
                                                                    infrastructure.getCredentials().getPassword())
                                                       .modules(modules)
                                                       .overrides(getDefinedProperties(infrastructure));
