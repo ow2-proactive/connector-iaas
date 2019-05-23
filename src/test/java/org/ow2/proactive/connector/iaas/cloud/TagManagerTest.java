@@ -26,8 +26,7 @@
 package org.ow2.proactive.connector.iaas.cloud;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,38 +43,44 @@ public class TagManagerTest {
 
     @Before
     public void init() {
-        tagManager = new TagManager("connector-iaas-tag", "default-value");
+        tagManager = new TagManager("connector-iaas-tag", "default-value", "infrastructure-id-tag");
     }
 
     @Test
     public void testRetrieveTagsWithoutOptions() {
-        List<Tag> tags = tagManager.retrieveAllTags(null);
-        assertTrue(tags.size() == 1);
+        List<Tag> tags = tagManager.retrieveAllTags(null, null);
+        assertTrue(tags.size() == 2);
         assertThat(tags.get(0).getKey(), is("connector-iaas-tag"));
         assertThat(tags.get(0).getValue(), is("default-value"));
+        assertThat(tags.get(1).getKey(), is("infrastructure-id-tag"));
     }
 
     @Test
     public void testRetrieveTagsWithUniqueOptions() {
+        final String infrastructureId = "infra-id";
         List<Tag> optionsTags = new ArrayList<>();
         optionsTags.add(Tag.builder().key("random-tag1").value("random-value1").build());
         optionsTags.add(Tag.builder().key("random-tag2").value("random-value2").build());
         optionsTags.add(Tag.builder().key("random-tag3").value("random-value3").build());
         Options options = Options.builder().tags(optionsTags).build();
-        List<Tag> tags = tagManager.retrieveAllTags(options);
-        assertTrue(tags.size() == 4);
+        List<Tag> tags = tagManager.retrieveAllTags(infrastructureId, options);
+        assertTrue(tags.size() == 5);
     }
 
     @Test
     public void testRetrieveTagsWithDuplicatedMandatoryKey() {
+        final String infrastructureId = "infra-id";
         List<Tag> optionsTags = new ArrayList<>();
         optionsTags.add(Tag.builder().key("connector-iaas-tag").value("new-default-value").build());
         optionsTags.add(Tag.builder().key("random-tag").value("random-value").build());
+        optionsTags.add(Tag.builder().key("infrastructure-id-tag").value("new-infra-id-value").build());
         Options options = Options.builder().tags(optionsTags).build();
-        List<Tag> tags = tagManager.retrieveAllTags(options);
-        assertTrue(tags.size() == 2);
+        List<Tag> tags = tagManager.retrieveAllTags(infrastructureId, options);
+        assertTrue(tags.size() == 3);
         assertThat(tags.stream().filter(tag -> tag.getKey().equals("connector-iaas-tag")).findAny().get().getValue(),
                    is("default-value"));
+        assertThat(tags.stream().filter(tag -> tag.getKey().equals("infrastructure-id-tag")).findAny().get().getValue(),
+                   is("infra-id"));
     }
 
 }

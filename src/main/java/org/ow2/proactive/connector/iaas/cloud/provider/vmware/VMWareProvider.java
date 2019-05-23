@@ -102,7 +102,7 @@ public class VMWareProvider implements CloudProvider {
         Folder destinationFolder = getDestinationFolderFromImage(image, rootFolder);
         VirtualMachine vmToClone = getVirtualMachineByNameOrUUID(instanceImageId, rootFolder);
 
-        List<Tag> tags = tagManager.retrieveAllTags(instance.getOptions());
+        List<Tag> tags = tagManager.retrieveAllTags(infrastructure.getId(), instance.getOptions());
 
         return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber())).mapToObj(instanceIndexStartAt1 -> {
             String uniqueInstanceTag = createUniqueInstanceTag(instance.getTag(), instanceIndexStartAt1);

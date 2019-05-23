@@ -95,7 +95,7 @@ public class GCEJCloudsProvider extends JCloudsProvider {
                                                                         .as(GoogleComputeEngineTemplateOptions.class);
 
         // Add the tag key connector-iaas to mark the instance as a createdInstance managed by ProActive
-        gceTemplateOptions.userMetadata(tagManager.retrieveAllTags(instance.getOptions())
+        gceTemplateOptions.userMetadata(tagManager.retrieveAllTags(infrastructure.getId(), instance.getOptions())
                                                   .stream()
                                                   .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
 

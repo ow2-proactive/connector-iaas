@@ -109,13 +109,18 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Override
     public Set<Instance> getCreatedInfrastructureInstances(Infrastructure infrastructure) {
         Tag connectorIaasTag = tagManager.getConnectorIaasTag();
+        Tag infrastructureIdTag = tagManager.getInfrastructureIdTag();
         return createInstancesFromNodes(getAllNodes(infrastructure).stream()
                                                                    .filter(node -> node.getUserMetadata()
-                                                                                       .keySet()
-                                                                                       .contains(connectorIaasTag.getKey()) &&
+                                                                                       .containsKey(connectorIaasTag.getKey()) &&
                                                                                    node.getUserMetadata()
                                                                                        .get(connectorIaasTag.getKey())
-                                                                                       .equals(connectorIaasTag.getValue()))
+                                                                                       .equals(connectorIaasTag.getValue()) &&
+                                                                                   node.getUserMetadata()
+                                                                                       .containsKey(infrastructureIdTag.getKey()) &&
+                                                                                   node.getUserMetadata()
+                                                                                       .get(infrastructureIdTag.getKey())
+                                                                                       .equals(infrastructure.getId()))
                                                                    .collect(Collectors.toSet()));
     }
 

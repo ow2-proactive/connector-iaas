@@ -191,7 +191,8 @@ public class OpenstackJCloudsProviderTest {
         when(computeService.listNodes()).thenReturn(nodes);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         when(computeService.createNodesInGroup(instance.getTag(),
                                                Integer.parseInt(instance.getNumber()),
@@ -243,7 +244,8 @@ public class OpenstackJCloudsProviderTest {
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set nodesMetaData = Sets.newHashSet();
         NodeMetadataImpl nodeMetadataImpl = mock(NodeMetadataImpl.class);

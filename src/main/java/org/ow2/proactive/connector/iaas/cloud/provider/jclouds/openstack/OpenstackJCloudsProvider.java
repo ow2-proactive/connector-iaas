@@ -121,7 +121,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         }
 
         // Set tags before returning options
-        return createServerOptions.metadata(tagManager.retrieveAllTags(instance.getOptions())
+        return createServerOptions.metadata(tagManager.retrieveAllTags(infrastructure.getId(), instance.getOptions())
                                                       .stream()
                                                       .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
     }

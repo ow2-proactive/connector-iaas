@@ -201,7 +201,8 @@ public class VMWareProviderTest {
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 
@@ -258,7 +259,8 @@ public class VMWareProviderTest {
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         // Create the new instance and check if the MAC address is set as option
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
@@ -305,7 +307,8 @@ public class VMWareProviderTest {
         when(task.waitForTask()).thenReturn(Task.SUCCESS);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set<Instance> createdInstances = vmWareProvider.createInstance(infrastructure, instance);
 

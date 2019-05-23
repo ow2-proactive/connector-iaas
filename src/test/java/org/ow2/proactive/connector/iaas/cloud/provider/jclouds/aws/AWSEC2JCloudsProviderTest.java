@@ -31,6 +31,7 @@ import static org.jclouds.scriptbuilder.domain.Statements.exec;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -174,7 +175,8 @@ public class AWSEC2JCloudsProviderTest {
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 
@@ -248,7 +250,8 @@ public class AWSEC2JCloudsProviderTest {
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
         // Tags
-        when(tagManager.retrieveAllTags(any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
+        when(tagManager.retrieveAllTags(anyString(),
+                                        any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
         Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
 

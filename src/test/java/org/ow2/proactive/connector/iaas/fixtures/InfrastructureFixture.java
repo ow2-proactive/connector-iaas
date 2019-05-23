@@ -127,6 +127,21 @@ public class InfrastructureFixture {
                                   null);
     }
 
+    public static Infrastructure getSimpleInfrastructure(String id, String type) {
+        return new Infrastructure(id,
+                                  type,
+                                  "endPoint",
+                                  CredentialsFixtures.getInfrastructureCredentials("userName", "password"),
+                                  null,
+                                  null,
+                                  null,
+                                  null,
+                                  false,
+                                  null,
+                                  null,
+                                  null);
+    }
+
     public static Infrastructure getSimpleInfrastructure(String type, boolean removeOnShutdown) {
         return new Infrastructure("id-" + type,
                                   type,
