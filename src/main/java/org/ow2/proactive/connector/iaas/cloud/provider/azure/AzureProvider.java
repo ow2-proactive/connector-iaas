@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -351,9 +352,8 @@ public class AzureProvider implements CloudProvider {
         // Add init script(s) using dedicated Microsoft extension
         Optional.ofNullable(instance.getInitScript()).map(InstanceScript::getScripts).ifPresent(scripts -> {
             if (scripts.length > 0) {
-                StringBuilder concatenatedScripts = new StringBuilder();
-                Lists.newArrayList(scripts)
-                     .forEach(script -> concatenatedScripts.append(script).append(SCRIPT_SEPARATOR));
+                StringJoiner concatenatedScripts = new StringJoiner(SCRIPT_SEPARATOR);
+                Lists.newArrayList(scripts).forEach(script -> concatenatedScripts.add(script));
                 if (operatingSystemType.equals(OperatingSystemTypes.LINUX)) {
                     creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
                                        .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
@@ -721,9 +721,9 @@ public class AzureProvider implements CloudProvider {
     protected List<ScriptResult> executeScriptOnVM(VirtualMachine vm, InstanceScript instanceScript) {
 
         // Concatenate all provided scripts in one (Multiple VMExtensions per handler not supported)
-        StringBuilder concatenatedScripts = new StringBuilder();
+        StringJoiner concatenatedScripts = new StringJoiner(SCRIPT_SEPARATOR);
         Arrays.stream(instanceScript.getScripts()).forEach(script -> {
-            concatenatedScripts.append(script).append(SCRIPT_SEPARATOR);
+            concatenatedScripts.add(script);
         });
 
         // Update existing or install new extension
