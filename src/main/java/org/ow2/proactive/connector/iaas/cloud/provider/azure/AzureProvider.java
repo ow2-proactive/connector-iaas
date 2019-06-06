@@ -25,8 +25,13 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -348,8 +353,7 @@ public class AzureProvider implements CloudProvider {
         Optional.ofNullable(instance.getInitScript()).map(InstanceScript::getScripts).ifPresent(scripts -> {
             if (scripts.length > 0) {
                 StringJoiner concatenatedScripts = new StringJoiner(SCRIPT_SEPARATOR);
-                Lists.newArrayList(scripts)
-                     .forEach(script -> concatenatedScripts.add(script));
+                Lists.newArrayList(scripts).forEach(script -> concatenatedScripts.add(script));
                 if (operatingSystemType.equals(OperatingSystemTypes.LINUX)) {
                     creatableVMWithSize.defineNewExtension(createUniqueScriptName(instanceTag))
                                        .withPublisher(SCRIPT_EXTENSION_PUBLISHER_LINUX)
