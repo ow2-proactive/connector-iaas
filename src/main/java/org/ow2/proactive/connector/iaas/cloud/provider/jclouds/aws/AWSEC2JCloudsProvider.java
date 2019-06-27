@@ -94,6 +94,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                         .minRam(Integer.parseInt(instance.getHardware().getMinRam()))
                                                         .minCores(Double.parseDouble(instance.getHardware()
                                                                                              .getMinCores()))
+                                                        .locationId(getRegionFromImage(instance))
                                                         .imageId(instance.getImage());
 
         Template template = templateBuilder.build();
