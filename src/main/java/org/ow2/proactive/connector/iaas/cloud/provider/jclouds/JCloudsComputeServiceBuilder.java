@@ -67,10 +67,10 @@ public class JCloudsComputeServiceBuilder {
     @Value("${connector-iaas.openstack.jclouds.compute.timeout.script-complete:60000}")
     private String timeoutScriptComplete;
 
-    @Value("${connector-iaas.aws.jclouds.ssh.max-retries:100}")
+    @Value("${connector-iaas.aws.jclouds.ssh.max-retries:7}")
     private String sshMaxRetries;
 
-    @Value("${connector-iaas.aws.jclouds.max-retries:1000}")
+    @Value("${connector-iaas.aws.jclouds.max-retries:5}")
     private String maxRetries;
 
     @Autowired
