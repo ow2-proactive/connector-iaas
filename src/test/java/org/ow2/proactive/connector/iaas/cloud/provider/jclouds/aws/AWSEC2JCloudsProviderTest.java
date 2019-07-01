@@ -86,6 +86,10 @@ import jersey.repackaged.com.google.common.collect.Sets;
 
 public class AWSEC2JCloudsProviderTest {
 
+    private static final String REGION = "region";
+
+    private static final String IMAGE = REGION + "/ami-image";
+
     @InjectMocks
     private AWSEC2JCloudsProvider jcloudsProvider;
 
@@ -135,7 +139,7 @@ public class AWSEC2JCloudsProviderTest {
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
-                                                        "image",
+                                                        IMAGE,
                                                         "2",
                                                         "512",
                                                         "2",
@@ -147,6 +151,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateBuilder.minCores(Double.parseDouble(instance.getHardware()
                                                                  .getMinCores()))).thenReturn(templateBuilder);
+
+        when(templateBuilder.locationId(REGION)).thenReturn(templateBuilder);
 
         when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
@@ -208,7 +214,7 @@ public class AWSEC2JCloudsProviderTest {
 
         Instance instance = InstanceFixture.getInstanceWithSpotPrice("instance-id",
                                                                      "instance-name",
-                                                                     "image",
+                                                                     IMAGE,
                                                                      "2",
                                                                      "512",
                                                                      "2",
@@ -221,6 +227,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateBuilder.minCores(Double.parseDouble(instance.getHardware()
                                                                  .getMinCores()))).thenReturn(templateBuilder);
+
+        when(templateBuilder.locationId(REGION)).thenReturn(templateBuilder);
 
         when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
@@ -285,7 +293,7 @@ public class AWSEC2JCloudsProviderTest {
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
-                                                        "image",
+                                                        IMAGE,
                                                         "2",
                                                         "512",
                                                         "1",
@@ -297,6 +305,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateBuilder.minCores(Double.parseDouble(instance.getHardware()
                                                                  .getMinCores()))).thenReturn(templateBuilder);
+
+        when(templateBuilder.locationId(REGION)).thenReturn(templateBuilder);
 
         when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
@@ -365,7 +375,7 @@ public class AWSEC2JCloudsProviderTest {
 
         Instance instance = InstanceFixture.getInstanceWithSecurityGroup("instance-id",
                                                                          "instance-name",
-                                                                         "image",
+                                                                         IMAGE,
                                                                          "2",
                                                                          "512",
                                                                          "2",
@@ -378,6 +388,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateBuilder.minCores(Double.parseDouble(instance.getHardware()
                                                                  .getMinCores()))).thenReturn(templateBuilder);
+
+        when(templateBuilder.locationId(REGION)).thenReturn(templateBuilder);
 
         when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
@@ -438,7 +450,7 @@ public class AWSEC2JCloudsProviderTest {
 
         Instance instance = InstanceFixture.getInstanceWithSubnetId("instance-id",
                                                                     "instance-name",
-                                                                    "image",
+                                                                    IMAGE,
                                                                     "2",
                                                                     "512",
                                                                     "2",
@@ -451,6 +463,8 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateBuilder.minCores(Double.parseDouble(instance.getHardware()
                                                                  .getMinCores()))).thenReturn(templateBuilder);
+
+        when(templateBuilder.locationId(REGION)).thenReturn(templateBuilder);
 
         when(templateBuilder.imageId(instance.getImage())).thenReturn(templateBuilder);
 
