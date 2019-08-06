@@ -1,3 +1,5 @@
+import com.github.jk1.license.render.*
+
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -6,6 +8,7 @@ apply plugin: 'spring-boot'
 apply plugin: 'war'
 apply plugin: "org.sonarqube"
 apply from: "$rootDir/gradle/ext/coding-format.gradle"
+apply plugin: 'com.github.jk1.dependency-license-report'
 
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
@@ -52,6 +55,7 @@ buildscript {
     classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
     classpath "com.diffplug.gradle.spotless:spotless:2.4.0"
     classpath "org.ow2.proactive:coding-rules:1.0.0"
+    classpath 'com.github.jk1:gradle-license-report:1.7'
   }
   dependencies {
     delete "gradle/ext"
@@ -264,4 +268,10 @@ allprojects {
     }
 
 
+}
+
+
+licenseReport {
+    configurations = ['runtime']
+    renderers = [new InventoryHtmlReportRenderer()]
 }
