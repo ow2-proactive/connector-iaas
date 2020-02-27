@@ -39,6 +39,7 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
@@ -210,6 +211,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         log.info("Openstack key-pair created: " + keyPair.getName() + " [" + keyPair.toString() + "]");
         return new SimpleImmutableEntry<>(keyPair.getName(), keyPair.toString());
+    }
+
+    @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
     }
 
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName) {

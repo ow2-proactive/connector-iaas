@@ -37,6 +37,7 @@ import java.util.stream.IntStream;
 
 import javax.ws.rs.NotSupportedException;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -382,6 +383,11 @@ public class VMWareProvider implements CloudProvider {
     @Override
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
     }
 
     private VirtualMachine cloneVM(VirtualMachine vm, String newVMname, Instance instance, Folder rootFolder,

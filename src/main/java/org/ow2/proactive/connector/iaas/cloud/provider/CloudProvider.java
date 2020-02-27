@@ -63,4 +63,6 @@ public interface CloudProvider {
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String desiredIp);
 
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance);
+
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region);
 }

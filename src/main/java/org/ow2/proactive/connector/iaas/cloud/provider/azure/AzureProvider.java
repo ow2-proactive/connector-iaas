@@ -38,6 +38,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.Hardware;
@@ -901,6 +902,11 @@ public class AzureProvider implements CloudProvider {
     @Override
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
     }
 
     private static String unsupportedOperatingSystemError(String operatingSystem) {

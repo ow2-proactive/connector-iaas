@@ -29,10 +29,12 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Optional;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -68,6 +70,25 @@ public class KeyPairRest {
         return Optional.ofNullable(privateKey)
                        .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
                        .orElse(Response.serverError().build());
+    }
+
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{infrastructureId}/keypairs")
+    public Response deleteKeyPair(@PathParam("infrastructureId") String infrastructureId,
+            @QueryParam("keyPairName") String keyPairName, @QueryParam("region") String region) {
+        log.info("Receive delete request for key pair [{}] under infrastructure [{}] in region [{}] ",
+                 keyPairName,
+                 infrastructureId,
+                 region);
+        try {
+            keyPairService.deleteKeyPair(infrastructureId, keyPairName, region);
+        } catch (Exception e) {
+            log.error("Error during delete key pair {}: {}", keyPairName, e);
+            return Response.serverError().build();
+        }
+        return Response.ok().build();
     }
 
 }

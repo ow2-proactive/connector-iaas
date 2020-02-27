@@ -303,6 +303,13 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         }
     }
 
+    @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
+        keyPairApi.deleteKeyPairInRegion(region, keyPairName);
+        log.info("Removed the key pair [{}] in the region [{}]", keyPairName, region);
+    }
+
     private KeyPairApi getKeyPairApi(Infrastructure infrastructure) {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
         EC2Api ec2Api = computeService.getContext().unwrapApi(EC2Api.class);

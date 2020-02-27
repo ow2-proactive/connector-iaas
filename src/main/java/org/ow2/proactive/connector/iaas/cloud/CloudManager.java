@@ -106,4 +106,8 @@ public class CloudManager {
         return cloudProviderPerType.get(infrastructure.getType()).createKeyPair(infrastructure, instance);
     }
 
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        cloudProviderPerType.get(infrastructure.getType()).deleteKeyPair(infrastructure, keyPairName, region);
+    }
+
 }
