@@ -26,17 +26,20 @@
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
@@ -74,6 +77,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     private static final String SINGLE_INSTANCE = "1";
 
+    private static Map<String, String> autoCreatedKeyNamePerInstance = new HashMap<>();
+
     private String region;
 
     @Autowired
@@ -94,10 +99,17 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         CreateServerOptions serverOptions = createOptions(infrastructure, instance);
         log.info("Openstack instance will use options: " + serverOptions.toString());
 
-        return IntStream.rangeClosed(1, Integer.valueOf(instance.getNumber()))
-                        .mapToObj(i -> createOpenstackInstance(instance, serverApi, serverOptions))
-                        .map(this::createInstanceFromNode)
-                        .collect(Collectors.toSet());
+        Set<Instance> createdInstances = new HashSet<>();
+        for (int i = 0; i < Integer.valueOf(instance.getNumber()); i++) {
+            Server server = createOpenstackInstance(instance, serverApi, serverOptions);
+            Instance createdInstance = this.createInstanceFromNode(server);
+            createdInstances.add(createdInstance);
+            if (isPublicKeyNameNotSet(instance)) {
+                autoCreatedKeyNamePerInstance.put(createdInstance.getId(), serverOptions.getKeyPairName());
+            }
+        }
+
+        return createdInstances;
 
     }
 
@@ -105,8 +117,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         // Acquire or generate KeyPair name
         String publicKeyName;
-        if ((instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null) ||
-            (instance.getCredentials().getPublicKeyName().isEmpty())) {
+        if (isPublicKeyNameNotSet(instance)) {
             publicKeyName = createKeyPair(infrastructure, instance).getKey();
             log.info("Openstack instance will use generated key-pair: " + publicKeyName);
         } else {
@@ -124,6 +135,11 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         return createServerOptions.metadata(tagManager.retrieveAllTags(infrastructure.getId(), instance.getOptions())
                                                       .stream()
                                                       .collect(Collectors.toMap(Tag::getKey, Tag::getValue)));
+    }
+
+    private boolean isPublicKeyNameNotSet(Instance instance) {
+        return (instance.getCredentials() == null) || (instance.getCredentials().getPublicKeyName() == null) ||
+               (instance.getCredentials().getPublicKeyName().isEmpty());
     }
 
     private boolean isNetworkIdSet(Network network) {
@@ -197,6 +213,17 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         return new SimpleImmutableEntry<>(keyPair.getName(), keyPair.toString());
     }
 
+    @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
+    }
+
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName) {
+        NovaApi novaApi = buildNovaApi(infrastructure);
+        novaApi.getKeyPairApi(region).get().delete(keyPairName);
+        log.info("Remove the auto-generated openstack key-pair: " + keyPairName);
+    }
+
     private void validatePlateformOperation(NovaApi novaApi) {
         if (!novaApi.getFloatingIPApi(region).isPresent()) {
             throw new NotSupportedException("Operation not supported by the targeted Openstack version");
@@ -239,6 +266,16 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                                                                .password(credentials.getPassword())
                                                                                                .authenticateSudo(false)
                                                                                                .build());
+    }
+
+    @Override
+    public void deleteInstance(Infrastructure infrastructure, String instanceId) {
+        super.deleteInstance(infrastructure, instanceId);
+        String keyPairName = autoCreatedKeyNamePerInstance.get(instanceId);
+        if (keyPairName != null) {
+            deleteKeyPair(infrastructure, keyPairName);
+            autoCreatedKeyNamePerInstance.remove(instanceId);
+        }
     }
 
     protected NovaApi buildNovaApi(Infrastructure infrastructure) {

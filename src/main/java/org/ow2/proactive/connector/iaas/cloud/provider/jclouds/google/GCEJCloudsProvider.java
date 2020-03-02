@@ -153,6 +153,11 @@ public class GCEJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
+    }
+
+    @Override
     protected RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
         // retrieve the passed username or read the default username from the property file
         String username = Optional.ofNullable(credentials.getUsername())

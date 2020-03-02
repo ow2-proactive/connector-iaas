@@ -31,6 +31,7 @@ import java.util.Optional;
 import javax.ws.rs.NotFoundException;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,14 @@ public class KeyPairService {
                        .map(infrastructure -> cloudManager.createKeyPair(infrastructure, instance))
                        .orElseThrow(() -> new NotFoundException("infrastructure id : " + infrastructureId +
                                                                 " does not exists"));
+    }
+
+    public void deleteKeyPair(String infrastructureId, String keyPairName, String region) {
+        Infrastructure infrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                                                .orElseThrow(() -> new NotFoundException("infrastructure id : " +
+                                                                                         infrastructureId +
+                                                                                         " does not exists"));
+        cloudManager.deleteKeyPair(infrastructure, keyPairName, region);
     }
 
 }
