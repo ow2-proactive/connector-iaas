@@ -38,7 +38,6 @@ import lombok.experimental.Wither;
                                "initScript" })
 @Getter
 @AllArgsConstructor
-@ToString
 @NoArgsConstructor
 @Wither
 @Builder
@@ -65,5 +64,22 @@ public class Instance {
     private InstanceScript initScript;
 
     private String customScriptUrl;
+
+    @Override
+    public String toString() {
+        return String.format("{id=%s; tag=%s; image=%s; number=%s; status=%s; hardware=%s; network=%s; credentialUsername=%s; credentialPublicKeyName=%s; options=%s; initScript=%s; customScriptUrl=%s}",
+                             id,
+                             tag,
+                             image,
+                             number,
+                             status,
+                             hardware,
+                             network,
+                             credentials.getUsername(),
+                             credentials.getPublicKeyName(),
+                             options,
+                             initScript,
+                             customScriptUrl);
+    }
 
 }
