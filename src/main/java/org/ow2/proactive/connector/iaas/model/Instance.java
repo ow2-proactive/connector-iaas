@@ -67,7 +67,7 @@ public class Instance {
 
     @Override
     public String toString() {
-        return String.format("{id=%s; tag=%s; image=%s; number=%s; status=%s; hardware=%s; network=%s; credentialUsername=%s; credentialPublicKeyName=%s; options=%s; initScript=%s; customScriptUrl=%s}",
+        return String.format("{id=%s; tag=%s; image=%s; number=%s; status=%s; hardware=%s; network=%s; credential=%s; options=%s; initScript=%s; customScriptUrl=%s}",
                              id,
                              tag,
                              image,
@@ -75,8 +75,7 @@ public class Instance {
                              status,
                              hardware,
                              network,
-                             credentials.getUsername(),
-                             credentials.getPublicKeyName(),
+                             credentials,
                              options,
                              initScript,
                              customScriptUrl);
