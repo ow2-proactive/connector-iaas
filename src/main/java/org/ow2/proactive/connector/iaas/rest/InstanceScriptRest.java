@@ -66,7 +66,7 @@ public class InstanceScriptRest {
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             final String instanceScriptJson) {
         log.info("Received request to execute script on infrastructure " + infrastructureId + " and instance id " +
-                 instanceId + " and instance tag " + instanceTag + " with parameters " + instanceScriptJson);
+                 instanceId + " and instance tag " + instanceTag);
         InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
         final List<ScriptResult> scriptResults = Optional.ofNullable(instanceId)
                                                          .map(i -> Lists.newArrayList(instanceScriptService.executeScriptOnInstance(infrastructureId,

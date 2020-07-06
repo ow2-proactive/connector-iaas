@@ -366,8 +366,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .filter(StringUtils::isNotEmpty)
                                   .filter(StringUtils::isNotBlank)
                                   .orElse(getVmUserLogin());
-        log.info("Credentials used to execute script on instance: [username=" + username + ", privateKey=" +
-                 credentials.getPrivateKey() + "]");
+        log.info("Credentials used to execute script on instance: [username=" + username + "]");
         // Currently in AWS EC2 root login is forbidden, as well as
         // username/password login. So the only way to login to run the script
         // is by giving username/private key credentials
@@ -408,8 +407,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     private RunScriptOptions buildDefaultRunScriptOptions(String keyPairRegion) {
         SimpleImmutableEntry<String, String> defaultKeyPairInRegion = generatedKeyPairsPerAwsRegion.get(keyPairRegion);
         Optional.ofNullable(defaultKeyPairInRegion)
-                .ifPresent(keyPair -> log.info("Default script options: username=" + getVmUserLogin() +
-                                               ", privateKey=" + keyPair.getValue()));
+                .ifPresent(keyPair -> log.info("Default script options: username=" + getVmUserLogin()));
         return Optional.ofNullable(defaultKeyPairInRegion)
                        .map(keyPair -> RunScriptOptions.Builder.runAsRoot(false)
                                                                .overrideLoginUser(getVmUserLogin())
