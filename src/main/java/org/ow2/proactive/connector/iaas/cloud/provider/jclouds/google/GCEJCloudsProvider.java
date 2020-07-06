@@ -163,8 +163,7 @@ public class GCEJCloudsProvider extends JCloudsProvider {
         String username = Optional.ofNullable(credentials.getUsername())
                                   .filter(StringUtils::isNotBlank)
                                   .orElse(getVmUserLogin());
-        log.info("Credentials used to execute script on instance: [username=" + username + ", privateKey=" +
-                 credentials.getPrivateKey() + "]");
+        log.info("Credentials used to execute script on instance: [username=" + username + "]");
         return RunScriptOptions.Builder.runAsRoot(false)
                                        .overrideLoginUser(username)
                                        .overrideLoginPrivateKey(credentials.getPrivateKey());

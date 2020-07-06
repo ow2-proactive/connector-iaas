@@ -259,8 +259,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     @Override
     public RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials) {
-        log.info("Credentials used to execute script on instance: [username=" + credentials.getUsername() +
-                 ", password=" + credentials.getPassword() + "]");
+        log.info("Credentials used to execute script on instance: [username=" + credentials.getUsername() + "]");
         return RunScriptOptions.Builder.runAsRoot(false)
                                        .overrideLoginCredentials(new LoginCredentials.Builder().user(credentials.getUsername())
                                                                                                .password(credentials.getPassword())

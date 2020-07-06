@@ -91,8 +91,8 @@ public class InfrastructureRest {
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response registerInfrastructure(final String infrastructureJson) {
-        log.info("Received create request with parameters " + infrastructureJson);
         Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
+        log.info("Received create request with parameters " + infrastructure);
         return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
     }
 

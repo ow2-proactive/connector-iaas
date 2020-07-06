@@ -35,7 +35,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @Getter
 @AllArgsConstructor
-@ToString
 @NoArgsConstructor
 public class InstanceCredentials {
 
@@ -48,4 +47,9 @@ public class InstanceCredentials {
     private String publicKey;
 
     private String privateKey;
+
+    @Override
+    public String toString() {
+        return String.format("{username=%s; publicKeyName=%s}", username, publicKeyName);
+    }
 }
