@@ -64,8 +64,8 @@ public class KeyPairRest {
     @Produces("application/json")
     @Path("{infrastructureId}/keypairs")
     public Response createKeyPair(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        log.info("Receive create request for infrastructure " + infrastructureId + " with parameter " + instanceJson);
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+        log.info("Receive create request for infrastructure " + infrastructureId + " with parameter " + instance);
         SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
         return Optional.ofNullable(privateKey)
                        .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())

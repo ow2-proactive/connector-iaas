@@ -63,8 +63,8 @@ public class InstanceRest {
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instanceJson);
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
         return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
     }
 
