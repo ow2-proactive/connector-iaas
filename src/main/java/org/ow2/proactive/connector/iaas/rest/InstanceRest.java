@@ -76,7 +76,8 @@ public class InstanceRest {
             @QueryParam("allInstances") Boolean allInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " + instanceId);
+            log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
+                     instanceId);
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
             log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
