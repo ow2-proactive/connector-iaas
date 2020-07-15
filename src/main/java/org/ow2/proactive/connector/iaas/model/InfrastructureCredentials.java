@@ -35,7 +35,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 @Getter
 @AllArgsConstructor
-@ToString
+@ToString(exclude = { "password" })
 @NoArgsConstructor
 public class InfrastructureCredentials {
 
