@@ -752,6 +752,22 @@ public class AzureProvider implements CloudProvider {
     }
 
     @Override
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        return azureServiceCache.getService(infrastructure)
+                                .virtualMachines()
+                                .sizes()
+                                .listByRegion(infrastructure.getRegion())
+                                .parallelStream()
+                                .map(vms -> Hardware.builder()
+                                                    .type(vms.name())
+                                                    .minCores("" + vms.numberOfCores())
+                                                    .minSpeed("-1")
+                                                    .minRam("" + vms.memoryInMB())
+                                                    .build())
+                                .collect(Collectors.toSet());
+    }
+
+    @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
         azureServiceCache.removeService(infrastructure);
     }

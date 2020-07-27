@@ -29,11 +29,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Set;
 
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.*;
 
 
 public interface CloudProvider {
@@ -55,6 +51,8 @@ public interface CloudProvider {
             InstanceScript instanceScript);
 
     public Set<Image> getAllImages(Infrastructure infrastructure);
+
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure);
 
     public void deleteInfrastructure(Infrastructure infrastructure);
 

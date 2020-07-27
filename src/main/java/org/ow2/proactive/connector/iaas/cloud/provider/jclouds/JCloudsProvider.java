@@ -188,6 +188,25 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     @Override
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listHardwareProfiles()
+                                                                 .parallelStream()
+                                                                 .map(hw -> Hardware.builder()
+                                                                                    .minCores("" + hw.getProcessors()
+                                                                                                     .stream()
+                                                                                                     .mapToDouble(Processor::getCores)
+                                                                                                     .sum())
+                                                                                    .minRam("" + hw.getRam())
+                                                                                    .type(hw.getType().toString())
+                                                                                    .minSpeed("" + hw.getProcessors()
+                                                                                                     .stream()
+                                                                                                     .mapToDouble(Processor::getSpeed)
+                                                                                                     .sum())
+                                                                                    .build())
+                                                                 .collect(Collectors.toSet());
+    }
+
+    @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
         jCloudsComputeServiceCache.removeComputeService(infrastructure);
         log.info("Infrastructure deleted successfully: " + infrastructure.getId());

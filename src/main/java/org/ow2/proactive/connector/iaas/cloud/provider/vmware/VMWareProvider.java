@@ -366,6 +366,11 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        throw new NotSupportedException("Operation not supported for VMWare");
+    }
+
+    @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
         vmWareServiceInstanceCache.removeServiceInstance(infrastructure);
     }
