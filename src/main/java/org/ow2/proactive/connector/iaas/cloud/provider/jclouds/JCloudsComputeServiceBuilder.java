@@ -31,6 +31,8 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
+import org.jclouds.View;
+import org.jclouds.aws.ec2.reference.AWSEC2Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.config.ComputeServiceProperties;
@@ -94,7 +96,8 @@ public class JCloudsComputeServiceBuilder {
                 .filter(endPoint -> !endPoint.isEmpty())
                 .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
 
-        return contextBuilder.buildView(ComputeServiceContext.class).getComputeService();
+        ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+        return context.getComputeService();
     }
 
     /**
@@ -118,6 +121,10 @@ public class JCloudsComputeServiceBuilder {
 
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
+
+        // set AMI queries to nothing
+        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
+        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
 
         log.info("Infrastructure properties: " + properties.toString());
 
