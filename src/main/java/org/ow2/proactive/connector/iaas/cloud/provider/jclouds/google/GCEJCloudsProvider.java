@@ -71,21 +71,32 @@ public class GCEJCloudsProvider extends JCloudsProvider {
 
         TemplateBuilder templateBuilder = computeService.templateBuilder();
 
-        Optional.ofNullable(instance.getHardware())
-                .map(Hardware::getMinRam)
-                .filter(StringUtils::isNotBlank)
-                .map(Integer::parseInt)
-                .ifPresent(templateBuilder::minRam);
+        if (Optional.ofNullable(instance.getHardware())
+                    .map(Hardware::getType)
+                    .filter(StringUtils::isNoneBlank)
+                    .isPresent()) {
 
-        Optional.ofNullable(instance.getHardware())
-                .map(Hardware::getMinCores)
-                .filter(StringUtils::isNotBlank)
-                .map(Double::parseDouble)
-                .ifPresent(templateBuilder::minCores);
+            templateBuilder.hardwareId(instance.getHardware().getType());
 
-        Optional.ofNullable(instance.getImage())
-                .filter(StringUtils::isNotBlank)
-                .ifPresent(templateBuilder::imageNameMatches);
+        } else {
+
+            Optional.ofNullable(instance.getHardware())
+                    .map(Hardware::getMinRam)
+                    .filter(StringUtils::isNotBlank)
+                    .map(Integer::parseInt)
+                    .ifPresent(templateBuilder::minRam);
+
+            Optional.ofNullable(instance.getHardware())
+                    .map(Hardware::getMinCores)
+                    .filter(StringUtils::isNotBlank)
+                    .map(Double::parseDouble)
+                    .ifPresent(templateBuilder::minCores);
+
+            Optional.ofNullable(instance.getImage())
+                    .filter(StringUtils::isNotBlank)
+                    .ifPresent(templateBuilder::imageNameMatches);
+
+        }
 
         Optional.ofNullable(instance.getOptions()).map(Options::getRegion).ifPresent(templateBuilder::locationId);
 

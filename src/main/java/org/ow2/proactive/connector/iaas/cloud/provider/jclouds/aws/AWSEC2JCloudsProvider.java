@@ -53,11 +53,7 @@ import org.jclouds.ec2.features.KeyPairApi;
 import org.jclouds.ec2.features.SecurityGroupApi;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
-import org.ow2.proactive.connector.iaas.model.Options;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -96,11 +92,17 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
 
         TemplateBuilder templateBuilder = computeService.templateBuilder()
-                                                        .minRam(Integer.parseInt(instance.getHardware().getMinRam()))
-                                                        .minCores(Double.parseDouble(instance.getHardware()
-                                                                                             .getMinCores()))
                                                         .locationId(getRegionFromImage(instance))
                                                         .imageId(instance.getImage());
+        if (Optional.ofNullable(instance.getHardware())
+                    .map(Hardware::getType)
+                    .filter(StringUtils::isNoneBlank)
+                    .isPresent()) {
+            templateBuilder.hardwareId(instance.getHardware().getType());
+        } else {
+            templateBuilder.minRam(Integer.parseInt(instance.getHardware().getMinRam()))
+                           .minCores(Double.parseDouble(instance.getHardware().getMinCores()));
+        }
 
         Template template = templateBuilder.build();
 
