@@ -36,6 +36,8 @@ public interface CloudProvider {
 
     public String getType();
 
+    public Set<String> listAvailableRegions(Infrastructure infrastructure);
+
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance);
 
     public void deleteInstance(Infrastructure infrastructure, String instanceId);

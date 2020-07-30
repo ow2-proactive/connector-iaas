@@ -159,6 +159,11 @@ public class AzureProvider implements CloudProvider {
     protected String defaultPrivateNetworkCidr;
 
     @Override
+    public Set<String> listAvailableRegions(Infrastructure infrastructure) {
+        return Arrays.stream(Region.values()).map(Region::name).collect(Collectors.toSet());
+    }
+
+    @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         Azure azureService = azureServiceCache.getService(infrastructure);

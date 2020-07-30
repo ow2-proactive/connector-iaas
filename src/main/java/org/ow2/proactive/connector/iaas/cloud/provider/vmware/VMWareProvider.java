@@ -93,6 +93,11 @@ public class VMWareProvider implements CloudProvider {
     private TagManager tagManager;
 
     @Override
+    public Set<String> listAvailableRegions(Infrastructure infrastructure) {
+        throw new NotSupportedException("Operation not supported for VMWare");
+    }
+
+    @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
         String image = instance.getImage();

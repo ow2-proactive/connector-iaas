@@ -76,6 +76,10 @@ public class CloudManager {
                                                                                             instanceScript);
     }
 
+    public Set<String> getAllRegionsOnInfrastructure(Infrastructure infrastructure) {
+        return cloudProviderPerType.get(infrastructure.getType()).listAvailableRegions(infrastructure);
+    }
+
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
             InstanceScript instanceScript) {
         return cloudProviderPerType.get(infrastructure.getType())

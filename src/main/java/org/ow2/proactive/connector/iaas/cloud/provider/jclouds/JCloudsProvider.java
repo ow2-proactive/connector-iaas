@@ -88,6 +88,13 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     protected abstract RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials);
 
+    public Set<String> listAvailableRegions(Infrastructure infrastructure) {
+        return getComputeServiceFromInfastructure(infrastructure).listAssignableLocations()
+                                                                 .parallelStream()
+                                                                 .map(loc -> loc.toString())
+                                                                 .collect(Collectors.toSet());
+    }
+
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
         getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
