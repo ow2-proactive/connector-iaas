@@ -570,14 +570,14 @@ public class AzureProvider implements CloudProvider {
                                      .id(vm.vmId())
                                      .tag(vm.name())
                                      .number(SINGLE_INSTANCE_NUMBER)
-                                     .hardware(Hardware.builder().type(vm.size().toString()).build())
+                                     .hardware(Hardware.builder().type(String.valueOf(vm.size())).build())
                                      .network(org.ow2.proactive.connector.iaas.model.Network.builder()
                                                                                             .publicAddresses(buildPublicAddressList(azureService,
                                                                                                                                     vm))
                                                                                             .privateAddresses(buildPrivateAddressList(azureService,
                                                                                                                                       vm))
                                                                                             .build())
-                                     .status(String.valueOf(vm.powerState().toString()))
+                                     .status(String.valueOf(vm.powerState()))
                                      .build())
                   .collect(Collectors.toSet());
     }
