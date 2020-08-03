@@ -65,4 +65,6 @@ public interface CloudProvider {
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance);
 
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region);
+
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq);
 }

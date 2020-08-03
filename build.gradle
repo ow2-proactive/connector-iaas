@@ -13,6 +13,14 @@ apply plugin: 'com.github.jk1.dependency-license-report'
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
 
+dependencyManagement {
+    dependencies {
+        imports {
+            mavenBom 'software.amazon.awssdk:bom:2.13.66'
+        }
+    }
+}
+
 // Configure the maven repository deployment
 install {
     repositories.mavenInstaller {
@@ -171,6 +179,9 @@ dependencies {
     // Microsoft Azure
     compile 'com.microsoft.azure:azure:1.35.1'
     compile 'com.microsoft.azure:azure-mgmt-network:1.35.1'
+
+    // AWS Pricing
+    compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.13.66'
 
     // Json project
     compile 'org.json:json:20151123'

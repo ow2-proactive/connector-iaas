@@ -25,15 +25,10 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.aws;
 
+import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.aws.ec2.AWSEC2Api;
@@ -61,6 +56,12 @@ import com.google.common.collect.Sets;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.services.pricing.PricingClient;
+import software.amazon.awssdk.services.pricing.model.Filter;
+import software.amazon.awssdk.services.pricing.model.FilterType;
+import software.amazon.awssdk.services.pricing.model.GetProductsRequest;
 
 
 @Component
@@ -71,6 +72,8 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     private final String type = "aws-ec2";
 
     private static final String INSTANCE_ID_REGION_SEPARATOR = "/";
+
+    private static final Map<String,String> awsPricingRegionName = initAwsPricingRegionsMap();
 
     /**
      * This field stores the couple (AWS key pair name, private key) for each 
@@ -131,6 +134,33 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                   .map(this::createInstanceFromNode)
                                   .collect(Collectors.toSet());
 
+    }
+
+    private static Map<String,String> initAwsPricingRegionsMap() {
+        Map<String, String> result = Stream.of(new String[][] {
+                {"af-south-1","Africa (Cape Town)"},
+                {"ap-east-1","Asia Pacific (Hong Kong)"},
+                {"ap-south-1","Asia Pacific (Mumbai)"},
+                {"ap-northeast-3","Asia Pacific (Osaka-Local)"},
+                {"ap-northeast-2","Asia Pacific (Seoul)"},
+                {"ap-southeast-1","Asia Pacific (Singapore)"},
+                {"ap-southeast-2","Asia Pacific (Sydney)"},
+                {"ap-northeast-1","Asia Pacific (Tokyo)"},
+                {"ca-central-1", "Canada (Central)"},
+                {"eu-central-1", "EU (Frankfurt)"},
+                {"eu-west-1","EU (Ireland)"},
+                {"eu-west-2","EU (London)"},
+                {"eu-south-1","EU (Milan)"},
+                {"eu-west-3","EU (Paris)"},
+                {"eu-north-1","EU (Stockholm)"},
+                {"me-south-1","Middle East (Bahrain)"},
+                {"sa-east-1","South America (Sao Paulo)"},
+                {"us-east-1","US East (N. Virginia)"},
+                {"us-east-2","US East (Ohio)"},
+                {"us-west-2","US West (Los Angeles)"},
+                {"us-west-1","US West (N. California)"},
+        }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+        return result;
     }
 
     private InstanceCredentials createCredentialsIfNotExist(Infrastructure infrastructure, Instance instance) {
@@ -319,6 +349,30 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
         keyPairApi.deleteKeyPairInRegion(region, keyPairName);
         log.info("Removed the key pair [{}] in the region [{}]", keyPairName, region);
+    }
+
+    @Override
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String osReq) {
+        PricingClient pc = PricingClient.builder()
+                                        .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(infra.getCredentials()
+                                                                                                                              .getUsername(),
+                                                                                                                         infra.getCredentials()
+                                                                                                                              .getPassword())))
+                                        .build();
+        pc.getProducts(GetProductsRequest.builder()
+                                        .serviceCode("AmazonEC2")
+                                         .filters(Filter.builder()
+                                                        .field("location")
+                                                        .type(FilterType.TERM_MATCH)
+                                                        .value(awsPricingRegionName.get(region))
+                                                        .build(),
+                                                  Filter.builder()
+                                                        .field("operatingSystem")
+                                                        .type(FilterType.TERM_MATCH)
+                                                        .value(osReq)
+                                                        .build())
+                                         .build());
+        return null;
     }
 
     @Override
