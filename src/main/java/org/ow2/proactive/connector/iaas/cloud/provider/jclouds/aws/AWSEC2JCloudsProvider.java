@@ -46,6 +46,7 @@ import org.jclouds.ec2.domain.PublicIpInstanceIdPair;
 import org.jclouds.ec2.features.ElasticIPAddressApi;
 import org.jclouds.ec2.features.KeyPairApi;
 import org.jclouds.ec2.features.SecurityGroupApi;
+import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
 import org.ow2.proactive.connector.iaas.model.*;
@@ -58,10 +59,12 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.pricing.PricingClient;
 import software.amazon.awssdk.services.pricing.model.Filter;
 import software.amazon.awssdk.services.pricing.model.FilterType;
 import software.amazon.awssdk.services.pricing.model.GetProductsRequest;
+import software.amazon.awssdk.services.pricing.model.GetProductsResponse;
 
 
 @Component
@@ -73,7 +76,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     private static final String INSTANCE_ID_REGION_SEPARATOR = "/";
 
-    private static final Map<String,String> awsPricingRegionName = initAwsPricingRegionsMap();
+    private static Map<String, String> awsPricingRegionName = null;
 
     /**
      * This field stores the couple (AWS key pair name, private key) for each 
@@ -136,30 +139,30 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     }
 
-    private static Map<String,String> initAwsPricingRegionsMap() {
-        Map<String, String> result = Stream.of(new String[][] {
-                {"af-south-1","Africa (Cape Town)"},
-                {"ap-east-1","Asia Pacific (Hong Kong)"},
-                {"ap-south-1","Asia Pacific (Mumbai)"},
-                {"ap-northeast-3","Asia Pacific (Osaka-Local)"},
-                {"ap-northeast-2","Asia Pacific (Seoul)"},
-                {"ap-southeast-1","Asia Pacific (Singapore)"},
-                {"ap-southeast-2","Asia Pacific (Sydney)"},
-                {"ap-northeast-1","Asia Pacific (Tokyo)"},
-                {"ca-central-1", "Canada (Central)"},
-                {"eu-central-1", "EU (Frankfurt)"},
-                {"eu-west-1","EU (Ireland)"},
-                {"eu-west-2","EU (London)"},
-                {"eu-south-1","EU (Milan)"},
-                {"eu-west-3","EU (Paris)"},
-                {"eu-north-1","EU (Stockholm)"},
-                {"me-south-1","Middle East (Bahrain)"},
-                {"sa-east-1","South America (Sao Paulo)"},
-                {"us-east-1","US East (N. Virginia)"},
-                {"us-east-2","US East (Ohio)"},
-                {"us-west-2","US West (Los Angeles)"},
-                {"us-west-1","US West (N. California)"},
-        }).collect(Collectors.toMap(data -> data[0], data -> data[1]));
+    // Structure to map AWS region names to their labels used in the pricing API.
+    private static Map<String, String> initAwsPricingRegionsMap() {
+        Map<String, String> result = Stream.of(new String[][] { { "af-south-1", "Africa (Cape Town)" },
+                                                                { "ap-east-1", "Asia Pacific (Hong Kong)" },
+                                                                { "ap-south-1", "Asia Pacific (Mumbai)" },
+                                                                { "ap-northeast-3", "Asia Pacific (Osaka-Local)" },
+                                                                { "ap-northeast-2", "Asia Pacific (Seoul)" },
+                                                                { "ap-southeast-1", "Asia Pacific (Singapore)" },
+                                                                { "ap-southeast-2", "Asia Pacific (Sydney)" },
+                                                                { "ap-northeast-1", "Asia Pacific (Tokyo)" },
+                                                                { "ca-central-1", "Canada (Central)" },
+                                                                { "eu-central-1", "EU (Frankfurt)" },
+                                                                { "eu-west-1", "EU (Ireland)" },
+                                                                { "eu-west-2", "EU (London)" },
+                                                                { "eu-south-1", "EU (Milan)" },
+                                                                { "eu-west-3", "EU (Paris)" },
+                                                                { "eu-north-1", "EU (Stockholm)" },
+                                                                { "me-south-1", "Middle East (Bahrain)" },
+                                                                { "sa-east-1", "South America (Sao Paulo)" },
+                                                                { "us-east-1", "US East (N. Virginia)" },
+                                                                { "us-east-2", "US East (Ohio)" },
+                                                                { "us-west-2", "US West (Los Angeles)" },
+                                                                { "us-west-1", "US West (N. California)" }, })
+                                           .collect(Collectors.toMap(data -> data[0], data -> data[1]));
         return result;
     }
 
@@ -353,26 +356,92 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     @Override
     public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String osReq) {
+        if (awsPricingRegionName == null) {
+            // If the structure is not yet initialized, I prepare it.
+            awsPricingRegionName = initAwsPricingRegionsMap();
+        }
+        // Preparing the request to the API. Only two regions provide an endpoint for the pricing API. We arbitrarily set it to US-EAST-1.
         PricingClient pc = PricingClient.builder()
                                         .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(infra.getCredentials()
                                                                                                                               .getUsername(),
                                                                                                                          infra.getCredentials()
                                                                                                                               .getPassword())))
+                                        .region(Region.US_EAST_1)
                                         .build();
-        pc.getProducts(GetProductsRequest.builder()
-                                        .serviceCode("AmazonEC2")
-                                         .filters(Filter.builder()
-                                                        .field("location")
-                                                        .type(FilterType.TERM_MATCH)
-                                                        .value(awsPricingRegionName.get(region))
-                                                        .build(),
-                                                  Filter.builder()
-                                                        .field("operatingSystem")
-                                                        .type(FilterType.TERM_MATCH)
-                                                        .value(osReq)
-                                                        .build())
-                                         .build());
-        return null;
+        // Effectively proceed to the API call
+        GetProductsResponse pricesListResponse = pc.getProducts(GetProductsRequest.builder()
+                                                                                  .serviceCode("AmazonEC2")
+                                                                                  .filters(Filter.builder()
+                                                                                                 .field("location")
+                                                                                                 .type(FilterType.TERM_MATCH)
+                                                                                                 .value(awsPricingRegionName.get(region))
+                                                                                                 .build(),
+                                                                                           Filter.builder()
+                                                                                                 .field("operatingSystem")
+                                                                                                 .type(FilterType.TERM_MATCH)
+                                                                                                 .value(osReq)
+                                                                                                 .build())
+                                                                                  .build());
+        // Interpreting response
+        if (!pricesListResponse.hasPriceList()) {
+            // No pricing result.
+            return new HashSet<NodeCandidate>();
+        } else {
+            // We have pricing results => We parse the Stringified-JSON structure from the API
+            Set<NodeCandidate> result = pricesListResponse.priceList().parallelStream().map(s -> {
+                JSONObject jo = new JSONObject(s).getJSONObject("product").getJSONObject("attributes");
+                // Hardware spec.
+                Hardware hw = Hardware.builder()
+                                      .minRam(fromAwsGioToparseableMB(jo.getString("memory")) + "")
+                                      .minCores(jo.getString("vcpu"))
+                                      .minSpeed(fromAwsGioToparseableMB(jo.getString("clockSpeed")) + "")
+                                      .type(jo.getString("instanceType"))
+                                      .build();
+                // The minimal price of the cheaper on-demand-offer
+                double price = parseAwsPriceOnDemandInstance(jo);
+                // Image spec - No strict reference toa system image is provided by the pricing API. Instead,
+                // we re-use their label system to identified system type. We left to association between
+                // system image and those label to an external process.
+                Image operatingSystem = Image.builder().name(jo.getString("operatingSystem")).build();
+                // We build the structure encapsulating the result.
+                return NodeCandidate.builder()
+                                    .cloud(this.getType())
+                                    .region(region)
+                                    .hw(hw)
+                                    .price(price)
+                                    .img(operatingSystem)
+                                    .build();
+            }).collect(Collectors.toSet());
+            return result;
+        }
+    }
+
+    private int fromAwsGioToparseableMB(String s) {
+        // The pricing API providing Strings for to describe the spec. of the infra resources. We need to parse it, to work with MB.
+        Integer parsedInt = Integer.parseInt(s.split(" ")[0]);
+        return parsedInt * 1024;
+    }
+
+    private double parseAwsPriceOnDemandInstance(JSONObject jo) {
+        // The pricing API use very specific JSON structure to describe the offers, and provide a lot of unexploitable values (for now). We dwarf it.
+        // See `$ aws pricing get-products --service-code AmazonEC2 --filter Type=contain,Field=instanceType,Value=t3.small`
+        // to get an example of such JSON structure.
+        JSONObject terms = jo.getJSONObject("terms");
+        JSONObject onDemand = terms.getJSONObject("OnDemand");
+        OptionalDouble foundPrice = onDemand.keySet()
+                                            .parallelStream()
+                                            .map(jo1 -> onDemand.getJSONObject(jo1))
+                                            .map(anOfferTerm -> anOfferTerm.getJSONObject("priceDimensions"))
+                                            .map(priceDimensions -> priceDimensions.keySet()
+                                                                                   .parallelStream()
+                                                                                   .map(keyName -> priceDimensions.getJSONObject(keyName))
+                                                                                   .map(aPriceDimension -> aPriceDimension.getJSONObject("pricePerUnit"))
+                                                                                   .mapToDouble(aPricePerUnit -> aPricePerUnit.getDouble("USD"))
+                                                                                   .min())
+                                            .filter(OptionalDouble::isPresent)
+                                            .mapToDouble(OptionalDouble::getAsDouble)
+                                            .min();
+        return foundPrice.orElse(0);
     }
 
     @Override
