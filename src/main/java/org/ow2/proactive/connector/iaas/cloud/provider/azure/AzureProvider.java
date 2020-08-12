@@ -943,7 +943,8 @@ public class AzureProvider implements CloudProvider {
                                                .listbyRegionAndResourceType(Region.fromName(region),
                                                                             ComputeResourceType.VIRTUALMACHINES);
             if (!knownCostPerMeterId.isPresent()) {
-                // We need to initiate the cost structure
+                // We need to initiate the cost structure if none is already present.
+                // We try to do this once since the ratecard structure is heavy (~19MB)
                 String rateCard = getRateCard(infra);
                 knownCostPerMeterId = Optional.ofNullable(parseVmRateCard(rateCard));
             }
@@ -967,6 +968,7 @@ public class AzureProvider implements CloudProvider {
                     String type = csku.name().toString();
                     // The Azure API doesn't provide any mean to access the freq of VMs
 
+                    // We build up the resulting structure.
                     result.add(NodeCandidate.builder()
                                             .img(Image.builder().name("Unspecified").build())
                                             .region(region)
@@ -987,7 +989,7 @@ public class AzureProvider implements CloudProvider {
         }
     }
 
-    // This method is used to retrieved the rateCard to
+    // This method is used to retrieve the rateCard info from Azure API.
     private String queryRateCard(Infrastructure infra, String accessToken) throws IOException {
         String endpoint = String.format("https://management.azure.com/subscriptions/%s/providers/Microsoft.Commerce/RateCard?api-version=%s&$filter=OfferDurableId eq '%s' and Currency eq '%s' and Locale eq '%s' and RegionInfo eq '%s'",
                                         infra.getCredentials().getSubscriptionId(),
@@ -1018,6 +1020,7 @@ public class AzureProvider implements CloudProvider {
         return builder.toString();
     }
 
+    // This method download the rateCard of the Azure subscription.
     private String getRateCard(Infrastructure infrastructure) throws IOException {
         Azure azureService = azureServiceCache.getService(infrastructure);
         String token = azureServiceCache.getInfrastructureToken(infrastructure);
@@ -1031,6 +1034,7 @@ public class AzureProvider implements CloudProvider {
         }
     }
 
+    // This method parses the content of the VmRateCard answer.
     private Map<String, AzureKnownCost> parseVmRateCard(String queryResult) {
         Map<String, AzureKnownCost> result = new HashMap<>();
         JSONObject parsedQueryResult = new JSONObject(queryResult);
@@ -1040,7 +1044,7 @@ public class AzureProvider implements CloudProvider {
             for (Object meterObj : meters.get()) {
                 JSONObject meter = (JSONObject) meterObj;
                 if (!vmCatergory.equals(meter.optString("MeterCategory"))) {
-                    // If we are analyzing the price of something that is not a VM, we skip it.
+                    // If we are analyzing the price for a resource that is not a VM, we skip it.
                     continue;
                 }
                 JSONObject meterRates = meter.getJSONObject("MeterRates");
