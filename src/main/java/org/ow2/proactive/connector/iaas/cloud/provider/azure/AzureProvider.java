@@ -25,31 +25,27 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.*;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.microsoft.azure.PagedList;
+import com.microsoft.azure.credentials.AzureTokenCredentials;
+import com.microsoft.azure.management.compute.*;
 import org.apache.commons.lang3.NotImplementedException;
+import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.Hardware;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.Options;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -57,11 +53,6 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.microsoft.azure.management.Azure;
-import com.microsoft.azure.management.compute.OperatingSystemTypes;
-import com.microsoft.azure.management.compute.VirtualMachine;
-import com.microsoft.azure.management.compute.VirtualMachineCustomImage;
-import com.microsoft.azure.management.compute.VirtualMachineExtension;
-import com.microsoft.azure.management.compute.VirtualMachineSizeTypes;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.network.NetworkInterface;
 import com.microsoft.azure.management.network.NetworkSecurityGroup;
@@ -136,6 +127,16 @@ public class AzureProvider implements CloudProvider {
     protected static final String SINGLE_INSTANCE_NUMBER = "1";
 
     protected static final String INSTANCE_NOT_FOUND_ERROR = "ERROR unable to find instance with ID: ";
+
+    protected static final String CLOUD_OFFERS_CURRENCY = "USD";
+
+    protected static final String CLOUD_OFFERS_LOCAL = "en-US";
+
+    protected static final String CLOUD_OFFERS_REGION_INFO = "US";
+
+    protected static final String CLOUD_OFFERS_PAYASYOUGO = "MS-AZR-0003p";
+
+    private static Optional<Map<String,AzureKnownCost>> knownCostPerMeterId;
 
     @Autowired
     protected AzureServiceCache azureServiceCache;
@@ -928,6 +929,95 @@ public class AzureProvider implements CloudProvider {
     @Override
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
         throw new NotImplementedException("This method is not yet implemented.");
+    }
+
+    @Override
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
+        try {
+            // We Connect to Azure
+            Azure service = azureServiceCache.getService(infra);
+            //PagedList<VirtualMachineSize> vmTypeInRegion = service.virtualMachines().sizes().listByRegion(region);
+            // We retrieve the Sku from compute resource type
+            PagedList<ComputeSku> sku = service.computeSkus().listbyRegionAndResourceType(Region.fromName(region), ComputeResourceType.VIRTUALMACHINES);
+            if (!knownCostPerMeterId.isPresent()) {
+                // We need to initiate the cost structure
+                String rateCard = getRateCard(infra);
+                knownCostPerMeterId = Optional.ofNullable(parseVmRateCard(rateCard));
+            }
+            Set<NodeCandidate> result = new HashSet<>();
+            for (ComputeSku csku : sku) {
+                for (ResourceSkuCosts cost : csku.costs()) {
+                    // Retreving info for node candidate
+                    String memoryGB = csku.capabilities().stream().filter(cap -> cap.name().equals("MemoryGB")).map(res -> res.value() ).findAny().orElse("0 GB");
+                    String memoryMB = Double.parseDouble(memoryGB.split(" ")[0])*1024 + "";
+                    String vCpu = csku.capabilities().stream().filter(cap -> cap.name().equals("vCPUsAvailable")).map(res -> res.value() ).findAny().orElse("0");
+                    String type = csku.name().toString();
+                    // The Azure API doesn't provide any mean to access the freq of VMs
+
+                   result.add(
+                     NodeCandidate.builder()
+                            .img(Image.builder().name("Unspecified").build())
+                            .region(region)
+                            .cloud(this.getType())
+                            .price(knownCostPerMeterId.get().get(cost.meterID()).meterRatesZero)
+                            .hw(Hardware.builder().minRam(memoryMB).minCores(vCpu).type(type).minSpeed("0").build())
+                            .build());
+                }
+            }
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // This method is used to retrieved the rateCard to
+    private String queryRateCard(Infrastructure infra, String accessToken) throws IOException {
+        String endpoint = String.format("https://management.azure.com/subscriptions/%s/providers/Microsoft.Commerce/RateCard?api-version=%s&$filter=OfferDurableId eq '%s' and Currency eq '%s' and Locale eq '%s' and RegionInfo eq '%s'",
+                infra.getCredentials().getSubscriptionId(),
+                "2016-08-31-preview",
+                this.CLOUD_OFFERS_PAYASYOUGO,
+                this.CLOUD_OFFERS_CURRENCY,
+                this.CLOUD_OFFERS_LOCAL,
+                this.CLOUD_OFFERS_REGION_INFO)
+                .replaceAll(" ", "%20");
+        HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
+        conn.setRequestMethod("GET");
+        conn.addRequestProperty("Authorization", "Bearer " + accessToken);
+        conn.addRequestProperty("Content-Type", "application/json");
+        conn.connect();
+
+        // getInputStream() works only if Http returns a code between 200 and 299
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getResponseCode() / 100 == 2
+                                                                          ? conn.getInputStream()
+                : conn.getErrorStream(),
+                "UTF-8"));
+
+        StringBuilder builder = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+        }
+        reader.close();
+        return builder.toString();
+    }
+
+    String getRateCard(Infrastructure infrastructure) throws IOException {
+        Azure azureService = azureServiceCache.getService(infrastructure);
+        String token = azureServiceCache.getInfrastructureToken(infrastructure);
+        // Get a new rate card
+        String queryResult = queryRateCard(infrastructure,token);
+        JSONObject parsedQueryResult = new JSONObject(queryResult);
+        if (parsedQueryResult.keySet().contains("Meters")) {
+            return queryResult;
+        } else {
+            throw new RuntimeException("Unable to parse ratecard: " + queryResult);
+        }
+    }
+
+    Map<String,AzureKnownCost> parseVmRateCard(String queryResult) {
+        Map<String,AzureKnownCost> result = new HashMap<>();
+        // Todo
+       return result;
     }
 
     private static String unsupportedOperatingSystemError(String operatingSystem) {
