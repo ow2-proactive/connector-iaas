@@ -49,7 +49,7 @@ import com.microsoft.rest.LogLevel;
 @Component
 public class AzureServiceBuilder {
 
-    private Map<Infrastructure,AzureTokenCredentials> generatedTokenPerInfra = new HashMap<>();
+    private Map<Infrastructure, AzureTokenCredentials> generatedTokenPerInfra = new HashMap<>();
 
     // We store token, since they may be needed from the context of the infra (ex: pricing API)
     public AzureTokenCredentials getTokenfromInfra(Infrastructure infra) {
@@ -78,7 +78,7 @@ public class AzureServiceBuilder {
         AzureEnvironment environment = getAzureEnvironment(infrastructure);
 
         AzureTokenCredentials credentials = new ApplicationTokenCredentials(clientId, domain, secret, environment);
-        generatedTokenPerInfra.put(infrastructure,credentials);
+        generatedTokenPerInfra.put(infrastructure, credentials);
 
         Azure azure;
         try {

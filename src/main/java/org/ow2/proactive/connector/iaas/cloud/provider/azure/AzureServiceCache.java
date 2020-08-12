@@ -30,11 +30,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import com.microsoft.azure.credentials.AzureTokenCredentials;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.Azure;
 
 
@@ -66,7 +66,7 @@ public class AzureServiceCache {
         try {
             return serviceBuilder.getTokenfromInfra(infra).getToken(MANAGEMENT_URL);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to determine token for infrastructure "  + infra);
+            throw new RuntimeException("Unable to determine token for infrastructure " + infra);
         }
     }
 
