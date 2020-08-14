@@ -394,7 +394,7 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public Set<NodeCandidate> getNodeCandidate(String region, String imageReq) {
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
         throw new NotImplementedException("This method is not yet implemented.");
     }
 

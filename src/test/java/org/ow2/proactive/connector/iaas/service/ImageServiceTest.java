@@ -76,7 +76,7 @@ public class ImageServiceTest {
 
         Set<Image> images = Sets.newHashSet();
 
-        images.add(new Image("id", "name"));
+        images.add(new Image("id", "name","os","location"));
 
         when(cloudManager.getAllImages(infrastructure)).thenReturn(images);
 

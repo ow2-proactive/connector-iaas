@@ -28,11 +28,9 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.io.File;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
@@ -46,15 +44,7 @@ import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.Hardware;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.Network;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -85,6 +75,9 @@ public abstract class JCloudsProvider implements CloudProvider {
     @Setter
     @Value("${connector-iaas.vm-user-login:admin}")
     private String vmUserLogin;
+
+    @Value("${connector-iaas.pricing-repo}")
+    private String pricingRepo;
 
     protected abstract RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials);
 
@@ -189,6 +182,9 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                  .map(it -> Image.builder()
                                                                                  .id(it.getId())
                                                                                  .name(it.getName())
+                                                                                 .location(it.getLocation().getId())
+                                                                                 .operatingSystem(it.getOperatingSystem()
+                                                                                                    .getName())
                                                                                  .build())
                                                                  .collect(Collectors.toSet());
 
@@ -196,8 +192,20 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        return getHardware(infrastructure, Optional.empty());
+    }
+
+    public Set<Hardware> getRegionSpecificHardware(Infrastructure infrastructure, String region) {
+        return getHardware(infrastructure, Optional.of(region));
+    }
+
+    public Set<Hardware> getHardware(Infrastructure infrastructure, Optional<String> region) {
         return getComputeServiceFromInfastructure(infrastructure).listHardwareProfiles()
                                                                  .parallelStream()
+                                                                 .filter(hw -> !region.isPresent() ||
+                                                                               hw.getLocation()
+                                                                                 .getId()
+                                                                                 .contains(region.get()))
                                                                  .map(hw -> Hardware.builder()
                                                                                     .minCores("" + hw.getProcessors()
                                                                                                      .stream()
@@ -291,4 +299,54 @@ public abstract class JCloudsProvider implements CloudProvider {
         return RunScriptOptions.NONE;
     }
 
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
+        String type = getType();
+        try {
+            String fileTag = new String(java.security.MessageDigest.getInstance("SHA-1")
+                                                                   .digest((type +
+                                                                            infra.getAuthenticationEndpoint()).getBytes()));
+            File pricingFile = new File(this.pricingRepo + File.pathSeparator + fileTag + ".json");
+            if (pricingFile.exists()) {
+                // If the file exist, we are in the case of a paid cloud
+                return getPaidNodeCandidate(infra, region, imageReq, pricingFile);
+            } else {
+                // Else, we assume this is a private one with no cost.
+                return getFreeNodeCandidate(infra, region, imageReq);
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Unable to proceed with the digest: " + e.getLocalizedMessage());
+        }
+    }
+
+    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, String imageReq) {
+        // We will use the getAllImage() API to identify which VM image are relevant.
+        Set<Image> resultImages = this.getAllImages(infra)
+                                      .parallelStream()
+                                      .filter(image -> image.getLocation().equals(region))
+                                      .filter(img -> img.getName().contains(imageReq))
+                                      .collect(Collectors.toSet());
+        Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region);
+        return resultHardware.stream()
+                             .map(hw -> resultImages.parallelStream()
+                                                    .map(image -> NodeCandidate.builder()
+                                                                               .region(region)
+                                                                               .cloud(infra.getType())
+                                                                               .hw(hw)
+                                                                               .img(image)
+                                                                               .price(0)
+                                                                               .build())
+                                                    .collect(Collectors.toSet()))
+                             .reduce((nc1, nc2) -> {
+                                 nc1.addAll(nc2);
+                                 return nc1;
+                             })
+                             .orElse(new HashSet<>());
+    }
+
+    private Set<NodeCandidate> getPaidNodeCandidate(Infrastructure infra, String region, String imageReq,
+            File pricingFile) {
+        // TODO
+        Set<NodeCandidate> result = new HashSet<>();
+        return result;
+    }
 }

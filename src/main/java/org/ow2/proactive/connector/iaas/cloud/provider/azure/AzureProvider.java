@@ -136,7 +136,7 @@ public class AzureProvider implements CloudProvider {
 
     protected static final String CLOUD_OFFERS_PAYASYOUGO = "MS-AZR-0003p";
 
-    private static Map<String,Map<String, AzureKnownCost>> knownCostPerMeterIdPerApiKey = new HashMap<>();
+    private static Map<String, Map<String, AzureKnownCost>> knownCostPerMeterIdPerApiKey = new HashMap<>();
 
     @Autowired
     protected AzureServiceCache azureServiceCache;
@@ -973,7 +973,8 @@ public class AzureProvider implements CloudProvider {
                                             .img(Image.builder().name("Unspecified").build())
                                             .region(region)
                                             .cloud(this.getType())
-                                            .price(knownCostPerMeterIdPerApiKey.get(id).get(cost.meterID()).meterRatesZero)
+                                            .price(knownCostPerMeterIdPerApiKey.get(id)
+                                                                               .get(cost.meterID()).meterRatesZero)
                                             .hw(Hardware.builder()
                                                         .minRam(memoryMB)
                                                         .minCores(vCpu)
