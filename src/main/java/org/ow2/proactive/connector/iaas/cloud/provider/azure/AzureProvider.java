@@ -51,7 +51,6 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.microsoft.azure.PagedList;
-import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.compute.*;
 import com.microsoft.azure.management.network.Network;
@@ -137,7 +136,7 @@ public class AzureProvider implements CloudProvider {
 
     protected static final String CLOUD_OFFERS_PAYASYOUGO = "MS-AZR-0003p";
 
-    private static Optional<Map<String, AzureKnownCost>> knownCostPerMeterId;
+    private static Map<String,Map<String, AzureKnownCost>> knownCostPerMeterIdPerApiKey = new HashMap<>();
 
     @Autowired
     protected AzureServiceCache azureServiceCache;
@@ -942,11 +941,12 @@ public class AzureProvider implements CloudProvider {
             PagedList<ComputeSku> sku = service.computeSkus()
                                                .listbyRegionAndResourceType(Region.fromName(region),
                                                                             ComputeResourceType.VIRTUALMACHINES);
-            if (!knownCostPerMeterId.isPresent()) {
+            String id = infra.getCredentials().getUsername();
+            if (!knownCostPerMeterIdPerApiKey.containsKey(id)) {
                 // We need to initiate the cost structure if none is already present.
                 // We try to do this once since the ratecard structure is heavy (~19MB)
                 String rateCard = getRateCard(infra);
-                knownCostPerMeterId = Optional.ofNullable(parseVmRateCard(rateCard));
+                knownCostPerMeterIdPerApiKey.put(id, parseVmRateCard(rateCard));
             }
             Set<NodeCandidate> result = new HashSet<>();
             for (ComputeSku csku : sku) {
@@ -973,7 +973,7 @@ public class AzureProvider implements CloudProvider {
                                             .img(Image.builder().name("Unspecified").build())
                                             .region(region)
                                             .cloud(this.getType())
-                                            .price(knownCostPerMeterId.get().get(cost.meterID()).meterRatesZero)
+                                            .price(knownCostPerMeterIdPerApiKey.get(id).get(cost.meterID()).meterRatesZero)
                                             .hw(Hardware.builder()
                                                         .minRam(memoryMB)
                                                         .minCores(vCpu)
