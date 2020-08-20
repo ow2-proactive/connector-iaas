@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.tools.DocumentationTool;
+
 import org.jclouds.aws.ec2.AWSEC2ApiMetadata;
 import org.jclouds.aws.ec2.compute.AWSEC2ComputeServiceContext;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
@@ -55,6 +57,7 @@ import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationBuilder;
+import org.jclouds.domain.LocationScope;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
@@ -82,8 +85,6 @@ import com.google.common.collect.Maps;
 import com.microsoft.azure.management.compute.VirtualMachineExtension;
 
 import jersey.repackaged.com.google.common.collect.Sets;
-
-import javax.tools.DocumentationTool;
 
 
 public class AWSEC2JCloudsProviderTest {
@@ -607,10 +608,14 @@ public class AWSEC2JCloudsProviderTest {
 
         Set images = Sets.newHashSet();
         ImageImpl image = mock(ImageImpl.class);
-        OperatingSystem os = OperatingSystem.builder().build();
+        OperatingSystem os = OperatingSystem.builder().description("An Operating System").build();
         when(image.getId()).thenReturn("someId");
         when(image.getName()).thenReturn("someName");
         when(image.getOperatingSystem()).thenReturn(os);
+        when(image.getLocation()).thenReturn(new LocationBuilder().id("idLoc")
+                                                                  .description("Adescription")
+                                                                  .scope(LocationScope.REGION)
+                                                                  .build());
         images.add(image);
         when(computeService.listImages()).thenReturn(images);
 

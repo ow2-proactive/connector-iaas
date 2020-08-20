@@ -53,7 +53,7 @@ public class ImageTest {
     @Test
     public void testEqualsAndHashcode() {
         Image image1 = new Image("image-id", "image-name", "image-os", "image-location");
-        Image image2 = new Image("image-id", "image-name",  "image-os", "image-location");
+        Image image2 = new Image("image-id", "image-name", "image-os", "image-location");
 
         Set<Image> images = Sets.newHashSet(image1, image2);
 
