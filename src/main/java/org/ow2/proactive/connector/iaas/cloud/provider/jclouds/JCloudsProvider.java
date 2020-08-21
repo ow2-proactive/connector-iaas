@@ -29,15 +29,11 @@ import static org.jclouds.compute.predicates.NodePredicates.runningInGroup;
 import static org.jclouds.scriptbuilder.domain.Statements.exec;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
@@ -316,26 +312,27 @@ public abstract class JCloudsProvider implements CloudProvider {
             File pricingFile = new File(this.pricingRepo + File.pathSeparator + fileTag + ".json");
             // We will use the getAllImage() API to identify which VM image are relevant.
             Set<Image> resultImages = this.getAllImages(infra)
-                    .parallelStream()
-                    .filter(image -> image.getLocation().equals(region))
-                    .filter(img -> img.getName().contains(imageReq))
-                    .collect(Collectors.toSet());
+                                          .parallelStream()
+                                          .filter(image -> image.getLocation().equals(region))
+                                          .filter(img -> img.getName().contains(imageReq))
+                                          .collect(Collectors.toSet());
             Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region);
             if (pricingFile.exists()) {
                 // If the file exist, we are in the case of a paid cloud
                 return getPaidNodeCandidate(infra, region, imageReq, pricingFile, resultImages, resultHardware);
             } else {
                 // Else, we assume this is a private one with no cost.
-                return getFreeNodeCandidate(infra, region, imageReq,resultImages, resultHardware);
+                return getFreeNodeCandidate(infra, region, imageReq, resultImages, resultHardware);
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to proceed with the digest: " + e.getLocalizedMessage());
         } catch (IOException e) {
-            throw new  RuntimeException("Unableto open the pricing file: " + e.getLocalizedMessage());
+            throw new RuntimeException("Unableto open the pricing file: " + e.getLocalizedMessage());
         }
     }
 
-    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, String imageReq, Set<Image> resultImages, Set<Hardware> resultHardware) {
+    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, String imageReq,
+            Set<Image> resultImages, Set<Hardware> resultHardware) {
         return resultHardware.stream()
                              .map(hw -> resultImages.parallelStream()
                                                     .map(image -> NodeCandidate.builder()
@@ -360,10 +357,20 @@ public abstract class JCloudsProvider implements CloudProvider {
         final String IMAGE_ID = "imageId";
         final String COST = "cost";
         // We constitute a list of hardwareId of the cloud region, to be seek into later on
-        List<String> listOfhardwareId = resultHardware.parallelStream().map(Hardware::getType).collect(Collectors.toList());
+        List<String> listOfhardwareId = resultHardware.parallelStream()
+                                                      .map(Hardware::getType)
+                                                      .collect(Collectors.toList());
         // We constitute multiple list of Image ID beacause image specification diverges on the Cloud infra provide.
-        List<String> listOfAvailableImageId = resultImages.parallelStream().map(Image::getId).distinct().collect(Collectors.toList());
-        List<String> listOfAvailableImageName = resultImages.parallelStream().map(Image::getName).distinct().filter(Objects::nonNull).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+        List<String> listOfAvailableImageId = resultImages.parallelStream()
+                                                          .map(Image::getId)
+                                                          .distinct()
+                                                          .collect(Collectors.toList());
+        List<String> listOfAvailableImageName = resultImages.parallelStream()
+                                                            .map(Image::getName)
+                                                            .distinct()
+                                                            .filter(Objects::nonNull)
+                                                            .filter(s -> !s.isEmpty())
+                                                            .collect(Collectors.toList());
         //  we read and proces the pricingfile.
         String fileContent = Files.readAllLines(pricingFile.toPath()).stream().collect(Collectors.joining());
         JSONArray princingArrayOfaRegion = new JSONArray(fileContent);
@@ -373,26 +380,35 @@ public abstract class JCloudsProvider implements CloudProvider {
             checkedPricingArray.add((JSONObject) entree);
         }
         // We determine the pricing to be analyzed in the region, based on which Hardware and image are available from user account.
-        List<JSONObject> releavantPricing = checkedPricingArray.parallelStream().filter(Objects::nonNull)
-                .filter(jo -> jo.has(HARDWARE_ID))
-                .filter(jo -> jo.has(IMAGE_ID))
-                .filter(jo -> listOfhardwareId.contains(jo.get(HARDWARE_ID)))
-                .filter(jo -> listOfAvailableImageId.contains(jo.getString(IMAGE_ID)) || listOfAvailableImageName.stream().filter(s -> s.contains(jo.getString(IMAGE_ID))).count() > 0)
-                .collect(Collectors.toList());
+        List<JSONObject> releavantPricing = checkedPricingArray.parallelStream()
+                                                               .filter(Objects::nonNull)
+                                                               .filter(jo -> jo.has(HARDWARE_ID))
+                                                               .filter(jo -> jo.has(IMAGE_ID))
+                                                               .filter(jo -> listOfhardwareId.contains(jo.get(HARDWARE_ID)))
+                                                               .filter(jo -> listOfAvailableImageId.contains(jo.getString(IMAGE_ID)) ||
+                                                                             listOfAvailableImageName.stream()
+                                                                                                     .filter(s -> s.contains(jo.getString(IMAGE_ID)))
+                                                                                                     .count() > 0)
+                                                               .collect(Collectors.toList());
         // We select pricing that are match the search criteria
-        List<JSONObject> selectedPricing = releavantPricing.parallelStream().filter(jo -> jo.getString(IMAGE_ID).contains(imageReq)).collect(Collectors.toList());
+        List<JSONObject> selectedPricing = releavantPricing.parallelStream()
+                                                           .filter(jo -> jo.getString(IMAGE_ID).contains(imageReq))
+                                                           .collect(Collectors.toList());
         // We build the nodeCandidate based on these
         Set<NodeCandidate> result = selectedPricing.parallelStream().map(jo -> {
             return NodeCandidate.builder()
-                    .cloud(infra.getType())
-                    .region(region)
-                    .hw(resultHardware.stream().filter(hw -> hw.getType().contains(jo.getString(HARDWARE_ID))).findFirst().get())
-                    .img(resultImages.stream().filter(img -> {
-                        String imageId = jo.getString(IMAGE_ID);
-                        return img.getName().contains(imageId) || img.getId().contains(imageId);
-                    }).findFirst().get())
-                    .price(jo.optDouble(COST))
-                    .build();
+                                .cloud(infra.getType())
+                                .region(region)
+                                .hw(resultHardware.stream()
+                                                  .filter(hw -> hw.getType().contains(jo.getString(HARDWARE_ID)))
+                                                  .findFirst()
+                                                  .get())
+                                .img(resultImages.stream().filter(img -> {
+                                    String imageId = jo.getString(IMAGE_ID);
+                                    return img.getName().contains(imageId) || img.getId().contains(imageId);
+                                }).findFirst().get())
+                                .price(jo.optDouble(COST))
+                                .build();
         }).collect(Collectors.toSet());
         return result;
     }

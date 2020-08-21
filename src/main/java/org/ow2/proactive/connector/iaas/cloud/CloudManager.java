@@ -114,4 +114,8 @@ public class CloudManager {
         cloudProviderPerType.get(infrastructure.getType()).deleteKeyPair(infrastructure, keyPairName, region);
     }
 
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infrastructure, String region, String imageReq) {
+        return cloudProviderPerType.get(infrastructure.getType()).getNodeCandidate(infrastructure, region, imageReq);
+    }
+
 }
