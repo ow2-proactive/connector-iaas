@@ -31,7 +31,6 @@ import java.util.Set;
 import javax.ws.rs.NotFoundException;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.NodeCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
