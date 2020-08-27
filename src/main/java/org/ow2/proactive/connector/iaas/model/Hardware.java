@@ -47,6 +47,6 @@ public class Hardware {
 
     private String minCores;
 
-    private String minSpeed;
+    private String minFreq;
 
 }

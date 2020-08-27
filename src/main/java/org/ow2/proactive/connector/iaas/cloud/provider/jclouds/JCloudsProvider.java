@@ -217,10 +217,10 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                                                      .sum())
                                                                                     .minRam("" + hw.getRam())
                                                                                     .type(hw.getType().toString())
-                                                                                    .minSpeed("" + hw.getProcessors()
-                                                                                                     .stream()
-                                                                                                     .mapToDouble(Processor::getSpeed)
-                                                                                                     .sum())
+                                                                                    .minFreq("" + hw.getProcessors()
+                                                                                                    .stream()
+                                                                                                    .mapToDouble(Processor::getSpeed)
+                                                                                                    .sum())
                                                                                     .build())
                                                                  .collect(Collectors.toSet());
     }

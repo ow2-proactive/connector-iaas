@@ -767,7 +767,7 @@ public class AzureProvider implements CloudProvider {
                                 .map(vms -> Hardware.builder()
                                                     .type(vms.name())
                                                     .minCores("" + vms.numberOfCores())
-                                                    .minSpeed("-1")
+                                                    .minFreq("-1")
                                                     .minRam("" + vms.memoryInMB())
                                                     .build())
                                 .collect(Collectors.toSet());
@@ -979,7 +979,7 @@ public class AzureProvider implements CloudProvider {
                                                         .minRam(memoryMB)
                                                         .minCores(vCpu)
                                                         .type(type)
-                                                        .minSpeed("0")
+                                                        .minFreq("0")
                                                         .build())
                                             .build());
                 }

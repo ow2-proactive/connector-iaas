@@ -394,7 +394,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 Hardware hw = Hardware.builder()
                                       .minRam(fromAwsGioToparseableMB(jo.getString("memory")) + "")
                                       .minCores(jo.getString("vcpu"))
-                                      .minSpeed(fromAwsGioToparseableMB(jo.getString("clockSpeed")) + "")
+                                      .minFreq(fromAwsGioToparseableMB(jo.getString("clockSpeed")) + "")
                                       .type(jo.getString("instanceType"))
                                       .build();
                 // The minimal price of the cheaper on-demand-offer
