@@ -39,6 +39,7 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
@@ -99,6 +100,11 @@ public class GCEJCloudsProvider extends JCloudsProvider {
         }
 
         Optional.ofNullable(instance.getOptions()).map(Options::getRegion).ifPresent(templateBuilder::locationId);
+
+        // If we have an explicit list of ports to be opened, we allow them.
+        Optional.ofNullable(instance.getOptions())
+                .map(Options::getPortsToOpen)
+                .ifPresent(ints -> templateBuilder.options(TemplateOptions.Builder.inboundPorts(ints)));
 
         Template template = templateBuilder.build();
 

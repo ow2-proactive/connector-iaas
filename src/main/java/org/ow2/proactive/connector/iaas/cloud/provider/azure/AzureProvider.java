@@ -218,11 +218,17 @@ public class AzureProvider implements CloudProvider {
                                                                                                                          subnetId)
                                                                                              .get());
 
-        // Prepare a new  security group (same for all VMs)
-        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(azureService,
-                                                                                                                                          region,
-                                                                                                                                          resourceGroup,
-                                                                                                                                          createUniqueSecurityGroupName(instance.getTag()));
+        // Prepare a new  security group (same for all VMs) - we take into account the ports the user want to be opened, if specified
+        Creatable<NetworkSecurityGroup> creatableNetworkSecurityGroup = options.map(Options::getPortsToOpen)
+                                                                               .map(ports -> azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(azureService,
+                                                                                                                                                               region,
+                                                                                                                                                               resourceGroup,
+                                                                                                                                                               createUniqueSecurityGroupName(instance.getTag()),
+                                                                                                                                                               ports))
+                                                                               .orElse(azureProviderNetworkingUtils.prepareProactiveNetworkSecurityGroup(azureService,
+                                                                                                                                                         region,
+                                                                                                                                                         resourceGroup,
+                                                                                                                                                         createUniqueSecurityGroupName(instance.getTag())));
 
         // Get existing security group if specified
         Optional<NetworkSecurityGroup> optionalNetworkSecurityGroup = options.map(Options::getSecurityGroupNames)
