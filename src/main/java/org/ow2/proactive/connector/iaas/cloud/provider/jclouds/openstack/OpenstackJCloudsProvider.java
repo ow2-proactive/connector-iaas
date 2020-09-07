@@ -43,12 +43,11 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
+import org.jclouds.net.domain.IpProtocol;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
-import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
+import org.jclouds.openstack.nova.v2_0.domain.*;
 import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
+import org.jclouds.openstack.nova.v2_0.extensions.SecurityGroupApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
@@ -61,6 +60,7 @@ import org.ow2.proactive.connector.iaas.model.Network;
 import org.ow2.proactive.connector.iaas.model.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -95,8 +95,12 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
         region = openstackUtil.getInfrastructureRegion(infrastructure);
         ServerApi serverApi = novaApi.getServerApi(region);
+        com.google.common.base.Optional<SecurityGroupApi> securityGroupApi = novaApi.getSecurityGroupApi(region);
+        if (!securityGroupApi.isPresent()) {
+            log.warn("The support of security groups has not been found in this OpenStack instance. Therefore, the explicit configuration of security groups and the support of port opening will be disabled");
+        }
 
-        CreateServerOptions serverOptions = createOptions(infrastructure, instance);
+        CreateServerOptions serverOptions = createOptions(infrastructure, instance, securityGroupApi);
         log.info("Openstack instance will use options: " + serverOptions.toString());
 
         Set<Instance> createdInstances = new HashSet<>();
@@ -113,7 +117,8 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
 
     }
 
-    private CreateServerOptions createOptions(Infrastructure infrastructure, Instance instance) {
+    private CreateServerOptions createOptions(Infrastructure infrastructure, Instance instance,
+            com.google.common.base.Optional<SecurityGroupApi> securityGroupApiOptional) {
 
         // Acquire or generate KeyPair name
         String publicKeyName;
@@ -129,6 +134,45 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
                                                                            .userData(buildScriptToExecuteString(instance.getInitScript()).getBytes());
         if (isNetworkIdSet(instance.getNetwork())) {
             createServerOptions = createServerOptions.networks(instance.getNetwork().getNetworkIds());
+        }
+
+        // Open port and support security group.
+        if (securityGroupApiOptional.isPresent()) {
+            List<String> securityGroupName = instance.getOptions().getSecurityGroupNames();
+            int[] inboundPort = instance.getOptions().getPortsToOpen();
+            if (!StringUtils.isEmpty(securityGroupName)) {
+                // Have we an explicit security group requested ?
+                createServerOptions.securityGroupNames(securityGroupName);
+            } else if (inboundPort.length > 0) {
+                // Or do we have to create a new one w/ the created request port to be opened ?
+                String sgName = "SG-" + System.currentTimeMillis();
+                SecurityGroupApi sgApi = securityGroupApiOptional.get();
+                SecurityGroup sg = sgApi.createWithDescription(sgName, "Auto-generated security group");
+                for (int port : inboundPort) {
+                    if (port == -1) {
+                        // Port -1 means we open the host to ICMP, as spec by Amazon
+                        sgApi.createRuleAllowingCidrBlock(sg.getId(),
+                                                          Ingress.builder().ipProtocol(IpProtocol.ICMP).build(),
+                                                          "0.0.0.0/0");
+                    } else if (port > 1 && port < 65536) { // 65536 == 8^16 => It is the upperband of adressable port
+                        sgApi.createRuleAllowingCidrBlock(sg.getId(),
+                                                          Ingress.builder()
+                                                                 .fromPort(port)
+                                                                 .toPort(port)
+                                                                 .ipProtocol(IpProtocol.TCP)
+                                                                 .build(),
+                                                          "0.0.0.0/0");
+                        sgApi.createRuleAllowingCidrBlock(sg.getId(),
+                                                          Ingress.builder()
+                                                                 .fromPort(port)
+                                                                 .toPort(port)
+                                                                 .ipProtocol(IpProtocol.UDP)
+                                                                 .build(),
+                                                          "0.0.0.0/0");
+                    }
+                    // Otherwise, the provided port value is invalide
+                }
+            }
         }
 
         // Set tags before returning options
