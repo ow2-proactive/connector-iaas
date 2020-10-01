@@ -160,6 +160,8 @@ public class OpenstackJCloudsProviderTest {
 
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
 
+        when(novaApi.getSecurityGroupApi("RegionOne")).thenReturn(com.google.common.base.Optional.absent());
+
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
 
         when(serverCreated.getId()).thenReturn("1cde5a56-27a6-46ce-bdb7-8b01b8fe2592");
