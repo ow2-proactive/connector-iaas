@@ -122,8 +122,10 @@ public class JCloudsComputeServiceBuilder {
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
 
-        // set AMI queries to nothing
-        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
+        // set AMI queries to filter private AMI (self), API from Amazon (137112412989) & Canonical (099720109477). Doc: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
+        //properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,"owner-id=137112412989,099720109477,self;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm" );
+        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
+                               "owner-id=099720109477;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm");
         properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
 
         log.info("Infrastructure properties: " + properties.toString());

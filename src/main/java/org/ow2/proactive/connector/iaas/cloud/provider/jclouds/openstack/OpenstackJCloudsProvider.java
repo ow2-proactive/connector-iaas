@@ -103,9 +103,9 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         try {
             serverOptions = createOptions(infrastructure, instance, securityGroupApi);
         } catch (Exception e) {
-           log.error(e.getMessage());
-           e.printStackTrace();
-           throw e;
+            log.error(e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
         log.info("Openstack instance will use options: " + serverOptions.toString());
 

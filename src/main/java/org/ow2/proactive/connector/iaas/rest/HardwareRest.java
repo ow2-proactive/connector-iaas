@@ -48,7 +48,7 @@ public class HardwareRest {
     private HardwareService hardwareService;
 
     @GET
-    @Path("{infrastructureId}/images")
+    @Path("{infrastructureId}/hardwares")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
         log.debug("Received get all hardwares request for infrastructure " + infrastructureId);

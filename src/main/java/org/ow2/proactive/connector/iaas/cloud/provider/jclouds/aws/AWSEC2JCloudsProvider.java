@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
@@ -385,29 +386,52 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                                                                                  .field("operatingSystem")
                                                                                                  .type(FilterType.TERM_MATCH)
                                                                                                  .value(osReq)
+                                                                                                 .build(),
+                                                                                           Filter.builder()
+                                                                                                 .field("capacitystatus")
+                                                                                                 .type(FilterType.TERM_MATCH)
+                                                                                                 .value("Used")
+                                                                                                 .build(),
+                                                                                           Filter.builder()
+                                                                                                 .field("Tenancy")
+                                                                                                 .type(FilterType.TERM_MATCH)
+                                                                                                 .value("Shared")
                                                                                                  .build())
                                                                                   .build());
         // Interpreting response
         if (!pricesListResponse.hasPriceList()) {
             // No pricing result.
+            log.info("No node candidate found");
             return new HashSet<NodeCandidate>();
         } else {
             // We have pricing results => We parse the Stringified-JSON structure from the API
             Set<NodeCandidate> result = pricesListResponse.priceList().parallelStream().map(s -> {
-                JSONObject jo = new JSONObject(s).getJSONObject("product").getJSONObject("attributes");
+                JSONObject terms = new JSONObject(s).getJSONObject("terms");
+                JSONObject productAttributes = new JSONObject(s).getJSONObject("product").getJSONObject("attributes");
                 // Hardware spec.
-                Hardware hw = Hardware.builder()
-                                      .minRam(fromAwsGioToparseableMB(jo.getString("memory")) + "")
-                                      .minCores(jo.getString("vcpu"))
-                                      .minFreq(fromAwsGioToparseableMB(jo.getString("clockSpeed")) + "")
-                                      .type(jo.getString("instanceType"))
-                                      .build();
+                Hardware.HardwareBuilder hwb = Hardware.builder()
+                                                       .minRam(fromAwsGioToparseableMB(productAttributes.getString("memory")) +
+                                                               "")
+                                                       .minCores(productAttributes.getString("vcpu"))
+                                                       .type(productAttributes.getString("instanceType"));
+
+                if (productAttributes.has("clockSpeed")) {
+                    hwb.minFreq(fromAwsGioToparseableMB(productAttributes.getString("clockSpeed")) + "");
+                } else {
+                    hwb.minFreq("0");
+                }
+
+                Hardware hw = hwb.build();
                 // The minimal price of the cheaper on-demand-offer
-                double price = parseAwsPriceOnDemandInstance(jo);
+                double price = parseAwsPriceOnDemandInstance(terms);
                 // Image spec - No strict reference toa system image is provided by the pricing API. Instead,
                 // we re-use their label system to identified system type. We left to association between
                 // system image and those label to an external process.
-                Image operatingSystem = Image.builder().name(jo.getString("operatingSystem")).build();
+                Image operatingSystem = Image.builder()
+                                             .name(productAttributes.getString("operatingSystem"))
+                                             .operatingSystem(productAttributes.getString("operatingSystem"))
+                                             .location(region)
+                                             .build();
                 // We build the structure encapsulating the result.
                 return NodeCandidate.builder()
                                     .cloud(this.getType())
@@ -417,36 +441,64 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                     .img(operatingSystem)
                                     .build();
             }).collect(Collectors.toSet());
+            log.info(String.format("%d node candidates were found.", result.stream().count()));
             return result;
         }
     }
 
     private int fromAwsGioToparseableMB(String s) {
         // The pricing API providing Strings for to describe the spec. of the infra resources. We need to parse it, to work with MB.
-        Integer parsedInt = Integer.parseInt(s.split(" ")[0]);
-        return parsedInt * 1024;
+        try {
+            String[] splitValue = s.split(" ");
+            Float floatNumber = 0f;
+            switch (splitValue.length) {
+                case 1:
+                    // The value contains just NA:
+                    return 0;
+                case 2:
+                    // If the value is traditionnaly formed (i.e. XX Ghz)
+                    floatNumber = Float.parseFloat(splitValue[0]);
+                    break;
+                case 4:
+                    // If the value defined a maximum
+                    floatNumber = Float.parseFloat(splitValue[2]);
+                    break;
+            }
+            return Math.round(floatNumber * 1024);
+        } catch (NumberFormatException e) {
+            log.error(String.format("Error while parsing integer answer %s from AWS API: %s", s, e.getMessage()));
+            e.printStackTrace();
+            throw e;
+        }
     }
 
-    private double parseAwsPriceOnDemandInstance(JSONObject jo) {
+    private double parseAwsPriceOnDemandInstance(JSONObject terms) {
         // The pricing API use very specific JSON structure to describe the offers, and provide a lot of unexploitable values (for now). We dwarf it.
-        // See `$ aws pricing get-products --service-code AmazonEC2 --filter Type=contain,Field=instanceType,Value=t3.small`
+        // See `$ aws pricing get-products --service-code AmazonEC2 --filter Type=TERM_MATCH,Field=instanceType,Value=t3.small`
         // to get an example of such JSON structure.
-        JSONObject terms = jo.getJSONObject("terms");
-        JSONObject onDemand = terms.getJSONObject("OnDemand");
-        OptionalDouble foundPrice = onDemand.keySet()
-                                            .parallelStream()
-                                            .map(jo1 -> onDemand.getJSONObject(jo1))
-                                            .map(anOfferTerm -> anOfferTerm.getJSONObject("priceDimensions"))
-                                            .map(priceDimensions -> priceDimensions.keySet()
-                                                                                   .parallelStream()
-                                                                                   .map(keyName -> priceDimensions.getJSONObject(keyName))
-                                                                                   .map(aPriceDimension -> aPriceDimension.getJSONObject("pricePerUnit"))
-                                                                                   .mapToDouble(aPricePerUnit -> aPricePerUnit.getDouble("USD"))
-                                                                                   .min())
-                                            .filter(OptionalDouble::isPresent)
-                                            .mapToDouble(OptionalDouble::getAsDouble)
-                                            .min();
-        return foundPrice.orElse(0);
+        try {
+            JSONObject onDemand = terms.getJSONObject("OnDemand");
+            OptionalDouble foundPrice = onDemand.keySet()
+                                                .parallelStream()
+                                                .map(jo1 -> onDemand.getJSONObject(jo1))
+                                                .map(anOfferTerm -> anOfferTerm.getJSONObject("priceDimensions"))
+                                                .map(priceDimensions -> priceDimensions.keySet()
+                                                                                       .parallelStream()
+                                                                                       .map(keyName -> priceDimensions.getJSONObject(keyName))
+                                                                                       .map(aPriceDimension -> aPriceDimension.getJSONObject("pricePerUnit"))
+                                                                                       .mapToDouble(aPricePerUnit -> aPricePerUnit.getDouble("USD"))
+                                                                                       .min())
+                                                .filter(OptionalDouble::isPresent)
+                                                .mapToDouble(OptionalDouble::getAsDouble)
+                                                .min();
+            return foundPrice.orElse(0);
+        } catch (NumberFormatException e) {
+            log.error(String.format("Error while parsing double answer %s from AWS API: %s",
+                                    terms.toString(),
+                                    e.getMessage()));
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override

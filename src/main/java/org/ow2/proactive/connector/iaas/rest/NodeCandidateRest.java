@@ -25,10 +25,13 @@
  */
 package org.ow2.proactive.connector.iaas.rest;
 
+import java.util.Set;
+
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.ow2.proactive.connector.iaas.model.NodeCandidate;
 import org.ow2.proactive.connector.iaas.service.NodeCandidateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -55,11 +58,11 @@ public class NodeCandidateRest {
                  infrastructureId,
                  region);
         try {
-            nodeCandidateService.getNodeCandidate(infrastructureId, region, imageReq);
+            Set<NodeCandidate> result = nodeCandidateService.getNodeCandidate(infrastructureId, region, imageReq);
+            return Response.ok(result).build();
         } catch (Exception e) {
             log.error("An error occurred while retrieving node candidate infrastructureId={}: {}", infrastructureId, e);
             return Response.serverError().build();
         }
-        return Response.ok().build();
     }
 }

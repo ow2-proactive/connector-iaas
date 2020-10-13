@@ -181,16 +181,16 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public Set<Image> getAllImages(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listImages()
-                                                                 .stream()
-                                                                 .map(it -> Image.builder()
-                                                                                 .id(it.getId())
-                                                                                 .name(it.getName())
-                                                                                 .location(it.getLocation().getId())
-                                                                                 .operatingSystem(it.getOperatingSystem()
-                                                                                                    .getName())
-                                                                                 .build())
-                                                                 .collect(Collectors.toSet());
+        Set<? extends org.jclouds.compute.domain.Image> images = getComputeServiceFromInfastructure(infrastructure).listImages();
+        log.info(String.format("Found %d images", images.stream().count()));
+        return images.stream()
+                     .map(it -> Image.builder()
+                                     .id(it.getId())
+                                     .name(it.getName())
+                                     .location(it.getLocation().getId())
+                                     .operatingSystem(it.getOperatingSystem().toString())
+                                     .build())
+                     .collect(Collectors.toSet());
 
     }
 
@@ -216,11 +216,11 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                                                      .mapToDouble(Processor::getCores)
                                                                                                      .sum())
                                                                                     .minRam("" + hw.getRam())
-                                                                                    .type(hw.getType().toString())
+                                                                                    .type(hw.getId())
                                                                                     .minFreq("" + hw.getProcessors()
                                                                                                     .stream()
                                                                                                     .mapToDouble(Processor::getSpeed)
-                                                                                                    .sum())
+                                                                                                    .sum() * 1024)
                                                                                     .build())
                                                                  .collect(Collectors.toSet());
     }
