@@ -51,7 +51,7 @@ public class RegionRest {
     @Path("{infrastructureId}/regions")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllRegions(@PathParam("infrastructureId") String infrastructureId) {
-        log.debug("Received get all request for infrastructure " + infrastructureId);
+        log.info("Received get all regions request for infrastructure " + infrastructureId);
         return Response.ok(regionService.getAllRegions(infrastructureId)).build();
     }
 

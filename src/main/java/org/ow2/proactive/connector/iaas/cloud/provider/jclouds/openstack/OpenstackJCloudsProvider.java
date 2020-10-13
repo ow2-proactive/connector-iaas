@@ -99,8 +99,14 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         if (!securityGroupApi.isPresent()) {
             log.warn("The support of security groups has not been found in this OpenStack instance. Therefore, the explicit configuration of security groups and the support of port opening will be disabled");
         }
-
-        CreateServerOptions serverOptions = createOptions(infrastructure, instance, securityGroupApi);
+        CreateServerOptions serverOptions;
+        try {
+            serverOptions = createOptions(infrastructure, instance, securityGroupApi);
+        } catch (Exception e) {
+           log.error(e.getMessage());
+           e.printStackTrace();
+           throw e;
+        }
         log.info("Openstack instance will use options: " + serverOptions.toString());
 
         Set<Instance> createdInstances = new HashSet<>();
@@ -133,18 +139,21 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
         CreateServerOptions createServerOptions = new CreateServerOptions().keyPairName(publicKeyName)
                                                                            .userData(buildScriptToExecuteString(instance.getInitScript()).getBytes());
         if (isNetworkIdSet(instance.getNetwork())) {
+            log.info("Networking: using specified network");
             createServerOptions = createServerOptions.networks(instance.getNetwork().getNetworkIds());
         }
 
         // Open port and support security group.
-        if (securityGroupApiOptional.isPresent()) {
+        if (securityGroupApiOptional.isPresent() && instance.getOptions() != null) {
             List<String> securityGroupName = instance.getOptions().getSecurityGroupNames();
             int[] inboundPort = instance.getOptions().getPortsToOpen();
             if (!StringUtils.isEmpty(securityGroupName)) {
                 // Have we an explicit security group requested ?
+                log.info("Security Group: Using supplied security group");
                 createServerOptions.securityGroupNames(securityGroupName);
             } else if (inboundPort.length > 0) {
                 // Or do we have to create a new one w/ the created request port to be opened ?
+                log.info("Security group: Configuring new security group to allow inbound connections to the specified ports");
                 String sgName = "SG-" + System.currentTimeMillis();
                 SecurityGroupApi sgApi = securityGroupApiOptional.get();
                 SecurityGroup sg = sgApi.createWithDescription(sgName, "Auto-generated security group");
