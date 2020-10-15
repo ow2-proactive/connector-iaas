@@ -220,7 +220,8 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                                     .minFreq("" + hw.getProcessors()
                                                                                                     .stream()
                                                                                                     .mapToDouble(Processor::getSpeed)
-                                                                                                    .sum() * 1024)
+                                                                                                    .sum() *
+                                                                                                  1024)
                                                                                     .build())
                                                                  .collect(Collectors.toSet());
     }
