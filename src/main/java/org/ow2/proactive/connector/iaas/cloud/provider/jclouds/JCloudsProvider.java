@@ -35,6 +35,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.xml.stream.Location;
+
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
@@ -42,6 +44,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Processor;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.domain.LocationScope;
 import org.jclouds.scriptbuilder.ScriptBuilder;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.json.JSONArray;
@@ -88,7 +91,9 @@ public abstract class JCloudsProvider implements CloudProvider {
     public Set<String> listAvailableRegions(Infrastructure infrastructure) {
         return getComputeServiceFromInfastructure(infrastructure).listAssignableLocations()
                                                                  .parallelStream()
-                                                                 .map(loc -> loc.toString())
+                                                                 .filter(location -> location.getScope()
+                                                                                             .equals(LocationScope.REGION))
+                                                                 .map(loc -> loc.getId())
                                                                  .collect(Collectors.toSet());
     }
 
