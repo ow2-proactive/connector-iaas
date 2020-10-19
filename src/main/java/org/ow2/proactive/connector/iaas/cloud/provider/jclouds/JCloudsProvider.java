@@ -311,6 +311,10 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
         String type = getType();
+        // In this method, we will return a list of node candidates for JCloud infrastructure, that do not have their own pricing driver.
+        // To make this driver generic accross cloud provider, we consider two types of providers:
+        // 1 - Known and paid cloud providers: those have their pricing encoded in JSON files, located in pricingRepo folder,
+        // 2 - Unknown/private clouds: those do not have pricing files. The prices of their instances is assumed to be free.
         try {
             String fileTag = new String(java.security.MessageDigest.getInstance("SHA-1")
                                                                    .digest((type + infra.getRegion() +
@@ -333,7 +337,7 @@ public abstract class JCloudsProvider implements CloudProvider {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to proceed with the digest: " + e.getLocalizedMessage());
         } catch (IOException e) {
-            throw new RuntimeException("Unableto open the pricing file: " + e.getLocalizedMessage());
+            throw new RuntimeException("Unable to open the pricing file: " + e.getLocalizedMessage());
         }
     }
 
