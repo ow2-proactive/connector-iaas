@@ -23,30 +23,32 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.model;
+package org.ow2.proactive.connector.iaas.service;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.ws.rs.NotFoundException;
+
+import org.ow2.proactive.connector.iaas.cloud.CloudManager;
+import org.ow2.proactive.connector.iaas.model.Hardware;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-@ToString
-@NoArgsConstructor
-@Builder
-public class Hardware {
+@Service
+public class HardwareService {
 
-    private String type;
+    @Autowired
+    private InfrastructureService infrastructureService;
 
-    private String minRam;
+    @Autowired
+    private CloudManager cloudManager;
 
-    private String minCores;
-
-    private String minFreq;
-
+    public Set<Hardware> getAllHardwares(String infrastructureId) {
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.getAllHardwares(infrastructure))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
+                                                                " does not exists"));
+    }
 }

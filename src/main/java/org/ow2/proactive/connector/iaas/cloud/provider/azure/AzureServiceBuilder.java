@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
@@ -48,6 +49,15 @@ import com.microsoft.rest.LogLevel;
 @Component
 public class AzureServiceBuilder {
 
+    private Map<Infrastructure, AzureTokenCredentials> generatedTokenPerInfra = new HashMap<>();
+
+    // We store token, since they may be needed from the context of the infra (ex: pricing API)
+    public AzureTokenCredentials getTokenfromInfra(Infrastructure infra) {
+        if (!generatedTokenPerInfra.containsKey(infra))
+            throw new RuntimeException("No stored token found for infrastructure " + infra.toString());
+        return generatedTokenPerInfra.get(infra);
+    }
+
     public Azure buildServiceFromInfrastructure(Infrastructure infrastructure) {
 
         // Get credentials
@@ -68,6 +78,8 @@ public class AzureServiceBuilder {
         AzureEnvironment environment = getAzureEnvironment(infrastructure);
 
         AzureTokenCredentials credentials = new ApplicationTokenCredentials(clientId, domain, secret, environment);
+        generatedTokenPerInfra.put(infrastructure, credentials);
+
         Azure azure;
         try {
             Azure.Authenticated authenticatedAzureService = Azure.configure()

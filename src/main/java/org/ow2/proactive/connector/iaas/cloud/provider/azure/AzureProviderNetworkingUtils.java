@@ -28,7 +28,9 @@ package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Component;
 
@@ -124,65 +126,103 @@ public class AzureProviderNetworkingUtils {
     }
 
     public Creatable<NetworkSecurityGroup> prepareProactiveNetworkSecurityGroup(Azure azureService, Region region,
-            ResourceGroup resourceGroup, String name) {
+            ResourceGroup resourceGroup, String name, int[] portsToBeOpened) {
+        NetworkSecurityGroup.DefinitionStages.WithCreate result = createSgWithDefaultRules(azureService,
+                                                                                           region,
+                                                                                           resourceGroup,
+                                                                                           name);
+        AtomicReference<Integer> portProcessed = new AtomicReference<>(0);
+        IntStream.of(portsToBeOpened).distinct().sorted().forEach(port -> {
+            result.defineRule("Opened port " + portProcessed.get())
+                  .allowInbound()
+                  .fromAnyAddress()
+                  .fromAnyPort()
+                  .toAnyAddress()
+                  .toPort(port)
+                  .withProtocol(SecurityRuleProtocol.ASTERISK)
+                  .withPriority(101 + portProcessed.getAndSet(portProcessed.get() + 1))
+                  .attach();
+        });
+        result.defineRule("All")
+              .allowOutbound()
+              .fromAnyAddress()
+              .fromAnyPort()
+              .toAnyAddress()
+              .toAnyPort()
+              .withAnyProtocol()
+              .attach();
+        return result;
+    }
 
-        return azureService.networkSecurityGroups()
-                           .define(name)
-                           .withRegion(region)
-                           .withExistingResourceGroup(resourceGroup)
-                           .defineRule("SSH")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(22)
-                           .withProtocol(SecurityRuleProtocol.TCP)
-                           .withPriority(101)
-                           .attach()
-                           .defineRule("ProActive_portal")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(8080)
-                           .withProtocol(SecurityRuleProtocol.TCP)
-                           .withPriority(102)
-                           .attach()
-                           .defineRule("PNP")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(64738)
-                           .withAnyProtocol()
-                           .withPriority(103)
-                           .attach()
-                           .defineRule("PNPS")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(64739)
-                           .withAnyProtocol()
-                           .withPriority(104)
-                           .attach()
-                           .defineRule("PAMR")
-                           .allowInbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toPort(33647)
-                           .withAnyProtocol()
-                           .withPriority(105)
-                           .attach()
-                           .defineRule("All")
-                           .allowOutbound()
-                           .fromAnyAddress()
-                           .fromAnyPort()
-                           .toAnyAddress()
-                           .toAnyPort()
-                           .withAnyProtocol()
-                           .attach();
+    public Creatable<NetworkSecurityGroup> prepareProactiveNetworkSecurityGroup(Azure azureService, Region region,
+            ResourceGroup resourceGroup, String name) {
+        return appendDefaultProActiveRules(createSgWithDefaultRules(azureService, region, resourceGroup, name));
+    }
+
+    private NetworkSecurityGroup.DefinitionStages.WithCreate createSgWithDefaultRules(Azure azureService, Region region,
+            ResourceGroup resourceGroup, String name) {
+        NetworkSecurityGroup.DefinitionStages.WithCreate result = azureService.networkSecurityGroups()
+                                                                              .define(name)
+                                                                              .withRegion(region)
+                                                                              .withExistingResourceGroup(resourceGroup)
+                                                                              .defineRule("SSH")
+                                                                              .allowInbound()
+                                                                              .fromAnyAddress()
+                                                                              .fromAnyPort()
+                                                                              .toAnyAddress()
+                                                                              .toPort(22)
+                                                                              .withProtocol(SecurityRuleProtocol.TCP)
+                                                                              .withPriority(101)
+                                                                              .attach();
+        return result;
+    }
+
+    private NetworkSecurityGroup.DefinitionStages.WithCreate
+            appendDefaultProActiveRules(NetworkSecurityGroup.DefinitionStages.WithCreate sgInConfiguration) {
+        return sgInConfiguration.defineRule("ProActive_portal")
+                                .allowInbound()
+                                .fromAnyAddress()
+                                .fromAnyPort()
+                                .toAnyAddress()
+                                .toPort(8080)
+                                .withProtocol(SecurityRuleProtocol.TCP)
+                                .withPriority(102)
+                                .attach()
+                                .defineRule("PNP")
+                                .allowInbound()
+                                .fromAnyAddress()
+                                .fromAnyPort()
+                                .toAnyAddress()
+                                .toPort(64738)
+                                .withAnyProtocol()
+                                .withPriority(103)
+                                .attach()
+                                .defineRule("PNPS")
+                                .allowInbound()
+                                .fromAnyAddress()
+                                .fromAnyPort()
+                                .toAnyAddress()
+                                .toPort(64739)
+                                .withAnyProtocol()
+                                .withPriority(104)
+                                .attach()
+                                .defineRule("PAMR")
+                                .allowInbound()
+                                .fromAnyAddress()
+                                .fromAnyPort()
+                                .toAnyAddress()
+                                .toPort(33647)
+                                .withAnyProtocol()
+                                .withPriority(105)
+                                .attach()
+                                .defineRule("All")
+                                .allowOutbound()
+                                .fromAnyAddress()
+                                .fromAnyPort()
+                                .toAnyAddress()
+                                .toAnyPort()
+                                .withAnyProtocol()
+                                .attach();
     }
 
     public Creatable<NetworkInterface> prepareNetworkInterface(Azure azureService, Region region,

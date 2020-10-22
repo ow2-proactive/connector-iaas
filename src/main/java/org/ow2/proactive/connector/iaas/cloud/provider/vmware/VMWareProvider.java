@@ -40,14 +40,7 @@ import javax.ws.rs.NotSupportedException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.Hardware;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.Network;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -91,6 +84,11 @@ public class VMWareProvider implements CloudProvider {
 
     @Autowired
     private TagManager tagManager;
+
+    @Override
+    public Set<String> listAvailableRegions(Infrastructure infrastructure) {
+        throw new NotSupportedException("Operation not supported for VMWare");
+    }
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
@@ -366,6 +364,11 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        throw new NotSupportedException("Operation not supported for VMWare");
+    }
+
+    @Override
     public void deleteInfrastructure(Infrastructure infrastructure) {
         vmWareServiceInstanceCache.removeServiceInstance(infrastructure);
     }
@@ -387,6 +390,11 @@ public class VMWareProvider implements CloudProvider {
 
     @Override
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
+    }
+
+    @Override
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
         throw new NotImplementedException("This method is not yet implemented.");
     }
 

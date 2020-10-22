@@ -25,6 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -33,6 +34,7 @@ import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.microsoft.azure.credentials.AzureTokenCredentials;
 import com.microsoft.azure.management.Azure;
 
 
@@ -42,6 +44,8 @@ import com.microsoft.azure.management.Azure;
  */
 @Component
 public class AzureServiceCache {
+
+    public final String MANAGEMENT_URL = "https://management.azure.com/";
 
     @Autowired
     private AzureServiceBuilder serviceBuilder;
@@ -56,6 +60,14 @@ public class AzureServiceCache {
 
     public Azure getService(Infrastructure infrastructure) {
         return buildComputeService.apply(infrastructure);
+    }
+
+    public String getInfrastructureToken(Infrastructure infra) {
+        try {
+            return serviceBuilder.getTokenfromInfra(infra).getToken(MANAGEMENT_URL);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to determine token for infrastructure " + infra);
+        }
     }
 
     public void removeService(Infrastructure infrastructure) {

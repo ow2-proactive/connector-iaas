@@ -23,37 +23,33 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.rest;
+package org.ow2.proactive.connector.iaas.service;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.util.Optional;
+import java.util.Set;
 
-import org.ow2.proactive.connector.iaas.service.ImageService;
+import javax.ws.rs.NotFoundException;
+
+import org.ow2.proactive.connector.iaas.cloud.CloudManager;
+import org.ow2.proactive.connector.iaas.model.NodeCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Service;
 
 
-@Path("/infrastructures")
-@Component
-@Log4j2
-public class ImageRest {
+@Service
+public class NodeCandidateService {
 
     @Autowired
-    private ImageService imageService;
+    private InfrastructureService infrastructureService;
 
-    @GET
-    @Path("{infrastructureId}/images")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        log.info("Received get all images request for infrastructure " + infrastructureId);
-        return Response.ok(imageService.getAllImages(infrastructureId)).build();
+    @Autowired
+    private CloudManager cloudManager;
 
+    public Set<NodeCandidate> getNodeCandidate(String infrastructureId, String region, String imageReq) {
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infra -> cloudManager.getNodeCandidate(infra, region, imageReq))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
+                                                                " does not exists"));
     }
 
 }

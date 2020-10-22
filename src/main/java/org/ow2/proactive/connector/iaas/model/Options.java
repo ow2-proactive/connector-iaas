@@ -61,4 +61,6 @@ public class Options {
     private Boolean staticPublicIP;
 
     private List<Tag> tags;
+
+    private int[] portsToOpen;
 }
