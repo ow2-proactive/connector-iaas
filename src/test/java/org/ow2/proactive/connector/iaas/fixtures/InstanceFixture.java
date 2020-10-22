@@ -175,7 +175,17 @@ public class InstanceFixture {
                             HardwareFixtures.getHardware(minRam, minCores),
                             NetworkFixtures.getNetwork(networkId, publicAddress, privateAddress),
                             CredentialsFixtures.getInstanceCredentials("username", "password"),
-                            new Options(null, null, null, null, "resourceGroup", "region", null, null, null, null),
+                            new Options(null,
+                                        null,
+                                        null,
+                                        null,
+                                        "resourceGroup",
+                                        "region",
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null),
                             InstanceScriptFixture.simpleInstanceScriptNoscripts(),
                             customScriptUrl);
     }

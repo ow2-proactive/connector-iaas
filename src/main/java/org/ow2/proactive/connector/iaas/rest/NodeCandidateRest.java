@@ -25,14 +25,14 @@
  */
 package org.ow2.proactive.connector.iaas.rest;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import java.util.Set;
+
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.ow2.proactive.connector.iaas.service.ImageService;
+import org.ow2.proactive.connector.iaas.model.NodeCandidate;
+import org.ow2.proactive.connector.iaas.service.NodeCandidateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,18 +42,27 @@ import lombok.extern.log4j.Log4j2;
 @Path("/infrastructures")
 @Component
 @Log4j2
-public class ImageRest {
+public class NodeCandidateRest {
 
     @Autowired
-    private ImageService imageService;
+    public NodeCandidateService nodeCandidateService;
 
-    @GET
-    @Path("{infrastructureId}/images")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        log.info("Received get all images request for infrastructure " + infrastructureId);
-        return Response.ok(imageService.getAllImages(infrastructureId)).build();
-
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces("application/json")
+    @Path("{infrastructureId}/nodecandidates")
+    public Response getNodeCandidate(@PathParam("infrastructureId") String infrastructureId,
+            @QueryParam("region") String region, @QueryParam("imageReq") String imageReq) {
+        log.info("Receive getNodeCandidate request for imageReq [{}] under infrastructure [{}] in region [{}] ",
+                 imageReq,
+                 infrastructureId,
+                 region);
+        try {
+            Set<NodeCandidate> result = nodeCandidateService.getNodeCandidate(infrastructureId, region, imageReq);
+            return Response.ok(result).build();
+        } catch (Exception e) {
+            log.error("An error occurred while retrieving node candidate infrastructureId={}: {}", infrastructureId, e);
+            return Response.serverError().build();
+        }
     }
-
 }

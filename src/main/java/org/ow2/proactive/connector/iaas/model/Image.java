@@ -45,4 +45,8 @@ public class Image {
 
     private String name;
 
+    private String operatingSystem;
+
+    private String location;
+
 }

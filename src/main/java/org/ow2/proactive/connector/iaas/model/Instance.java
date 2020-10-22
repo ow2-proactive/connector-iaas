@@ -25,6 +25,8 @@
  */
 package org.ow2.proactive.connector.iaas.model;
 
+import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
