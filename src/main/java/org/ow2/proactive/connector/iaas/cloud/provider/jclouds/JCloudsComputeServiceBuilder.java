@@ -31,7 +31,6 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
-import org.jclouds.View;
 import org.jclouds.aws.ec2.reference.AWSEC2Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -74,6 +73,9 @@ public class JCloudsComputeServiceBuilder {
 
     @Value("${connector-iaas.aws.jclouds.max-retries:5}")
     private String maxRetries;
+
+    @Value("${connector-iass.aws.jcloud.list-tag:listed-in-proactive")
+    private String awsImagesListTag;
 
     @Autowired
     private OpenstackUtil openstackUtil;
@@ -125,7 +127,7 @@ public class JCloudsComputeServiceBuilder {
         // set AMI queries to filter private AMI (self), API from Amazon (137112412989) & Canonical (099720109477). Doc: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
         //properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,"owner-id=137112412989,099720109477,self;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm" );
         properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
-                               "owner-id=099720109477;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm");
+                               "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label="+awsImagesListTag);
         properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
 
         log.info("Infrastructure properties: " + properties.toString());
