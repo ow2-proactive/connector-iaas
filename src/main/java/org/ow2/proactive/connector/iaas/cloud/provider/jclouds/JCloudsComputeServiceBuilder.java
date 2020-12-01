@@ -74,7 +74,7 @@ public class JCloudsComputeServiceBuilder {
     @Value("${connector-iaas.aws.jclouds.max-retries:5}")
     private String maxRetries;
 
-    @Value("${connector-iass.aws.jcloud.list-tag:listed-in-proactive")
+    @Value("${connector-iaas.aws.jclouds.list-tag}")
     private String awsImagesListTag;
 
     @Autowired
