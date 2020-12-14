@@ -25,12 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 
 @EqualsAndHashCode
@@ -39,14 +34,15 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @Builder
-public class Image {
+public class OperatingSystem {
 
-    private String id;
+    private String family;
 
-    private String name;
+    private String arch;
 
-    private OperatingSystem operatingSystem;
+    private String version;
 
-    private String location;
+    private String description;
 
+    private boolean is64Bit;
 }

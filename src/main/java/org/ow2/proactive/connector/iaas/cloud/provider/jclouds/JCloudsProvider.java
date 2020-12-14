@@ -193,7 +193,16 @@ public abstract class JCloudsProvider implements CloudProvider {
                                      .id(it.getId())
                                      .name(it.getName())
                                      .location(it.getLocation().getId())
-                                     .operatingSystem(it.getOperatingSystem().toString())
+                                     .operatingSystem(OperatingSystem.builder()
+                                                                     .arch(it.getOperatingSystem().getArch())
+                                                                     .description(it.getOperatingSystem()
+                                                                                    .getDescription())
+                                                                     .family(Optional.ofNullable(it.getOperatingSystem()
+                                                                                                   .getFamily())
+                                                                                     .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)
+                                                                                     .value())
+                                                                     .is64Bit(it.getOperatingSystem().is64Bit())
+                                                                     .build())
                                      .build())
                      .collect(Collectors.toSet());
 

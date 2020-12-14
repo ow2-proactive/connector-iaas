@@ -42,6 +42,7 @@ import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.model.Image;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
+import org.ow2.proactive.connector.iaas.model.OperatingSystem;
 
 import jersey.repackaged.com.google.common.collect.Sets;
 
@@ -76,7 +77,7 @@ public class ImageServiceTest {
 
         Set<Image> images = Sets.newHashSet();
 
-        images.add(new Image("id", "name", "os", "location"));
+        images.add(new Image("id", "name", OperatingSystem.builder().family("os").build(), "location"));
 
         when(cloudManager.getAllImages(infrastructure)).thenReturn(images);
 

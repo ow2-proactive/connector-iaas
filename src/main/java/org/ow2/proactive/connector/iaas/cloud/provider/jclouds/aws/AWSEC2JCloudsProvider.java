@@ -471,7 +471,9 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 // system image and those label to an external process.
                 Image operatingSystem = Image.builder()
                                              .name(productAttributes.getString("operatingSystem"))
-                                             .operatingSystem(productAttributes.getString("operatingSystem"))
+                                             .operatingSystem(OperatingSystem.builder()
+                                                                             .family(productAttributes.getString("operatingSystem"))
+                                                                             .build())
                                              .location(region)
                                              .build();
                 // We build the structure encapsulating the result.
