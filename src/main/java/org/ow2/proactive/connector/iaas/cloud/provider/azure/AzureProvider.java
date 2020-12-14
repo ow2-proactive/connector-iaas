@@ -759,7 +759,19 @@ public class AzureProvider implements CloudProvider {
                                 .virtualMachineCustomImages()
                                 .list()
                                 .stream()
-                                .map(azureImage -> Image.builder().id(azureImage.id()).name(azureImage.name()).build())
+                                .map(azureImage -> Image.builder()
+                                                        .id(azureImage.id())
+                                                        .name(azureImage.name())
+                                                        .operatingSystem(OperatingSystem.builder()
+                                                                                        .arch("AMD64")
+                                                                                        .description(azureImage.osDiskImage()
+                                                                                                               .toString())
+                                                                                        .family(azureImage.osDiskImage()
+                                                                                                          .osType()
+                                                                                                          .toString())
+                                                                                        .is64Bit(true)
+                                                                                        .build())
+                                                        .build())
                                 .collect(Collectors.toSet());
     }
 
