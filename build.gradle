@@ -183,6 +183,10 @@ dependencies {
     // AWS Pricing
     compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.13.66'
 
+    // Fixing AWS node candidates retrieving
+    // For more info: https://github.com/aws/aws-sdk-java-v2/issues/652#issuecomment-476247813
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.9'
+
     // Json project
     compile 'org.json:json:20151123'
 
