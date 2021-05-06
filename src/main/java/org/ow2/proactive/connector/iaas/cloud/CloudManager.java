@@ -33,11 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
-import org.ow2.proactive.connector.iaas.model.Image;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceScript;
-import org.ow2.proactive.connector.iaas.model.ScriptResult;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -80,10 +76,18 @@ public class CloudManager {
                                                                                             instanceScript);
     }
 
+    public Set<String> getAllRegionsOnInfrastructure(Infrastructure infrastructure) {
+        return cloudProviderPerType.get(infrastructure.getType()).listAvailableRegions(infrastructure);
+    }
+
     public List<ScriptResult> executeScriptOnInstanceTag(Infrastructure infrastructure, String instanceTag,
             InstanceScript instanceScript) {
         return cloudProviderPerType.get(infrastructure.getType())
                                    .executeScriptOnInstanceTag(infrastructure, instanceTag, instanceScript);
+    }
+
+    public Set<Hardware> getAllHardwares(Infrastructure infrastructure) {
+        return cloudProviderPerType.get(infrastructure.getType()).getAllHardwares(infrastructure);
     }
 
     public Set<Image> getAllImages(Infrastructure infrastructure) {
@@ -104,6 +108,14 @@ public class CloudManager {
 
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance) {
         return cloudProviderPerType.get(infrastructure.getType()).createKeyPair(infrastructure, instance);
+    }
+
+    public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
+        cloudProviderPerType.get(infrastructure.getType()).deleteKeyPair(infrastructure, keyPairName, region);
+    }
+
+    public Set<NodeCandidate> getNodeCandidate(Infrastructure infrastructure, String region, String imageReq) {
+        return cloudProviderPerType.get(infrastructure.getType()).getNodeCandidate(infrastructure, region, imageReq);
     }
 
 }

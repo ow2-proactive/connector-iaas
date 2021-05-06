@@ -46,14 +46,23 @@ public class ImageTest {
 
     @Test
     public void testConstructor() {
-        Image image = new Image("image-id", "image-name");
+        Image image = new Image("image-id",
+                                "image-name",
+                                OperatingSystem.builder().family("image-os").build(),
+                                "image-location");
         assertThat(image.getName(), is("image-name"));
     }
 
     @Test
     public void testEqualsAndHashcode() {
-        Image image1 = new Image("image-id", "image-name");
-        Image image2 = new Image("image-id", "image-name");
+        Image image1 = new Image("image-id",
+                                 "image-name",
+                                 OperatingSystem.builder().family("image-os").build(),
+                                 "image-location");
+        Image image2 = new Image("image-id",
+                                 "image-name",
+                                 OperatingSystem.builder().family("image-os").build(),
+                                 "image-location");
 
         Set<Image> images = Sets.newHashSet(image1, image2);
 

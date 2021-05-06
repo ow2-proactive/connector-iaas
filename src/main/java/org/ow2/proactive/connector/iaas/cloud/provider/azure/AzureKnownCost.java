@@ -23,30 +23,19 @@
  * If needed, contact us to obtain a release under GPL Version 2 or 3
  * or a different license than the AGPL.
  */
-package org.ow2.proactive.connector.iaas.model;
+package org.ow2.proactive.connector.iaas.cloud.provider.azure;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 
-@EqualsAndHashCode
 @Getter
 @AllArgsConstructor
-@ToString
-@NoArgsConstructor
-@Builder
-public class Hardware {
+public class AzureKnownCost {
 
-    private String type;
+    String meterCategory;
 
-    private String minRam;
+    String meterRegion;
 
-    private String minCores;
-
-    private String minFreq;
-
+    double meterRatesZero;
 }

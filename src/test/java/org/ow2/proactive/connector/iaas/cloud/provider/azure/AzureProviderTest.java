@@ -121,7 +121,7 @@ public class AzureProviderTest {
     private VirtualMachine.DefinitionStages.WithNetwork virtualMachineWithNetwork;
 
     @Mock
-    private VirtualMachine.DefinitionStages.WithOS virtualMachineWithOS;
+    private VirtualMachine.DefinitionStages.WithProximityPlacementGroup virtualMachineWithPlacementGroup;
 
     @Mock
     private VirtualMachine.DefinitionStages.WithLinuxRootUsernameManaged virtualMachineWithLinuxRootUsername;
@@ -342,8 +342,8 @@ public class AzureProviderTest {
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
-        when(virtualMachineWithOS.withLinuxCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithLinuxRootUsername);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithPlacementGroup);
+        when(virtualMachineWithPlacementGroup.withLinuxCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithLinuxRootUsername);
         when(virtualMachineWithLinuxRootUsername.withRootUsername(anyString())).thenReturn(creatableLinuxVMWithoutCredentials);
         when(creatableLinuxVMWithoutCredentials.withRootPassword(anyString())).thenReturn(creatableLinuxVMWithImage);
         when(creatableLinuxVMWithoutCredentials.withSsh(anyString())).thenReturn(creatableLinuxVMWithImage);
@@ -508,8 +508,8 @@ public class AzureProviderTest {
         when(virtualMachines.define(anyString())).thenReturn(defineVirtualMachine);
         when(defineVirtualMachine.withRegion(any(Region.class))).thenReturn(virtualMachineWithGroup);
         when(virtualMachineWithGroup.withExistingResourceGroup(resourceGroup)).thenReturn(virtualMachineWithNetwork);
-        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithOS);
-        when(virtualMachineWithOS.withWindowsCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithWindowsAdminUsername);
+        when(virtualMachineWithNetwork.withNewPrimaryNetworkInterface(creatableNetworkInterface)).thenReturn(virtualMachineWithPlacementGroup);
+        when(virtualMachineWithPlacementGroup.withWindowsCustomImage(virtualMachineCustomImage.id())).thenReturn(virtualMachineWithWindowsAdminUsername);
         when(virtualMachineWithWindowsAdminUsername.withAdminUsername(anyString())).thenReturn(creatableWindowsVMWithoutCredentials);
         when(creatableWindowsVMWithoutCredentials.withAdminPassword(anyString())).thenReturn(creatableWindowsVMWithImage);
         when(creatableWindowsVMWithImage.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(creatableVMWithSize);

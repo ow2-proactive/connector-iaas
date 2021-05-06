@@ -1,14 +1,25 @@
+import com.github.jk1.license.render.*
+
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.researchgate.release'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
-apply plugin: "sonar-runner"
+apply plugin: "org.sonarqube"
 apply from: "$rootDir/gradle/ext/coding-format.gradle"
+apply plugin: 'com.github.jk1.dependency-license-report'
 
 // To embed into the release process. './gradlew' install will be called.
 apply plugin: 'maven'
+
+dependencyManagement {
+    dependencies {
+        imports {
+            mavenBom 'software.amazon.awssdk:bom:2.13.66'
+        }
+    }
+}
 
 // Configure the maven repository deployment
 install {
@@ -44,12 +55,14 @@ buildscript {
   }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
-    classpath 'org.postgresql:postgresql:9.3-1102-jdbc41'
     classpath 'org.ajoberstar:gradle-jacoco:0.3.0'
     classpath 'net.researchgate:gradle-release:2.2.1'
     classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.3.3.RELEASE'
+    classpath "io.spring.gradle:dependency-management-plugin:0.6.1.RELEASE"
+    classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7.1"
     classpath "com.diffplug.gradle.spotless:spotless:2.4.0"
     classpath "org.ow2.proactive:coding-rules:1.0.0"
+    classpath 'com.github.jk1:gradle-license-report:1.7'
   }
   dependencies {
     delete "gradle/ext"
@@ -79,6 +92,7 @@ jar {
 }
 
 shadowJar {
+  zip64 = true
   mergeServiceFiles()
 }
 
@@ -137,34 +151,41 @@ dependencies {
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile('org.springframework.boot:spring-boot-starter-jetty:1.3.3.RELEASE')
     // Jcloud dependencies
-    compile ('org.apache.jclouds:jclouds-compute:2.1.2'){
+    compile ('org.apache.jclouds:jclouds-compute:2.1.3'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.api:openstack-nova:2.1.2'){
+    compile ('org.apache.jclouds.api:openstack-nova:2.1.3'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.api:openstack-keystone:2.1.2'){
+    compile ('org.apache.jclouds.api:openstack-keystone:2.1.3'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:aws-ec2:2.1.2'){
+    compile ('org.apache.jclouds.provider:aws-ec2:2.1.3'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.2'){
+    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.3'){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds:jclouds-allcompute:2.1.2'){
+    compile ('org.apache.jclouds:jclouds-allcompute:2.1.3'){
         exclude module : 'jsr311-api'
     }
 
     // Prevent the usage of an old version of SSHJ
-    compile 'org.apache.jclouds.driver:jclouds-sshj:2.1.2'
+    compile 'org.apache.jclouds.driver:jclouds-sshj:2.1.3'
 
     // VMware dependency
     compile 'com.toastcoders:yavijava:6.0.04'
 
     // Microsoft Azure
-    compile 'com.microsoft.azure:azure:1.5.1'
-    compile 'com.microsoft.azure:azure-mgmt-network:1.5.1'
+    compile 'com.microsoft.azure:azure:1.35.1'
+    compile 'com.microsoft.azure:azure-mgmt-network:1.35.1'
+
+    // AWS Pricing
+    compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.13.66'
+
+    // Fixing AWS node candidates retrieving
+    // For more info: https://github.com/aws/aws-sdk-java-v2/issues/652#issuecomment-476247813
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.9'
 
     // Json project
     compile 'org.json:json:20151123'
@@ -227,12 +248,12 @@ task local {
 
 
 allprojects {
-    apply plugin: "sonar-runner"
+    apply plugin: "org.sonarqube"
     apply plugin: 'jacoco'
     apply plugin: 'project-report'
 
-    sonarRunner {
-        sonarProperties {
+    sonarqube {
+        properties {
             property "sonar.projectKey", "$project.group:connector-iaas"
             property "sonar.projectName", "connector-iaas"
             property "sonar.jdbc.driverClassName", "org.postgresql.Driver"
@@ -262,4 +283,10 @@ allprojects {
     }
 
 
+}
+
+
+licenseReport {
+    configurations = ['runtime']
+    renderers = [new InventoryHtmlReportRenderer()]
 }

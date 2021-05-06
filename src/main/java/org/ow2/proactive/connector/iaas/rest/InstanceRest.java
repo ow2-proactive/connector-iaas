@@ -63,8 +63,8 @@ public class InstanceRest {
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instanceJson);
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
         return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
     }
 
@@ -76,7 +76,8 @@ public class InstanceRest {
             @QueryParam("allInstances") Boolean allInstances) {
 
         if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received get request for infrastructure " + infrastructureId + " and instance id " + instanceId);
+            log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
+                     instanceId);
             return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
         } else if (Optional.ofNullable(instanceTag).isPresent()) {
             log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +

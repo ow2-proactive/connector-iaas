@@ -44,15 +44,16 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.RunScriptOnNodesException;
-import org.jclouds.compute.domain.ComputeType;
-import org.jclouds.compute.domain.ExecResponse;
+import org.jclouds.compute.domain.*;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata.Status;
-import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.domain.LocationBuilder;
+import org.jclouds.domain.LocationScope;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
@@ -72,6 +73,7 @@ import org.ow2.proactive.connector.iaas.fixtures.InfrastructureFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceFixture;
 import org.ow2.proactive.connector.iaas.fixtures.InstanceScriptFixture;
 import org.ow2.proactive.connector.iaas.model.*;
+import org.ow2.proactive.connector.iaas.model.Image;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -158,6 +160,8 @@ public class OpenstackJCloudsProviderTest {
         when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
 
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
+
+        when(novaApi.getSecurityGroupApi("RegionOne")).thenReturn(com.google.common.base.Optional.absent());
 
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenReturn(serverCreated);
 
@@ -357,8 +361,14 @@ public class OpenstackJCloudsProviderTest {
 
         Set images = Sets.newHashSet();
         ImageImpl image = mock(ImageImpl.class);
+        OperatingSystem os = OperatingSystem.builder().description("An Operating System").build();
         when(image.getId()).thenReturn("someId");
         when(image.getName()).thenReturn("someName");
+        when(image.getOperatingSystem()).thenReturn(os);
+        when(image.getLocation()).thenReturn(new LocationBuilder().id("idLoc")
+                                                                  .description("Adescription")
+                                                                  .scope(LocationScope.REGION)
+                                                                  .build());
         images.add(image);
         when(computeService.listImages()).thenReturn(images);
 

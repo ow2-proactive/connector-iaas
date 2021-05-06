@@ -31,6 +31,7 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
+import org.jclouds.aws.ec2.reference.AWSEC2Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.config.ComputeServiceProperties;
@@ -67,11 +68,14 @@ public class JCloudsComputeServiceBuilder {
     @Value("${connector-iaas.openstack.jclouds.compute.timeout.script-complete:60000}")
     private String timeoutScriptComplete;
 
-    @Value("${connector-iaas.aws.jclouds.ssh.max-retries:100}")
+    @Value("${connector-iaas.aws.jclouds.ssh.max-retries:7}")
     private String sshMaxRetries;
 
-    @Value("${connector-iaas.aws.jclouds.max-retries:1000}")
+    @Value("${connector-iaas.aws.jclouds.max-retries:5}")
     private String maxRetries;
+
+    @Value("${connector-iaas.aws.jclouds.list-tag}")
+    private String awsImagesListTag;
 
     @Autowired
     private OpenstackUtil openstackUtil;
@@ -94,7 +98,8 @@ public class JCloudsComputeServiceBuilder {
                 .filter(endPoint -> !endPoint.isEmpty())
                 .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
 
-        return contextBuilder.buildView(ComputeServiceContext.class).getComputeService();
+        ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+        return context.getComputeService();
     }
 
     /**
@@ -118,6 +123,13 @@ public class JCloudsComputeServiceBuilder {
 
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
+
+        // set AMI queries to filter private AMI (self), API from Amazon (137112412989) & Canonical (099720109477). Doc: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
+        //properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,"owner-id=137112412989,099720109477,self;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm" );
+        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
+                               "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label=" +
+                                                                       awsImagesListTag);
+        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
 
         log.info("Infrastructure properties: " + properties.toString());
 

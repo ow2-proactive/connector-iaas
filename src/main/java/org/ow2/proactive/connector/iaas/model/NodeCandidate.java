@@ -25,12 +25,7 @@
  */
 package org.ow2.proactive.connector.iaas.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 
 @EqualsAndHashCode
@@ -39,14 +34,15 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @Builder
-public class Hardware {
+public class NodeCandidate {
 
-    private String type;
+    private Hardware hw;
 
-    private String minRam;
+    private Image img;
 
-    private String minCores;
+    private String cloud;
 
-    private String minFreq;
+    private String region;
 
+    private double price;
 }
