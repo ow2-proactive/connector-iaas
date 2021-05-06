@@ -6,6 +6,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'net.researchgate.release'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
+apply plugin: 'project-report'
 apply plugin: "org.sonarqube"
 apply from: "$rootDir/gradle/ext/coding-format.gradle"
 apply plugin: 'com.github.jk1.dependency-license-report'
@@ -130,6 +131,10 @@ dependencies {
     compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"
     compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
+
+    // route all log4j 1.2 and jul to slf4j
+    compile 'org.slf4j:log4j-over-slf4j'
+    compile 'org.slf4j:jul-to-slf4j'
 
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.14'
