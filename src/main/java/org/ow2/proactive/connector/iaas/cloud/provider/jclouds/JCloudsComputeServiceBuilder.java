@@ -56,7 +56,7 @@ public class JCloudsComputeServiceBuilder {
 
     private static final String MAX_RETRIES = "jclouds.max-retries";
 
-    @Value("${  connector-iaas.jclouds.request-timeout:10000}")
+    @Value("${connector-iaas.jclouds.request-timeout:10000}")
     private String requestTimeout;
 
     @Value("${connector-iaas.jclouds.connection-timeout:18000}")
@@ -67,6 +67,9 @@ public class JCloudsComputeServiceBuilder {
 
     @Value("${connector-iaas.openstack.jclouds.compute.timeout.script-complete:60000}")
     private String timeoutScriptComplete;
+
+    @Value("${connector-iaas.jclouds.compute.timeout.node-running:1200000}")
+    private String timeoutNodeRunning;
 
     @Value("${connector-iaas.aws.jclouds.ssh.max-retries:7}")
     private String sshMaxRetries;
@@ -79,6 +82,8 @@ public class JCloudsComputeServiceBuilder {
 
     @Autowired
     private OpenstackUtil openstackUtil;
+
+    private Properties properties;
 
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
@@ -102,12 +107,19 @@ public class JCloudsComputeServiceBuilder {
         return context.getComputeService();
     }
 
+    public Properties getDefinedProperties(Infrastructure infrastructure) {
+        if (properties == null) {
+            properties = loadDefinedProperties(infrastructure);
+        }
+        return properties;
+    }
+
     /**
      * Sets the timeouts for the deployment.
      * 
      * @return Properties object with the timeout policy.
      */
-    private Properties getDefinedProperties(Infrastructure infrastructure) {
+    private Properties loadDefinedProperties(Infrastructure infrastructure) {
         Properties properties = new Properties();
 
         // Add custom properties for Openstack with identity version 3
@@ -120,6 +132,7 @@ public class JCloudsComputeServiceBuilder {
 
         properties.put(ComputeServiceProperties.TIMEOUT_PORT_OPEN, timeoutPortOpen);
         properties.put(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, timeoutScriptComplete);
+        properties.put(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, timeoutNodeRunning);
 
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);

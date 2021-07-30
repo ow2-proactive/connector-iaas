@@ -50,6 +50,7 @@ public class JCloudsComputeServiceBuilderTest {
 
         ReflectionTestUtils.setField(computeServiceBuilder, "timeoutPortOpen", "60000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "timeoutScriptComplete", "60000", String.class);
+        ReflectionTestUtils.setField(computeServiceBuilder, "timeoutNodeRunning", "1200000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "requestTimeout", "10000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "connectionTimeout", "18000", String.class);
         ReflectionTestUtils.setField(computeServiceBuilder, "sshMaxRetries", "100", String.class);
