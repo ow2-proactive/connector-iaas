@@ -25,11 +25,14 @@
  */
 package org.ow2.proactive.connector.iaas.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.ws.rs.NotFoundException;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
 import org.ow2.proactive.connector.iaas.model.NodeCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,11 +48,15 @@ public class NodeCandidateService {
     @Autowired
     private CloudManager cloudManager;
 
-    public Set<NodeCandidate> getNodeCandidate(String infrastructureId, String region, String imageReq) {
-        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                       .map(infra -> cloudManager.getNodeCandidate(infra, region, imageReq))
-                       .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
-                                                                " does not exists"));
+    public Map<String, Object> getNodeCandidate(String infrastructureId, String region, String imageReq, String token) {
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).map(infra -> {
+            Pair<String, Set<NodeCandidate>> result = cloudManager.getNodeCandidate(infra, region, imageReq, token);
+
+            Map<String, Object> mappedResults = new HashMap<>();
+            mappedResults.put("nextToken", result.getLeft());
+            mappedResults.put("nodeCandidates", result.getRight());
+            return mappedResults;
+        }).orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId + " does not exists"));
     }
 
 }

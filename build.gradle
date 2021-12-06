@@ -17,7 +17,7 @@ apply plugin: 'maven'
 dependencyManagement {
     dependencies {
         imports {
-            mavenBom 'software.amazon.awssdk:bom:2.13.66'
+            mavenBom 'software.amazon.awssdk:bom:2.17.95'
         }
     }
 }
@@ -186,7 +186,7 @@ dependencies {
     compile 'com.microsoft.azure:azure-mgmt-network:1.35.1'
 
     // AWS Pricing
-    compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.13.66'
+    compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.17.95'
 
     // Fixing AWS node candidates retrieving
     // For more info: https://github.com/aws/aws-sdk-java-v2/issues/652#issuecomment-476247813

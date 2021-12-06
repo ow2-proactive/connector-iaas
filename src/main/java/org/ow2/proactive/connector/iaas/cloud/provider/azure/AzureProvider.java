@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
@@ -950,7 +951,8 @@ public class AzureProvider implements CloudProvider {
     }
 
     @Override
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
+    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
+            String token) {
         try {
             // We Connect to Azure
             Azure service = azureServiceCache.getService(infra);
@@ -1002,7 +1004,7 @@ public class AzureProvider implements CloudProvider {
                                             .build());
                 }
             }
-            return result;
+            return Pair.of("", result);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

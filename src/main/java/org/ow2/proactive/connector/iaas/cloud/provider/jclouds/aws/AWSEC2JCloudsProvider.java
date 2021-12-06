@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.aws.ec2.options.RequestSpotInstancesOptions;
@@ -65,10 +66,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.pricing.PricingClient;
-import software.amazon.awssdk.services.pricing.model.Filter;
-import software.amazon.awssdk.services.pricing.model.FilterType;
-import software.amazon.awssdk.services.pricing.model.GetProductsRequest;
-import software.amazon.awssdk.services.pricing.model.GetProductsResponse;
+import software.amazon.awssdk.services.pricing.model.*;
 
 
 @Component
@@ -422,7 +420,8 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String osReq) {
+    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String osReq,
+            String token) {
         if (awsPricingRegionName == null) {
             // If the structure is not yet initialized, I prepare it.
             awsPricingRegionName = initAwsPricingRegionsMap();
@@ -436,77 +435,99 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                                         .region(Region.US_EAST_1)
                                         .build();
         // Effectively proceed to the API call
-        GetProductsResponse pricesListResponse = pc.getProducts(GetProductsRequest.builder()
-                                                                                  .serviceCode("AmazonEC2")
-                                                                                  .filters(Filter.builder()
-                                                                                                 .field("location")
-                                                                                                 .type(FilterType.TERM_MATCH)
-                                                                                                 .value(awsPricingRegionName.get(region))
-                                                                                                 .build(),
-                                                                                           Filter.builder()
-                                                                                                 .field("operatingSystem")
-                                                                                                 .type(FilterType.TERM_MATCH)
-                                                                                                 .value(osReq)
-                                                                                                 .build(),
-                                                                                           Filter.builder()
-                                                                                                 .field("capacitystatus")
-                                                                                                 .type(FilterType.TERM_MATCH)
-                                                                                                 .value("Used")
-                                                                                                 .build(),
-                                                                                           Filter.builder()
-                                                                                                 .field("Tenancy")
-                                                                                                 .type(FilterType.TERM_MATCH)
-                                                                                                 .value("Shared")
-                                                                                                 .build())
-                                                                                  .build());
+        GetProductsResponse pricesListResponse;
+        try {
+            pricesListResponse = getProducts(pc, region, osReq, token);
+        } catch (InvalidNextTokenException inte) {
+            return Pair.of("", new HashSet<NodeCandidate>());
+        }
+
         // Interpreting response
         if (!pricesListResponse.hasPriceList()) {
             // No pricing result.
             log.info("No node candidate found");
-            return new HashSet<NodeCandidate>();
+            return Pair.of("", new HashSet<NodeCandidate>());
         } else {
             // We have pricing results => We parse the Stringified-JSON structure from the API
-            Set<NodeCandidate> result = pricesListResponse.priceList().parallelStream().map(s -> {
-                JSONObject terms = new JSONObject(s).getJSONObject("terms");
-                JSONObject productAttributes = new JSONObject(s).getJSONObject("product").getJSONObject("attributes");
-                // Hardware spec.
-                Hardware.HardwareBuilder hwb = Hardware.builder()
-                                                       .minRam(fromAwsGioToparseableMB(productAttributes.getString("memory")) +
-                                                               "")
-                                                       .minCores(productAttributes.getString("vcpu"))
-                                                       .type(productAttributes.getString("instanceType"));
-
-                if (productAttributes.has("clockSpeed")) {
-                    hwb.minFreq(fromAwsGioToparseableMB(productAttributes.getString("clockSpeed")) + "");
-                } else {
-                    hwb.minFreq("0");
-                }
-
-                Hardware hw = hwb.build();
-                // The minimal price of the cheaper on-demand-offer
-                double price = parseAwsPriceOnDemandInstance(terms);
-                // Image spec - No strict reference toa system image is provided by the pricing API. Instead,
-                // we re-use their label system to identified system type. We left to association between
-                // system image and those label to an external process.
-                Image operatingSystem = Image.builder()
-                                             .name(productAttributes.getString("operatingSystem"))
-                                             .operatingSystem(OperatingSystem.builder()
-                                                                             .family(productAttributes.getString("operatingSystem"))
-                                                                             .build())
-                                             .location(region)
-                                             .build();
-                // We build the structure encapsulating the result.
-                return NodeCandidate.builder()
-                                    .cloud(this.getType())
-                                    .region(region)
-                                    .hw(hw)
-                                    .price(price)
-                                    .img(operatingSystem)
-                                    .build();
-            }).collect(Collectors.toSet());
+            Set<NodeCandidate> result = productResponseToSet(pricesListResponse, region);
             log.info(String.format("%d node candidates were found.", result.stream().count()));
-            return result;
+            return Pair.of(pricesListResponse.nextToken(), result);
         }
+    }
+
+    private Set<NodeCandidate> productResponseToSet(GetProductsResponse pricesListResponse, String region) {
+        return pricesListResponse.priceList().parallelStream().map(priceResponse -> {
+            JSONObject terms = new JSONObject(priceResponse).getJSONObject("terms");
+            JSONObject productAttributes = new JSONObject(priceResponse).getJSONObject("product")
+                                                                        .getJSONObject("attributes");
+
+            // Hardware spec.
+            Hardware.HardwareBuilder hwb = Hardware.builder()
+                                                   .minRam(fromAwsGioToparseableMB(productAttributes.getString("memory")) +
+                                                           "")
+                                                   .minCores(productAttributes.getString("vcpu"))
+                                                   .type(productAttributes.getString("instanceType"));
+
+            if (productAttributes.has("clockSpeed")) {
+                hwb.minFreq(fromAwsGioToparseableMB(productAttributes.getString("clockSpeed")) + "");
+            } else {
+                hwb.minFreq("0");
+            }
+
+            Hardware hw = hwb.build();
+            // The minimal price of the cheaper on-demand-offer
+            double price = parseAwsPriceOnDemandInstance(terms);
+            // Image spec - No strict reference toa system image is provided by the pricing API. Instead,
+            // we re-use their label system to identified system type. We left to association between
+            // system image and those label to an external process.
+            Image operatingSystem = Image.builder()
+                                         .name(productAttributes.getString("operatingSystem"))
+                                         .operatingSystem(OperatingSystem.builder()
+                                                                         .family(productAttributes.getString("operatingSystem"))
+                                                                         .build())
+                                         .location(region)
+                                         .build();
+            // We build the structure encapsulating the result.
+            return NodeCandidate.builder()
+                                .cloud(this.getType())
+                                .region(region)
+                                .hw(hw)
+                                .price(price)
+                                .img(operatingSystem)
+                                .build();
+        }).collect(Collectors.toSet());
+    }
+
+    private GetProductsResponse getProducts(PricingClient pc, String region, String osReq, String token) {
+        return pc.getProducts(GetProductsRequest.builder()
+                                                .serviceCode("AmazonEC2")
+                                                .filters(Filter.builder()
+                                                               .field("location")
+                                                               .type(FilterType.TERM_MATCH)
+                                                               .value(awsPricingRegionName.get(region))
+                                                               .build(),
+                                                         Filter.builder()
+                                                               .field("operatingSystem")
+                                                               .type(FilterType.TERM_MATCH)
+                                                               .value(osReq)
+                                                               .build(),
+                                                         Filter.builder()
+                                                               .field("capacitystatus")
+                                                               .type(FilterType.TERM_MATCH)
+                                                               .value("Used")
+                                                               .build(),
+                                                         Filter.builder()
+                                                               .field("Tenancy")
+                                                               .type(FilterType.TERM_MATCH)
+                                                               .value("Shared")
+                                                               .build(),
+                                                         Filter.builder()
+                                                               .field("preInstalledSw")
+                                                               .type(FilterType.TERM_MATCH)
+                                                               .value("NA")
+                                                               .build())
+                                                .nextToken(token)
+                                                .build());
     }
 
     private int fromAwsGioToparseableMB(String s) {

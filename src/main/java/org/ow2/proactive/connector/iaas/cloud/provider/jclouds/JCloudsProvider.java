@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.Location;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.ExecResponse;
@@ -318,7 +319,8 @@ public abstract class JCloudsProvider implements CloudProvider {
         return RunScriptOptions.NONE;
     }
 
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
+    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
+            String token) {
         String type = getType();
         // In this method, we will return a list of node candidates for JCloud infrastructure, that do not have their own pricing driver.
         // To make this driver generic accross cloud provider, we consider two types of providers:
@@ -338,10 +340,16 @@ public abstract class JCloudsProvider implements CloudProvider {
             Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region);
             if (pricingFile.exists()) {
                 // If the file exist, we are in the case of a paid cloud
-                return getPaidNodeCandidate(infra, region, imageReq, pricingFile, resultImages, resultHardware);
+                return Pair.of("",
+                               getPaidNodeCandidate(infra,
+                                                    region,
+                                                    imageReq,
+                                                    pricingFile,
+                                                    resultImages,
+                                                    resultHardware));
             } else {
                 // Else, we assume this is a private one with no cost.
-                return getFreeNodeCandidate(infra, region, imageReq, resultImages, resultHardware);
+                return Pair.of("", getFreeNodeCandidate(infra, region, imageReq, resultImages, resultHardware));
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to proceed with the digest: " + e.getLocalizedMessage());

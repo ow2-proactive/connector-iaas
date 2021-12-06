@@ -29,6 +29,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ow2.proactive.connector.iaas.model.*;
 
 
@@ -152,9 +153,11 @@ public interface CloudProvider {
     /**
      * List the node candidate results matching a specified image requirements for a specific region of an infrastructure. A node candidate describes the type of operating system, the hardware profile a instance can be allocated from, and its pricing.
      * @param infra The infrastructure whose node candidates are to be exposed
-     * @param region The infrastructure region to be examined.
+     * @param region The infrastructure region to be examined
      * @param imageReq The requirements of the system image the node candidates should match
+     * @param token The pagination token that indicates the set of results that you want to retrieve
      * @return A list of node candidates for the specified infrastructure and region whose system images match the requirements
      */
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq);
+    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
+            String token);
 }

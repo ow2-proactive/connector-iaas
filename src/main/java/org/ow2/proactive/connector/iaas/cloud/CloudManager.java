@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,8 +115,12 @@ public class CloudManager {
         cloudProviderPerType.get(infrastructure.getType()).deleteKeyPair(infrastructure, keyPairName, region);
     }
 
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infrastructure, String region, String imageReq) {
-        return cloudProviderPerType.get(infrastructure.getType()).getNodeCandidate(infrastructure, region, imageReq);
+    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infrastructure, String region,
+            String imageReq, String token) {
+        return cloudProviderPerType.get(infrastructure.getType()).getNodeCandidate(infrastructure,
+                                                                                   region,
+                                                                                   imageReq,
+                                                                                   token);
     }
 
 }
