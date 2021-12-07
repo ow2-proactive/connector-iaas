@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.aws.ec2.options.RequestSpotInstancesOptions;
@@ -420,8 +419,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     @Override
-    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String osReq,
-            String token) {
+    public PagedNodeCandidates getNodeCandidate(Infrastructure infra, String region, String osReq, String token) {
         if (awsPricingRegionName == null) {
             // If the structure is not yet initialized, I prepare it.
             awsPricingRegionName = initAwsPricingRegionsMap();
@@ -439,19 +437,22 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         try {
             pricesListResponse = getProducts(pc, region, osReq, token);
         } catch (InvalidNextTokenException inte) {
-            return Pair.of("", new HashSet<NodeCandidate>());
+            return PagedNodeCandidates.builder().nextToken("").nodeCandidates(new HashSet<NodeCandidate>()).build();
         }
 
         // Interpreting response
         if (!pricesListResponse.hasPriceList()) {
             // No pricing result.
             log.info("No node candidate found");
-            return Pair.of("", new HashSet<NodeCandidate>());
+            return PagedNodeCandidates.builder().nextToken("").nodeCandidates(new HashSet<NodeCandidate>()).build();
         } else {
             // We have pricing results => We parse the Stringified-JSON structure from the API
             Set<NodeCandidate> result = productResponseToSet(pricesListResponse, region);
             log.info(String.format("%d node candidates were found.", result.stream().count()));
-            return Pair.of(pricesListResponse.nextToken(), result);
+            return PagedNodeCandidates.builder()
+                                      .nextToken(pricesListResponse.nextToken())
+                                      .nodeCandidates(result)
+                                      .build();
         }
     }
 

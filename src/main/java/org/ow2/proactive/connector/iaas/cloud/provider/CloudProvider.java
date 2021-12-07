@@ -29,7 +29,6 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.ow2.proactive.connector.iaas.model.*;
 
 
@@ -158,6 +157,5 @@ public interface CloudProvider {
      * @param token The pagination token that indicates the set of results that you want to retrieve
      * @return A Pair of the next node candidates list page token, and a list of node candidates for the specified infrastructure and region whose system images match the requirements
      */
-    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
-            String token);
+    public PagedNodeCandidates getNodeCandidate(Infrastructure infra, String region, String imageReq, String token);
 }

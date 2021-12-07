@@ -38,7 +38,6 @@ import java.util.stream.IntStream;
 import javax.ws.rs.NotSupportedException;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.tuple.Pair;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.model.*;
@@ -395,8 +394,7 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
-    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
-            String token) {
+    public PagedNodeCandidates getNodeCandidate(Infrastructure infra, String region, String imageReq, String token) {
         throw new NotImplementedException("This method is not yet implemented.");
     }
 

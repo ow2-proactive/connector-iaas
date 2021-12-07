@@ -25,12 +25,11 @@
  */
 package org.ow2.proactive.connector.iaas.rest;
 
-import java.util.Map;
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.ow2.proactive.connector.iaas.model.PagedNodeCandidates;
 import org.ow2.proactive.connector.iaas.service.NodeCandidateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,7 +46,6 @@ public class NodeCandidateRest {
     public NodeCandidateService nodeCandidateService;
 
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces("application/json")
     @Path("{infrastructureId}/nodecandidates")
     public Response getNodeCandidate(@PathParam("infrastructureId") String infrastructureId,
@@ -59,7 +57,7 @@ public class NodeCandidateRest {
                  region,
                  token);
         try {
-            Map<String, Object> result = nodeCandidateService.getNodeCandidate(infrastructureId,
+            PagedNodeCandidates result = nodeCandidateService.getNodeCandidate(infrastructureId,
                                                                                region,
                                                                                imageReq,
                                                                                token);
