@@ -26,12 +26,11 @@
 package org.ow2.proactive.connector.iaas.service;
 
 import java.util.Optional;
-import java.util.Set;
 
 import javax.ws.rs.NotFoundException;
 
 import org.ow2.proactive.connector.iaas.cloud.CloudManager;
-import org.ow2.proactive.connector.iaas.model.NodeCandidate;
+import org.ow2.proactive.connector.iaas.model.PagedNodeCandidates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,9 +44,9 @@ public class NodeCandidateService {
     @Autowired
     private CloudManager cloudManager;
 
-    public Set<NodeCandidate> getNodeCandidate(String infrastructureId, String region, String imageReq) {
+    public PagedNodeCandidates getNodeCandidate(String infrastructureId, String region, String imageReq, String token) {
         return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
-                       .map(infra -> cloudManager.getNodeCandidate(infra, region, imageReq))
+                       .map(infra -> cloudManager.getNodeCandidate(infra, region, imageReq, token))
                        .orElseThrow(() -> new NotFoundException("infrastructure id  : " + infrastructureId +
                                                                 " does not exists"));
     }

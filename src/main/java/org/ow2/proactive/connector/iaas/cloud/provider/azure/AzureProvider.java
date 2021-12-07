@@ -950,7 +950,7 @@ public class AzureProvider implements CloudProvider {
     }
 
     @Override
-    public Set<NodeCandidate> getNodeCandidate(Infrastructure infra, String region, String imageReq) {
+    public PagedNodeCandidates getNodeCandidate(Infrastructure infra, String region, String imageReq, String token) {
         try {
             // We Connect to Azure
             Azure service = azureServiceCache.getService(infra);
@@ -1002,7 +1002,7 @@ public class AzureProvider implements CloudProvider {
                                             .build());
                 }
             }
-            return result;
+            return PagedNodeCandidates.builder().nextToken("").nodeCandidates(result).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
