@@ -181,10 +181,10 @@ dependencies {
     compile 'com.google.code.gson:gson:2.5'
 
     //Logger
-    compile 'org.apache.logging.log4j:log4j-api:2.17.0'
-    compile 'org.apache.logging.log4j:log4j-core:2.17.0'
-    compile 'org.apache.logging.log4j:log4j-web:2.17.0'
-    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.0'
+    compile 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-core:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-web:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
 
     testCompile ('org.apache.logging.log4j:log4j-api:2.4.1') {
         force = true
