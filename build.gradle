@@ -29,7 +29,6 @@ repositories {
         url "http://repository.springsource.com/maven/bundles/external"
     }
     mavenCentral()
-    mavenCentral()
 }
 
 buildscript {
