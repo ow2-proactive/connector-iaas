@@ -41,7 +41,6 @@ repositories {
         url "http://repository.springsource.com/maven/bundles/external"
     }
     mavenCentral()
-    jcenter()
 }
 
 buildscript {
@@ -52,7 +51,7 @@ buildscript {
       maven {
         url "http://repository.activeeon.com/content/groups/proactive/"
       }
-      jcenter()
+      mavenCentral()
   }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
