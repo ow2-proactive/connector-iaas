@@ -41,7 +41,6 @@ repositories {
         url "http://repository.springsource.com/maven/bundles/external"
     }
     mavenCentral()
-    jcenter()
 }
 
 buildscript {
@@ -52,7 +51,7 @@ buildscript {
       maven {
         url "http://repository.activeeon.com/content/groups/proactive/"
       }
-      jcenter()
+      mavenCentral()
   }
   dependencies {
     classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
@@ -133,8 +132,10 @@ dependencies {
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
 
     // route all log4j 1.2 and jul to slf4j
-    compile 'org.slf4j:log4j-over-slf4j'
-    compile 'org.slf4j:jul-to-slf4j'
+    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
+    compile 'org.slf4j:jul-to-slf4j:1.7.25'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
+    compile 'org.slf4j:slf4j-api:1.7.25'
 
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.14'
@@ -151,7 +152,9 @@ dependencies {
     }
     // This allows log4j logging for spring boot. This dependency is needed for standalaone but will
     // clash with the ProActive Scheduler dependencies when included. It is excluded in configurations above.
-    compile('org.springframework.boot:spring-boot-starter-log4j2:1.3.3.RELEASE')
+    compile('org.springframework.boot:spring-boot-starter-log4j2:1.3.3.RELEASE') {
+        exclude group: "org.apache.logging.log4j"
+    }
     // Provides a standalone jetty server. It is providedCompile to be placed inside the provided folder
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile('org.springframework.boot:spring-boot-starter-jetty:1.3.3.RELEASE')
@@ -199,8 +202,23 @@ dependencies {
     compile 'com.google.code.gson:gson:2.5'
 
     //Logger
-    compile 'org.apache.logging.log4j:log4j:2.7'
-    compile 'org.apache.logging.log4j:log4j-web:2.7'
+    compile 'org.apache.logging.log4j:log4j-api:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-core:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-web:2.17.1'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+
+    testCompile ('org.apache.logging.log4j:log4j-api:2.4.1') {
+        force = true
+    }
+    testCompile ('org.apache.logging.log4j:log4j-core:2.4.1') {
+        force = true
+    }
+    testCompile ('org.apache.logging.log4j:log4j-web:2.4.1') {
+        force = true
+    }
+    testCompile ('org.apache.logging.log4j:log4j-slf4j-impl:2.4.1') {
+        force = true
+    }
 
     // Imports for JUnit tests
     testCompile 'junit:junit:4.12'

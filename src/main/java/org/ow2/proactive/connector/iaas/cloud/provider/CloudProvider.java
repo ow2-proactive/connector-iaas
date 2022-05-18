@@ -156,8 +156,7 @@ public interface CloudProvider {
      * @param region The infrastructure region to be examined
      * @param imageReq The requirements of the system image the node candidates should match
      * @param token The pagination token that indicates the set of results that you want to retrieve
-     * @return A list of node candidates for the specified infrastructure and region whose system images match the requirements
+     * @return A Pair of the next node candidates list page token, and a list of node candidates for the specified infrastructure and region whose system images match the requirements
      */
-    public Pair<String, Set<NodeCandidate>> getNodeCandidate(Infrastructure infra, String region, String imageReq,
-            String token);
+    public PagedNodeCandidates getNodeCandidate(Infrastructure infra, String region, String imageReq, String token);
 }
