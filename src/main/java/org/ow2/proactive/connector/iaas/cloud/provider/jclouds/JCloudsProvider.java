@@ -444,8 +444,9 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     /**
-     * @return The Operating system family based on the infrastructure type, created to patch the limitation caused
-     * by Jclouds for OpenStack (not taking the distro_family into account).
+     * @return the Operating system family for images. When the infrastructure type is openstack-nova,
+     * getOpenStackOSFamily method will be called, otherwise retrieve it from the metadata collected by Jclouds.
+     * This allows us to utilise the distro_family parameter for OpenStack images.
      */
     private String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
         if (!infrastructureType.equals("openstack-nova")) {

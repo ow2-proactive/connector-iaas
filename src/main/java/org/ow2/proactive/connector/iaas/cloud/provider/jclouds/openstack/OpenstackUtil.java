@@ -130,8 +130,9 @@ public class OpenstackUtil {
     }
 
     /**
-     * @return The Operating system family either by default from jclouds or from the user metadata,
-     * created to patch the limitation caused by Jclouds for OpenStack (not taking the distro_family into account).
+     * @return the Operating system family for OpenStack images either by default from the metadata collected by Jclouds
+     * or from the user metadata if the OSFamily is set to UNRECOGNIZED. Created to patch the limitation introduced by
+     * Jclouds for OpenStack images (not taking the distro_family into account).
      */
     public static OsFamily getOpenStackOSFamily(Image image) {
         if (image.getOperatingSystem().getFamily() == OsFamily.UNRECOGNIZED) {
@@ -141,10 +142,10 @@ public class OpenstackUtil {
                 log.warn("the image \"{}\" with ID \"{}\" is added with no recognized operating system family",
                          image.getName(),
                          image.getId());
+                return OsFamily.UNRECOGNIZED;
             }
         } else {
             return image.getOperatingSystem().getFamily();
         }
-        return OsFamily.UNRECOGNIZED;
     }
 }
