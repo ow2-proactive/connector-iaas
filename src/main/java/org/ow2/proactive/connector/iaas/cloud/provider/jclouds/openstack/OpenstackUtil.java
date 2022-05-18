@@ -134,9 +134,9 @@ public class OpenstackUtil {
      * created to patch the limitation caused by Jclouds for OpenStack (not taking the distro_family into account).
      */
     public static OsFamily getOpenStackOSFamily(Image image) {
-        if (image.getOperatingSystem().getFamily() == org.jclouds.compute.domain.OsFamily.UNRECOGNIZED) {
+        if (image.getOperatingSystem().getFamily() == OsFamily.UNRECOGNIZED) {
             if (image.getUserMetadata().containsKey("distro_family")) {
-                return org.jclouds.compute.domain.OsFamily.fromValue(image.getUserMetadata().get("distro_family"));
+                return OsFamily.fromValue(image.getUserMetadata().get("distro_family"));
             } else {
                 log.warn("the image \"{}\" with ID \"{}\" is added with no recognized operating system family",
                          image.getName(),
@@ -145,6 +145,6 @@ public class OpenstackUtil {
         } else {
             return image.getOperatingSystem().getFamily();
         }
-        return org.jclouds.compute.domain.OsFamily.UNRECOGNIZED;
+        return OsFamily.UNRECOGNIZED;
     }
 }
