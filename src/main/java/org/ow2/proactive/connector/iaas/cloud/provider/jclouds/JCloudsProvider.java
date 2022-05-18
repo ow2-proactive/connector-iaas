@@ -49,6 +49,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
+import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -195,15 +196,12 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                      .arch(it.getOperatingSystem().getArch())
                                                                      .description(it.getOperatingSystem()
                                                                                     .getDescription())
-                                                                     .family(Optional.ofNullable(it.getOperatingSystem()
-                                                                                                   .getFamily())
-                                                                                     .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)
-                                                                                     .value())
+                                                                     .family(getOperatingSystemFamily(it,
+                                                                                                      infrastructure.getType()))
                                                                      .is64Bit(it.getOperatingSystem().is64Bit())
                                                                      .build())
                                      .build())
                      .collect(Collectors.toSet());
-
     }
 
     @Override
@@ -444,4 +442,21 @@ public abstract class JCloudsProvider implements CloudProvider {
         }).collect(Collectors.toSet());
         return result;
     }
+
+    /**
+     * @return The Operating system family based on the infrastructure type, created to patch the limitation caused
+     * by Jclouds for OpenStack (not taking the distro_family into account).
+     */
+    private String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
+        if (!infrastructureType.equals("openstack-nova")) {
+            return Optional.ofNullable(image.getOperatingSystem().getFamily())
+                           .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)
+                           .value();
+        } else {
+            return Optional.ofNullable(OpenstackUtil.getOpenStackOSFamily(image))
+                           .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)
+                           .value();
+        }
+    }
+
 }

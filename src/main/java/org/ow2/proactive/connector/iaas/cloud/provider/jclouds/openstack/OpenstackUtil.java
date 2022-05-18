@@ -28,6 +28,8 @@ package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack;
 import java.util.Properties;
 
 import org.apache.commons.lang3.Validate;
+import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.openstack.keystone.config.KeystoneProperties;
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
@@ -125,5 +127,24 @@ public class OpenstackUtil {
 
         Validate.notNull(instance.getNumber(), "Instance parameter 'number' cannot be null");
         Validate.notBlank(instance.getNumber(), "Instance parameter 'number type' cannot be empty");
+    }
+
+    /**
+     * @return The Operating system family either by default from jclouds or from the user metadata,
+     * created to patch the limitation caused by Jclouds for OpenStack (not taking the distro_family into account).
+     */
+    public static OsFamily getOpenStackOSFamily(Image image) {
+        if (image.getOperatingSystem().getFamily() == org.jclouds.compute.domain.OsFamily.UNRECOGNIZED) {
+            if (image.getUserMetadata().containsKey("distro_family")) {
+                return org.jclouds.compute.domain.OsFamily.fromValue(image.getUserMetadata().get("distro_family"));
+            } else {
+                log.warn("the image \"{}\" with ID \"{}\" is added with no recognized operating system family",
+                         image.getName(),
+                         image.getId());
+            }
+        } else {
+            return image.getOperatingSystem().getFamily();
+        }
+        return org.jclouds.compute.domain.OsFamily.UNRECOGNIZED;
     }
 }
