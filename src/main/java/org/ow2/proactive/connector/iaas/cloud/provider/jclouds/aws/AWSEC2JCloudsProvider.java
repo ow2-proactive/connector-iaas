@@ -287,6 +287,9 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
 
     private void allowPortInSecurityGroup(int port, String securityGroupId, String region,
             AWSSecurityGroupApi awsSecurityGroupApi) {
+
+        //A value of -1 indicates all ICMP/ICMPv6 types. Please find more details here:
+        //https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_IpPermission.html#API_IpPermission_Contents
         if (port == -1) {
             awsSecurityGroupApi.authorizeSecurityGroupIngressInRegion(region,
                                                                       securityGroupId,
