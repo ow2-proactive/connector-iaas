@@ -142,6 +142,15 @@ public interface CloudProvider {
     public SimpleImmutableEntry<String, String> createKeyPair(Infrastructure infrastructure, Instance instance);
 
     /**
+     * Get the key pair information from an infrastructure.
+     * @param infrastructure The infrastructure hosting the key pair to be removed from
+     * @param keyPairName The name of the key pair to be removed
+     * @param region The infrastructure region to be examined
+     */
+    public SimpleImmutableEntry<String, String> getKeyPairInfo(Infrastructure infrastructure, String keyPairName,
+            String region);
+
+    /**
      * Remove a key pair from an infrastructure.
      * @param infrastructure The infrastructure hosting the key pair to be removed from
      * @param keyPairName The name of the key pair to be removed

@@ -58,6 +58,15 @@ public class KeyPairService {
                                                                 " does not exists"));
     }
 
+    public SimpleImmutableEntry<String, String> getKeyPairInfo(String infrastructureId, String keyPairName,
+            String region) {
+
+        return Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
+                       .map(infrastructure -> cloudManager.getKeyPairInfo(infrastructure, keyPairName, region))
+                       .orElseThrow(() -> new NotFoundException("infrastructure id : " + infrastructureId +
+                                                                " does not exists"));
+    }
+
     public void deleteKeyPair(String infrastructureId, String keyPairName, String region) {
         Infrastructure infrastructure = Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId))
                                                 .orElseThrow(() -> new NotFoundException("infrastructure id : " +

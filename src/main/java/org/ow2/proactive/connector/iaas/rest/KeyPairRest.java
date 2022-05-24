@@ -28,13 +28,7 @@ package org.ow2.proactive.connector.iaas.rest;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Optional;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -67,6 +61,24 @@ public class KeyPairRest {
         Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
         log.info("Receive create request for infrastructure id " + infrastructureId + " with parameter " + instance);
         SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
+        return Optional.ofNullable(privateKey)
+                       .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
+                       .orElse(Response.serverError().build());
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{infrastructureId}/keypairs/{keyPairName}")
+    public Response getKeyPairInfo(@PathParam("infrastructureId") String infrastructureId, @PathParam("keyPairName")
+    final String keyPairName, @QueryParam("region") String region) {
+        log.info("Receive get request information for key pair [{}] under infrastructure [{}] in region [{}] ",
+                 keyPairName,
+                 infrastructureId,
+                 region);
+        SimpleImmutableEntry<String, String> privateKey = keyPairService.getKeyPairInfo(infrastructureId,
+                                                                                        keyPairName,
+                                                                                        region);
         return Optional.ofNullable(privateKey)
                        .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
                        .orElse(Response.serverError().build());

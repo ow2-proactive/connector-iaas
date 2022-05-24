@@ -389,6 +389,12 @@ public class VMWareProvider implements CloudProvider {
     }
 
     @Override
+    public SimpleImmutableEntry<String, String> getKeyPairInfo(Infrastructure infrastructure, String keyPairName,
+            String region) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
         throw new NotImplementedException("This method is not yet implemented.");
     }

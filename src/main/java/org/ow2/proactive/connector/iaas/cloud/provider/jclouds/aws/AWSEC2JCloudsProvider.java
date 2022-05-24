@@ -53,6 +53,7 @@ import org.jclouds.ec2.features.KeyPairApi;
 import org.jclouds.ec2.features.SecurityGroupApi;
 import org.jclouds.net.domain.IpPermission;
 import org.jclouds.net.domain.IpProtocol;
+import org.jclouds.ssh.SshKeys;
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsComputeServiceBuilder;
@@ -424,6 +425,23 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
             return new SimpleImmutableEntry<>(keyPairName, keyPair.getKeyMaterial());
         } catch (RuntimeException e) {
             log.warn("Cannot create key pair in region '" + region, e);
+            return null;
+        }
+    }
+
+    @Override
+    public SimpleImmutableEntry<String, String> getKeyPairInfo(Infrastructure infrastructure, String keyPairName,
+            String region) {
+        KeyPairApi keyPairApi = getKeyPairApi(infrastructure);
+        try {
+            KeyPair keyPair = keyPairApi.describeKeyPairsInRegion(region, keyPairName).iterator().next();
+            log.info("Got key pair '" + keyPairName + "' in region '" + region + "'");
+            // The private key retrieved by keyPair.getKeyMaterial() is empty.
+            // Only the SHA10 encrypted value is available keyPair.getSha1OfPrivateKey()
+            // This should be fixed for this PR to be mergeable.
+            return new SimpleImmutableEntry<>(keyPairName, keyPair.getSha1OfPrivateKey());
+        } catch (RuntimeException e) {
+            log.warn("Cannot retrieve key pair in region '" + region, e);
             return null;
         }
     }
