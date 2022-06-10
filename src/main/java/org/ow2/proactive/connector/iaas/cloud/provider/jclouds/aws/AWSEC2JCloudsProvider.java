@@ -48,6 +48,7 @@ import org.jclouds.domain.Location;
 import org.jclouds.ec2.EC2Api;
 import org.jclouds.ec2.domain.KeyPair;
 import org.jclouds.ec2.domain.PublicIpInstanceIdPair;
+import org.jclouds.ec2.domain.Subnet;
 import org.jclouds.ec2.features.ElasticIPAddressApi;
 import org.jclouds.ec2.features.KeyPairApi;
 import org.jclouds.ec2.features.SecurityGroupApi;
@@ -61,6 +62,7 @@ import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 
 import lombok.Getter;
@@ -258,10 +260,20 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
             if (ports != null) {
                 securityGroupName += "-" + UUID.randomUUID();
                 String sgDescription = "Auto generated security group to authorize the ports " + Arrays.toString(ports);
-                AWSSubnetApi awsSubnetApi = getAWSSubnetApi(infrastructure);
-                String vpcId = awsSubnetApi.describeSubnetsInRegion(region, options.getSubnetId()).get(0).getVpcId();
                 CreateSecurityGroupOptions sgOptions = new CreateSecurityGroupOptions();
-                sgOptions.vpcId(vpcId);
+                if (options.getSubnetId() != null) {
+                    AWSSubnetApi awsSubnetApi = getAWSSubnetApi(infrastructure);
+                    FluentIterable<Subnet> subnets = awsSubnetApi.describeSubnetsInRegion(region,
+                                                                                          options.getSubnetId());
+                    if (!subnets.isEmpty()) {
+                        String vpcId = subnets.get(0).getVpcId();
+                        sgOptions.vpcId(vpcId);
+                    } else {
+                        log.warn("The subnet {} could not be described from AWS in region {}. It will be ignored.",
+                                 options.getSubnetId(),
+                                 region);
+                    }
+                }
                 AWSSecurityGroupApi awsSecurityGroupApi = getAWSSecurityGroupApi(infrastructure);
                 String securityGroupId = awsSecurityGroupApi.createSecurityGroupInRegionAndReturnId(region,
                                                                                                     securityGroupName,
