@@ -30,6 +30,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
@@ -262,7 +263,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 String sgDescription = "Auto generated security group to authorize the ports " + Arrays.toString(ports);
                 CreateSecurityGroupOptions sgOptions = new CreateSecurityGroupOptions();
                 String subnetId = options.getSubnetId();
-                if (subnetId != null) {
+                if (!Strings.isNullOrEmpty(subnetId)) {
                     AWSSubnetApi awsSubnetApi = getAWSSubnetApi(infrastructure);
                     FluentIterable<Subnet> subnets = awsSubnetApi.describeSubnetsInRegion(region,
                                                                                           subnetId);
