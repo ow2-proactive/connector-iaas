@@ -261,16 +261,17 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 securityGroupName += "-" + UUID.randomUUID();
                 String sgDescription = "Auto generated security group to authorize the ports " + Arrays.toString(ports);
                 CreateSecurityGroupOptions sgOptions = new CreateSecurityGroupOptions();
-                if (options.getSubnetId() != null) {
+                String subnetId = options.getSubnetId();
+                if (subnetId != null) {
                     AWSSubnetApi awsSubnetApi = getAWSSubnetApi(infrastructure);
                     FluentIterable<Subnet> subnets = awsSubnetApi.describeSubnetsInRegion(region,
-                                                                                          options.getSubnetId());
+                                                                                          subnetId);
                     if (!subnets.isEmpty()) {
                         String vpcId = subnets.get(0).getVpcId();
                         sgOptions.vpcId(vpcId);
                     } else {
                         log.warn("The subnet {} could not be described from AWS in region {}. It will be ignored.",
-                                 options.getSubnetId(),
+                                 subnetId,
                                  region);
                     }
                 }
