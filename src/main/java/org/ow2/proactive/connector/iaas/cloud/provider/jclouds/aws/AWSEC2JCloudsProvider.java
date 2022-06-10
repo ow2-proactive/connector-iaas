@@ -30,7 +30,6 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.aws.ec2.AWSEC2Api;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
@@ -63,6 +62,7 @@ import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 
@@ -265,8 +265,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
                 String subnetId = options.getSubnetId();
                 if (!Strings.isNullOrEmpty(subnetId)) {
                     AWSSubnetApi awsSubnetApi = getAWSSubnetApi(infrastructure);
-                    FluentIterable<Subnet> subnets = awsSubnetApi.describeSubnetsInRegion(region,
-                                                                                          subnetId);
+                    FluentIterable<Subnet> subnets = awsSubnetApi.describeSubnetsInRegion(region, subnetId);
                     if (!subnets.isEmpty()) {
                         String vpcId = subnets.get(0).getVpcId();
                         sgOptions.vpcId(vpcId);
