@@ -73,6 +73,11 @@ public class OpenstackUtil {
             String value = infrastructure.getScope().getValue();
 
             properties.put(KeystoneProperties.SCOPE, prefix + SEPARATOR + value);
+
+            if (infrastructure.getCredentials().getDomain() != null &&
+                !infrastructure.getCredentials().getDomain().isEmpty()) {
+                properties.put(KeystoneProperties.PROJECT_DOMAIN_NAME, infrastructure.getCredentials().getDomain());
+            }
             log.info("Using Openstack infrastructure with scope: " + prefix + SEPARATOR + value);
 
         }
