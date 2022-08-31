@@ -651,7 +651,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
         Set<SecurityGroup> sgs = securityGroupApi.describeSecurityGroupsInRegionWithFilter(infrastructure.getRegion(),
                                                                                            ImmutableMultimap.of("group-name",
                                                                                                                 securityGroupName));
-        if (sgs.isEmpty()) {
+        if (sgs == null || sgs.isEmpty()) {
             log.warn(String.format("No security groups found for name [%s]", securityGroupName));
             return securityGroupName;
         } else if (sgs.size() > 1) {
