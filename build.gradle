@@ -122,7 +122,7 @@ compileJava {
 dependencies {
 
     // Jackson dependencies
-    def jacksonVersion = "2.13.4"
+    def jacksonVersion = "2.7.9"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
