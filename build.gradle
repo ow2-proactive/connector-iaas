@@ -165,16 +165,17 @@ dependencies {
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
 
-    def springVersion = "4.3.30.RELEASE"
+    // The spring version was not upgraded to 4.3.30.RELEASE because of issues arising with openstack infrastructure
+    def springVersion = "4.2.8.RELEASE"
 
-    compile("org.springframework:spring-core:${springVersion}")
-    compile("org.springframework:spring-aop:${springVersion}")
-    compile("org.springframework:spring-beans:${springVersion}")
-    compile("org.springframework:spring-context:${springVersion}")
-    compile("org.springframework:spring-context-support:${springVersion}")
-    compile("org.springframework:spring-expression:${springVersion}")
-    compile("org.springframework:spring-web:${springVersion}")
-    compile("org.springframework:spring-webmvc:${springVersion}")
+    //    compile("org.springframework:spring-core:${springVersion}")
+    //    compile("org.springframework:spring-aop:${springVersion}")
+    //    compile("org.springframework:spring-beans:${springVersion}")
+    //    compile("org.springframework:spring-context:${springVersion}")
+    //    compile("org.springframework:spring-context-support:${springVersion}")
+    //    compile("org.springframework:spring-expression:${springVersion}")
+    //    compile("org.springframework:spring-web:${springVersion}")
+    //    compile("org.springframework:spring-webmvc:${springVersion}")
 
     // Jcloud dependencies
     compile ('org.apache.jclouds:jclouds-compute:2.1.3'){
