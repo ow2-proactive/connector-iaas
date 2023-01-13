@@ -165,6 +165,24 @@ dependencies {
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
 
+    def jettyVersion = "9.4.50.v20221201"
+    providedCompile("org.eclipse.jetty:jetty-servlets:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-servlet:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-continuation:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-annotations:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-http:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-server:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-client:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-plus:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-security:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-util:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-io:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-xml:${jettyVersion}")
+    providedCompile("org.eclipse.jetty:jetty-webapp:${jettyVersion}")
+    providedCompile("org.eclipse.jetty.websocket:websocket-server:${jettyVersion}")
+    providedCompile("org.eclipse.jetty.websocket:websocket-client:${jettyVersion}")
+    providedCompile("org.eclipse.jetty.websocket:javax-websocket-server-impl:${jettyVersion}")
+
     // The spring version was not upgraded to 4.3.30.RELEASE because of issues arising with openstack infrastructure
     def springVersion = "4.2.8.RELEASE"
 
