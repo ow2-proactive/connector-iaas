@@ -79,6 +79,10 @@ springBoot {
     mainClass = mainClassName
 }
 
+bootRepackage {
+    enabled = false
+}
+
 // version is not set to make the war filename short and nice
 war {
     baseName = 'connector-iaas'
@@ -122,8 +126,8 @@ compileJava {
 dependencies {
 
     // Jackson dependencies
-    def jacksonVersion = "2.7.9"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    def jacksonVersion = "2.13.4"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}.2"
     compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
@@ -145,7 +149,7 @@ dependencies {
     // Guava allows immutable classes/objects
     compile 'com.google.guava:guava:19.0'
     // Support for easy class to Json convertion and vice verca
-    compile 'com.aol.microservices:micro-jackson-configuration:0.79.5'
+    compile 'com.oath.microservices:micro-jackson-configuration:1.2.6'
 
     def springBootVersion = "1.3.8.RELEASE"
 
@@ -183,17 +187,17 @@ dependencies {
     providedCompile("org.eclipse.jetty.websocket:websocket-client:${jettyVersion}")
     providedCompile("org.eclipse.jetty.websocket:javax-websocket-server-impl:${jettyVersion}")
 
-    // The spring version was not upgraded to 4.3.30.RELEASE because of issues arising with openstack infrastructure
-    def springVersion = "4.2.8.RELEASE"
+    // The spring version was upgraded to 4.3.30.RELEASE after recent changes
+    def springVersion = "4.3.30.RELEASE"
 
-    //    compile("org.springframework:spring-core:${springVersion}")
-    //    compile("org.springframework:spring-aop:${springVersion}")
-    //    compile("org.springframework:spring-beans:${springVersion}")
-    //    compile("org.springframework:spring-context:${springVersion}")
-    //    compile("org.springframework:spring-context-support:${springVersion}")
-    //    compile("org.springframework:spring-expression:${springVersion}")
-    //    compile("org.springframework:spring-web:${springVersion}")
-    //    compile("org.springframework:spring-webmvc:${springVersion}")
+    compile("org.springframework:spring-core:${springVersion}")
+    compile("org.springframework:spring-aop:${springVersion}")
+    compile("org.springframework:spring-beans:${springVersion}")
+    compile("org.springframework:spring-context:${springVersion}")
+    compile("org.springframework:spring-context-support:${springVersion}")
+    compile("org.springframework:spring-expression:${springVersion}")
+    compile("org.springframework:spring-web:${springVersion}")
+    compile("org.springframework:spring-webmvc:${springVersion}")
 
     // Jcloud dependencies
     compile ('org.apache.jclouds:jclouds-compute:2.1.3'){
