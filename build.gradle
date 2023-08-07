@@ -219,6 +219,9 @@ dependencies {
         exclude module : 'jsr311-api'
     }
 
+    // libraries used by multiple providers that must be upgraded
+    compile 'commons-codec:commons-codec:1.13'
+
     // Prevent the usage of an old version of SSHJ
     compile 'org.apache.jclouds.driver:jclouds-sshj:2.1.3'
 
