@@ -153,7 +153,7 @@ public class AzureProvider implements CloudProvider {
     @Value("${connector-iaas.azure.default-username:activeeon}")
     protected String defaultUsername;
 
-    @Value("${connector-iaas.azure.default-password:Act1v€0N}")
+    @Value("${connector-iaas.azure.default-password:0b8z&PDd4^uk}")
     protected String defaultPassword;
 
     @Value("${connector-iaas.azure.default-private-network-cidr:10.0.0.0/24}")
@@ -181,27 +181,44 @@ public class AzureProvider implements CloudProvider {
                                                                                instance + "'"));
 
         // Try to retrieve the resource group from provided name, otherwise get it from image ID
-        ResourceGroup resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
-                                                                                   options.map(Options::getResourceGroup)
-                                                                                          .orElseGet(() -> getImageById(azureService,
-                                                                                                                        imageNameOrId).map(VirtualMachineCustomImage::resourceGroupName)
-                                                                                                                                      .orElseThrow(() -> new RuntimeException("ERROR a resource group and/or an image ID must be specified from instance: '" +
-                                                                                                                                                                              instance +
-                                                                                                                                                                              "'"))))
-                                                        .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resource group from instance: '" +
-                                                                                                instance + "'"));
+        final ResourceGroup resourceGroup;
 
-        // Check for Image by name first and then by id
-        VirtualMachineCustomImage image = getImageByName(azureService,
-                                                         resourceGroup.name(),
-                                                         imageNameOrId).orElseGet(() -> getImageById(azureService,
-                                                                                                     imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
-                                                                                                                                                           instance.getImage() +
-                                                                                                                                                           "'")));
+        KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage = getKnownLinuxImage(imageNameOrId);
+        KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage = getKnownWindowsImage(imageNameOrId);
+        final VirtualMachineCustomImage image;
+        final Region region;
+        if (knownLinuxVirtualMachineImage == null && knownWindowsVirtualMachineImage == null) {
+            resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
+                                                                         options.map(Options::getResourceGroup)
+                                                                                .orElseGet(() -> getImageById(azureService,
+                                                                                                              imageNameOrId).map(VirtualMachineCustomImage::resourceGroupName)
+                                                                                                                            .orElseThrow(() -> new RuntimeException("ERROR a resource group and/or an image ID must be specified from instance: '" +
+                                                                                                                                                                    instance +
+                                                                                                                                                                    "'"))))
+                                              .orElseThrow(() -> new RuntimeException("ERROR unable to find a suitable resource group from instance: '" +
+                                                                                      instance + "'"));
+            // Check for Image by name first and then by id
+            image = getImageByName(azureService,
+                                   resourceGroup.name(),
+                                   imageNameOrId).orElseGet(() -> getImageById(azureService,
+                                                                               imageNameOrId).orElseThrow(() -> new RuntimeException("ERROR unable to find custom Image: '" +
+                                                                                                                                     instance.getImage() +
+                                                                                                                                     "'")));
 
-        // Try to get region from provided name, otherwise get it from image
-        Region region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion()))
-                               .orElseGet(image::region);
+            // Try to get region from provided name, otherwise get it from image
+            region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion()))
+                            .orElseGet(image::region);
+        } else {
+            image = null;
+            resourceGroup = azureProviderUtils.searchResourceGroupByName(azureService,
+                                                                         options.map(Options::getResourceGroup)
+                                                                                .orElse(null))
+                                              .orElseThrow(() -> new RuntimeException("ERROR when a known image is used, a resource group must be provided"));
+            region = options.map(presentOptions -> Region.findByLabelOrName(presentOptions.getRegion())).orElse(null);
+            if (region == null) {
+                throw new RuntimeException("ERROR when a known image is used, a region must be provided.");
+            }
+        }
 
         // Prepare a new virtual private network (same for all VMs)
         Optional<String> optionalPrivateNetworkCIDR = options.map(Options::getPrivateNetworkCIDR);
@@ -272,6 +289,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                              createUniqueInstanceTag(instanceTag,
                                                                                                                                      instanceNumber),
                                                                                                              image,
+                                                                                                             knownLinuxVirtualMachineImage,
+                                                                                                             knownWindowsVirtualMachineImage,
                                                                                                              creatableNetworkInterface);
                                                                             })
                                                                             .collect(Collectors.toList());
@@ -319,6 +338,22 @@ public class AzureProvider implements CloudProvider {
                                                                                         : null);
     }
 
+    protected KnownLinuxVirtualMachineImage getKnownLinuxImage(String name) {
+        try {
+            return KnownLinuxVirtualMachineImage.valueOf(name);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    protected KnownWindowsVirtualMachineImage getKnownWindowsImage(String name) {
+        try {
+            return KnownWindowsVirtualMachineImage.valueOf(name);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     protected Optional<VirtualMachineCustomImage> getImageByName(Azure azureService, String resourceGroup,
             String name) {
         return Optional.ofNullable(azureService.virtualMachineCustomImages().getByResourceGroup(resourceGroup, name));
@@ -330,37 +365,73 @@ public class AzureProvider implements CloudProvider {
 
     protected Creatable<VirtualMachine> prepareVirtualMachine(String infrastructureId, Instance instance,
             Azure azureService, ResourceGroup resourceGroup, Region region, String instanceTag,
-            VirtualMachineCustomImage image, Creatable<NetworkInterface> creatableNetworkInterface) {
+            VirtualMachineCustomImage image, KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage,
+            KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage,
+            Creatable<NetworkInterface> creatableNetworkInterface) {
 
-        // Configure the VM depending on the OS type
-        VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged creatableVirtualMachineWithImage;
-        OperatingSystemTypes operatingSystemType = image.osDiskImage().osType();
-        if (operatingSystemType.equals(OperatingSystemTypes.LINUX)) {
-            creatableVirtualMachineWithImage = configureLinuxVirtualMachine(azureService,
-                                                                            instanceTag,
-                                                                            region,
-                                                                            resourceGroup,
-                                                                            instance.getCredentials(),
-                                                                            image,
-                                                                            creatableNetworkInterface);
-        } else if (operatingSystemType.equals(OperatingSystemTypes.WINDOWS)) {
-            creatableVirtualMachineWithImage = configureWindowsVirtualMachine(azureService,
-                                                                              instanceTag,
-                                                                              region,
-                                                                              resourceGroup,
-                                                                              instance.getCredentials(),
-                                                                              image,
-                                                                              creatableNetworkInterface);
+        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize;
+        OperatingSystemTypes operatingSystemType;
+        if (knownLinuxVirtualMachineImage != null) {
+            operatingSystemType = OperatingSystemTypes.LINUX;
+            VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManagedOrUnmanaged creatableVirtualMachineWithImage = configureLinuxVirtualMachine(azureService,
+                                                                                                                                                         instanceTag,
+                                                                                                                                                         region,
+                                                                                                                                                         resourceGroup,
+                                                                                                                                                         instance.getCredentials(),
+                                                                                                                                                         knownLinuxVirtualMachineImage,
+                                                                                                                                                         creatableNetworkInterface);
+            // Set VM size (or type) and name of OS' disk
+            Optional<VirtualMachineSizeTypes> optionalHardwareType = Optional.ofNullable(instance.getHardware())
+                                                                             .map(Hardware::getType)
+                                                                             .map(VirtualMachineSizeTypes::fromString);
+            creatableVMWithSize = creatableVirtualMachineWithImage.withSize(optionalHardwareType.orElse(DEFAULT_VM_SIZE))
+                                                                  .withOSDiskName(createUniqOSDiskName(instanceTag));
+        } else if (knownWindowsVirtualMachineImage != null) {
+            operatingSystemType = OperatingSystemTypes.WINDOWS;
+            VirtualMachine.DefinitionStages.WithWindowsCreateManaged creatableVirtualMachineWithImage = configureWindowsVirtualMachine(azureService,
+                                                                                                                                       instanceTag,
+                                                                                                                                       region,
+                                                                                                                                       resourceGroup,
+                                                                                                                                       instance.getCredentials(),
+                                                                                                                                       knownWindowsVirtualMachineImage,
+                                                                                                                                       creatableNetworkInterface);
+            // Set VM size (or type) and name of OS' disk
+            Optional<VirtualMachineSizeTypes> optionalHardwareType = Optional.ofNullable(instance.getHardware())
+                                                                             .map(Hardware::getType)
+                                                                             .map(VirtualMachineSizeTypes::fromString);
+            creatableVMWithSize = creatableVirtualMachineWithImage.withSize(optionalHardwareType.orElse(DEFAULT_VM_SIZE))
+                                                                  .withOSDiskName(createUniqOSDiskName(instanceTag));
         } else {
-            throw new RuntimeException(unsupportedOperatingSystemError(operatingSystemType.toString()));
-        }
+            // Configure the VM depending on the OS type
+            VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged creatableVirtualMachineWithImage;
+            operatingSystemType = image.osDiskImage().osType();
+            if (operatingSystemType.equals(OperatingSystemTypes.LINUX)) {
+                creatableVirtualMachineWithImage = configureLinuxVirtualMachine(azureService,
+                                                                                instanceTag,
+                                                                                region,
+                                                                                resourceGroup,
+                                                                                instance.getCredentials(),
+                                                                                image,
+                                                                                creatableNetworkInterface);
+            } else if (operatingSystemType.equals(OperatingSystemTypes.WINDOWS)) {
+                creatableVirtualMachineWithImage = configureWindowsVirtualMachine(azureService,
+                                                                                  instanceTag,
+                                                                                  region,
+                                                                                  resourceGroup,
+                                                                                  instance.getCredentials(),
+                                                                                  image,
+                                                                                  creatableNetworkInterface);
+            } else {
+                throw new RuntimeException(unsupportedOperatingSystemError(operatingSystemType.toString()));
+            }
 
-        // Set VM size (or type) and name of OS' disk
-        Optional<VirtualMachineSizeTypes> optionalHardwareType = Optional.ofNullable(instance.getHardware())
-                                                                         .map(Hardware::getType)
-                                                                         .map(VirtualMachineSizeTypes::fromString);
-        VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize = creatableVirtualMachineWithImage.withSize(optionalHardwareType.orElse(DEFAULT_VM_SIZE))
-                                                                                                         .withOSDiskName(createUniqOSDiskName(instanceTag));
+            // Set VM size (or type) and name of OS' disk
+            Optional<VirtualMachineSizeTypes> optionalHardwareType = Optional.ofNullable(instance.getHardware())
+                                                                             .map(Hardware::getType)
+                                                                             .map(VirtualMachineSizeTypes::fromString);
+            creatableVMWithSize = creatableVirtualMachineWithImage.withSize(optionalHardwareType.orElse(DEFAULT_VM_SIZE))
+                                                                  .withOSDiskName(createUniqOSDiskName(instanceTag));
+        }
 
         // Add init script(s) using dedicated Microsoft extension
         Optional.ofNullable(instance.getInitScript()).map(InstanceScript::getScripts).ifPresent(scripts -> {
@@ -406,7 +477,6 @@ public class AzureProvider implements CloudProvider {
         Optional<String> optionalPublicKey = Optional.ofNullable(instanceCredentials)
                                                      .map(InstanceCredentials::getPublicKey);
 
-        // Prepare the VM without credentials
         VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManaged creatableVMWithoutCredentials = azureService.virtualMachines()
                                                                                                                             .define(instanceTag)
                                                                                                                             .withRegion(region)
@@ -414,10 +484,36 @@ public class AzureProvider implements CloudProvider {
                                                                                                                             .withNewPrimaryNetworkInterface(creatableNetworkInterface)
                                                                                                                             .withLinuxCustomImage(image.id())
                                                                                                                             .withRootUsername(optionalUsername.orElse(defaultUsername));
-
         // Set the credentials (whether password or SSH key)
         return optionalPublicKey.map(creatableVMWithoutCredentials::withSsh)
                                 .orElseGet(() -> creatableVMWithoutCredentials.withRootPassword(optionalPassword.orElse(defaultPassword)));
+
+    }
+
+    protected VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged configureLinuxVirtualMachine(
+            Azure azureService, String instanceTag, Region region, ResourceGroup resourceGroup,
+            InstanceCredentials instanceCredentials, KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage,
+            Creatable<NetworkInterface> creatableNetworkInterface) {
+        // Retrieve optional credentials
+        Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getUsername);
+        Optional<String> optionalPassword = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getPassword);
+        Optional<String> optionalPublicKey = Optional.ofNullable(instanceCredentials)
+                                                     .map(InstanceCredentials::getPublicKey);
+
+        // Prepare the VM without credentials
+        VirtualMachine.DefinitionStages.WithLinuxRootPasswordOrPublicKeyManagedOrUnmanaged creatableVMWithoutCredentials = azureService.virtualMachines()
+                                                                                                                                       .define(instanceTag)
+                                                                                                                                       .withRegion(region)
+                                                                                                                                       .withExistingResourceGroup(resourceGroup)
+                                                                                                                                       .withNewPrimaryNetworkInterface(creatableNetworkInterface)
+                                                                                                                                       .withPopularLinuxImage(knownLinuxVirtualMachineImage)
+                                                                                                                                       .withRootUsername(optionalUsername.orElse(defaultUsername));
+        // Set the credentials (whether password or SSH key)
+        return optionalPublicKey.map(creatableVMWithoutCredentials::withSsh)
+                                .orElseGet(() -> creatableVMWithoutCredentials.withRootPassword(optionalPassword.orElse(defaultPassword)));
+
     }
 
     protected VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(
@@ -437,6 +533,27 @@ public class AzureProvider implements CloudProvider {
                            .withExistingResourceGroup(resourceGroup)
                            .withNewPrimaryNetworkInterface(creatableNetworkInterface)
                            .withWindowsCustomImage(image.id())
+                           .withAdminUsername(optionalUsername.orElse(defaultUsername))
+                           .withAdminPassword(optionalPassword.orElse(defaultPassword));
+    }
+
+    protected VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(
+            Azure azureService, String instanceTag, Region region, ResourceGroup resourceGroup,
+            InstanceCredentials instanceCredentials, KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage,
+            Creatable<NetworkInterface> creatableNetworkInterface) {
+        // Retrieve optional credentials
+        Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getUsername);
+        Optional<String> optionalPassword = Optional.ofNullable(instanceCredentials)
+                                                    .map(InstanceCredentials::getPassword);
+
+        // Prepare the VM with credentials
+        return azureService.virtualMachines()
+                           .define(instanceTag)
+                           .withRegion(region)
+                           .withExistingResourceGroup(resourceGroup)
+                           .withNewPrimaryNetworkInterface(creatableNetworkInterface)
+                           .withPopularWindowsImage(knownWindowsVirtualMachineImage)
                            .withAdminUsername(optionalUsername.orElse(defaultUsername))
                            .withAdminPassword(optionalPassword.orElse(defaultPassword));
     }

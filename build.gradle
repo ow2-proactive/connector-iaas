@@ -230,8 +230,8 @@ dependencies {
     compile 'com.toastcoders:yavijava:6.0.04'
 
     // Microsoft Azure
-    compile 'com.microsoft.azure:azure:1.35.1'
-    compile 'com.microsoft.azure:azure-mgmt-network:1.35.1'
+    compile 'com.microsoft.azure:azure:1.41.3'
+    compile 'com.microsoft.azure:azure-mgmt-network:1.41.3'
 
     // AWS Pricing
     compile group: 'software.amazon.awssdk', name: 'pricing', version: '2.17.95'
