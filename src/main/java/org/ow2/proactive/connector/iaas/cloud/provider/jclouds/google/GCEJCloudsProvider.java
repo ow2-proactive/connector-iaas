@@ -77,6 +77,10 @@ public class GCEJCloudsProvider extends JCloudsProvider {
                     .filter(StringUtils::isNoneBlank)
                     .isPresent()) {
 
+            Optional.ofNullable(instance.getImage())
+                    .filter(StringUtils::isNotBlank)
+                    .ifPresent(templateBuilder::imageNameMatches);
+
             templateBuilder.hardwareId(instance.getHardware().getType());
 
         } else {
