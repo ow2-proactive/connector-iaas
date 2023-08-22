@@ -200,23 +200,26 @@ dependencies {
     compile("org.springframework:spring-web:${springVersion}")
     compile("org.springframework:spring-webmvc:${springVersion}")
 
+    def jcloudsVersion = "2.1.3"
+
     // Jcloud dependencies
-    compile ('org.apache.jclouds:jclouds-compute:2.1.3'){
+    compile ("org.apache.jclouds:jclouds-compute:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.api:openstack-nova:2.1.3'){
+    compile ("org.apache.jclouds.api:openstack-nova:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.api:openstack-keystone:2.1.3'){
+    compile ("org.apache.jclouds.api:openstack-keystone:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:aws-ec2:2.1.3'){
+    compile ("org.apache.jclouds.provider:aws-ec2:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds.provider:google-compute-engine:2.1.3'){
+    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.70'
+    compile ("org.apache.jclouds.provider:google-compute-engine:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile ('org.apache.jclouds:jclouds-allcompute:2.1.3'){
+    compile ("org.apache.jclouds:jclouds-allcompute:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
 
@@ -224,8 +227,10 @@ dependencies {
     compile 'commons-codec:commons-codec:1.13'
     compile 'org.apache.httpcomponents:httpclient:4.5.13'
 
+    compile 'org.bouncycastle:bcpkix-jdk15on:1.70'
+
     // Prevent the usage of an old version of SSHJ
-    compile 'org.apache.jclouds.driver:jclouds-sshj:2.1.3'
+    compile "org.apache.jclouds.driver:jclouds-sshj:${jcloudsVersion}"
 
     // VMware dependency
 
