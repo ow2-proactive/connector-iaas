@@ -154,6 +154,8 @@ dependencies {
 
     def springBootVersion = "1.3.8.RELEASE"
 
+    compile 'org.yaml:snakeyaml:2.0'
+
     // For using the rest jersey annotations
     compile("org.springframework.boot:spring-boot-starter-jersey:${springBootVersion}")
     // The basic spring boot web 'packet' -- tomcat is excluded because this project will be embedded
