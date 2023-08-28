@@ -247,6 +247,7 @@ dependencies {
     }
 
     // Microsoft Azure
+    compile 'net.minidev:json-smart:2.4.9'
     compile 'com.microsoft.azure:azure:1.41.3'
     compile 'com.microsoft.azure:azure-mgmt-network:1.41.3'
 
