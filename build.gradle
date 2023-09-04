@@ -157,7 +157,9 @@ dependencies {
     compile 'org.yaml:snakeyaml:2.0'
 
     // For using the rest jersey annotations
-    compile("org.springframework.boot:spring-boot-starter-jersey:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-jersey:${springBootVersion}") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
     // The basic spring boot web 'packet' -- tomcat is excluded because this project will be embedded
     // in ProActive Scheduler
     compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}") {
