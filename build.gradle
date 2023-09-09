@@ -148,7 +148,7 @@ dependencies {
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.14'
     // Guava allows immutable classes/objects
-    compile 'com.google.guava:guava:19.0'
+    compile 'com.google.guava:guava:32.0.1-jre'
     // Support for easy class to Json convertion and vice verca
     compile 'com.oath.microservices:micro-jackson-configuration:1.2.6'
 
