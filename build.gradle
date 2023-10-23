@@ -258,7 +258,12 @@ dependencies {
 
     // Microsoft Azure
     compile 'net.minidev:json-smart:2.4.9'
-    compile 'com.microsoft.azure:azure:1.41.3'
+    compile 'com.github.stephenc.jcip:jcip-annotations:1.0-1'
+    compile files('lib/nimbus-jose-jwt-9.8.1.jar')
+    compile ('com.microsoft.azure:azure:1.41.3') {
+        exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
+        exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
+    }
     compile 'com.microsoft.azure:azure-mgmt-network:1.41.3'
 
     // AWS Pricing
