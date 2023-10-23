@@ -269,7 +269,7 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.9'
 
     // Json project
-    compile 'org.json:json:20151123'
+    compile 'org.json:json:20231013'
 
     // Gson dependency
     compile 'com.google.code.gson:gson:2.8.0'
