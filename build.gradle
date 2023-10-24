@@ -176,7 +176,7 @@ dependencies {
     // in the war/jar. When a war is loaded, the jars in the provided folder are not loaded.
     providedCompile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
 
-    def jettyVersion = "9.4.51.v20230217"
+    def jettyVersion = "9.4.53.v20231009"
     providedCompile("org.eclipse.jetty:jetty-servlets:${jettyVersion}")
     providedCompile("org.eclipse.jetty:jetty-servlet:${jettyVersion}")
     providedCompile("org.eclipse.jetty:jetty-continuation:${jettyVersion}")
