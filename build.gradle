@@ -87,6 +87,8 @@ bootRepackage {
 // version is not set to make the war filename short and nice
 war {
     baseName = 'connector-iaas'
+    // exclude jclouds version downloaded from maven (superseded by local jar)
+    rootSpec.exclude("**/jclouds-core-2.4.0.jar")
 }
 
 jar {
@@ -225,6 +227,7 @@ dependencies {
     compile ("org.apache.jclouds.provider:google-compute-engine:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
+    compile files('lib/jclouds-core-2.4.1.jar')
 
     compile 'io.netty:netty-codec-http:4.1.97.Final'
     compile 'io.netty:netty-codec-http2:4.1.97.Final'
@@ -277,7 +280,7 @@ dependencies {
     compile 'org.json:json:20231013'
 
     // Gson dependency
-    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'com.google.code.gson:gson:2.8.9'
 
     //Logger
     compile 'org.apache.logging.log4j:log4j-api:2.17.1'
