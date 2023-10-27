@@ -141,11 +141,11 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
 
-    // route all log4j 1.2 and jul to slf4j
-    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
-    compile 'org.slf4j:jul-to-slf4j:1.7.25'
-    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
-    compile 'org.slf4j:slf4j-api:1.7.25'
+    // route all log4j 2 and jul to slf4j
+    compile 'org.slf4j:log4j-over-slf4j:1.7.36'
+    compile 'org.slf4j:jul-to-slf4j:1.7.36'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.36'
+    compile 'org.slf4j:slf4j-api:1.7.36'
 
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.14'
