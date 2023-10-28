@@ -34,6 +34,7 @@ install {
 
 repositories {
     if (project.hasProperty('local')) mavenLocal()
+
     // Needed by Microsoft Azure Java SDK
     maven {
         url "http://repository.springsource.com/maven/bundles/release"
@@ -255,8 +256,10 @@ dependencies {
     compile files('lib/org.dom4j.dom4j-custom.jar')
     compile files('lib/dom4j-custom.jar')
 
+    compile 'ch.qos.reload4j:reload4j:1.2.25'
     compile ('com.toastcoders:yavijava:6.0.05') {
         exclude group: 'org.apache.directory.studio', module: 'org.dom4j.dom4j'
+        exclude group: 'log4j', module: 'log4j'
     }
 
     // Microsoft Azure
