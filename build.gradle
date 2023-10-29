@@ -34,6 +34,7 @@ install {
 
 repositories {
     if (project.hasProperty('local')) mavenLocal()
+
     // Needed by Microsoft Azure Java SDK
     maven {
         url "http://repository.springsource.com/maven/bundles/release"
@@ -141,11 +142,11 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
 
-    // route all log4j 1.2 and jul to slf4j
-    compile 'org.slf4j:log4j-over-slf4j:1.7.25'
-    compile 'org.slf4j:jul-to-slf4j:1.7.25'
-    compile 'org.slf4j:jcl-over-slf4j:1.7.25'
-    compile 'org.slf4j:slf4j-api:1.7.25'
+    // route all log4j 2 and jul to slf4j
+    compile 'org.slf4j:log4j-over-slf4j:1.7.36'
+    compile 'org.slf4j:jul-to-slf4j:1.7.36'
+    compile 'org.slf4j:jcl-over-slf4j:1.7.36'
+    compile 'org.slf4j:slf4j-api:1.7.36'
 
     // Lombok plugin to remove boilerplate code from project
     compile 'org.projectlombok:lombok:1.16.14'
@@ -255,8 +256,10 @@ dependencies {
     compile files('lib/org.dom4j.dom4j-custom.jar')
     compile files('lib/dom4j-custom.jar')
 
+    compile 'ch.qos.reload4j:reload4j:1.2.25'
     compile ('com.toastcoders:yavijava:6.0.05') {
         exclude group: 'org.apache.directory.studio', module: 'org.dom4j.dom4j'
+        exclude group: 'log4j', module: 'log4j'
     }
 
     // Microsoft Azure
