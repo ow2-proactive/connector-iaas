@@ -88,8 +88,6 @@ bootRepackage {
 // version is not set to make the war filename short and nice
 war {
     baseName = 'connector-iaas'
-    // exclude jclouds version downloaded from maven (superseded by local jar)
-    rootSpec.exclude("**/jclouds-core-2.4.0.jar")
 }
 
 jar {
@@ -209,7 +207,7 @@ dependencies {
     compile("org.springframework:spring-web:${springVersion}")
     compile("org.springframework:spring-webmvc:${springVersion}")
 
-    def jcloudsVersion = "2.4.0"
+    def jcloudsVersion = "2.5.0"
 
     // Jcloud dependencies
     compile ("org.apache.jclouds:jclouds-compute:${jcloudsVersion}"){
@@ -228,7 +226,6 @@ dependencies {
     compile ("org.apache.jclouds.provider:google-compute-engine:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile files('lib/jclouds-core-2.4.1.jar')
 
     compile 'io.netty:netty-codec-http:4.1.97.Final'
     compile 'io.netty:netty-codec-http2:4.1.97.Final'

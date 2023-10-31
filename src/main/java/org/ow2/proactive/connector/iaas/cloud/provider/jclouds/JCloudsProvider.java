@@ -104,7 +104,12 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public Set<Instance> getAllInfrastructureInstances(Infrastructure infrastructure) {
-        return createInstancesFromNodes(getAllNodes(infrastructure));
+        try {
+            return createInstancesFromNodes(getAllNodes(infrastructure));
+        } catch (Exception e) {
+            log.error("Error when listing instances from infrastructure " + infrastructure.getId(), e);
+            throw e;
+        }
     }
 
     private Set<Instance> createInstancesFromNodes(Set<? extends ComputeMetadata> nodes) {
