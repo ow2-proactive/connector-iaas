@@ -40,8 +40,11 @@ import com.microsoft.azure.management.network.NetworkSecurityGroup;
 import com.microsoft.azure.management.network.PublicIPAddress;
 import com.microsoft.azure.management.resources.ResourceGroup;
 
+import lombok.extern.log4j.Log4j2;
+
 
 @Component
+@Log4j2
 public class AzureProviderUtils {
 
     public Optional<VirtualMachine> searchVirtualMachineByName(Azure azureService, String name) {
@@ -53,11 +56,25 @@ public class AzureProviderUtils {
     }
 
     public Optional<VirtualMachine> searchVirtualMachineByID(Azure azureService, String id) {
-        return azureService.virtualMachines()
-                           .list()
-                           .stream()
-                           .filter(availableVM -> availableVM.vmId().equals(id))
-                           .findAny();
+        Optional<VirtualMachine> answer = azureService.virtualMachines()
+                                                      .list()
+                                                      .stream()
+                                                      .filter(availableVM -> availableVM.vmId().equals(id))
+                                                      .findAny();
+        if (!answer.isPresent()) {
+            log.error("Cannot find instance with id {}", id);
+            log.error("Existing instances:");
+            azureService.virtualMachines()
+                        .list()
+                        .stream()
+                        .forEach(availableVM -> log.error("name: {} computerName: {} vmId: {} powerState: {}",
+                                                          availableVM.name(),
+                                                          availableVM.computerName(),
+                                                          availableVM.vmId(),
+                                                          availableVM.powerState()));
+        }
+
+        return answer;
     }
 
     public Optional<ResourceGroup> searchResourceGroupByName(Azure azureService, String name) {
