@@ -174,6 +174,12 @@ public class GCEJCloudsProvider extends JCloudsProvider {
     }
 
     @Override
+    public SimpleImmutableEntry<String, String> getKeyPairInfo(Infrastructure infrastructure, String keyPairName,
+            String region) {
+        throw new NotImplementedException("This method is not yet implemented.");
+    }
+
+    @Override
     public void deleteKeyPair(Infrastructure infrastructure, String keyPairName, String region) {
         throw new NotImplementedException("This method is not yet implemented.");
     }
