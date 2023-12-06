@@ -227,9 +227,9 @@ dependencies {
         exclude module : 'jsr311-api'
     }
 
-    compile 'io.netty:netty-codec-http:4.1.97.Final'
-    compile 'io.netty:netty-codec-http2:4.1.97.Final'
-    compile 'io.netty:netty-transport-native-epoll:4.1.97.Final'
+    compile 'io.netty:netty-codec-http:4.1.101.Final'
+    compile 'io.netty:netty-codec-http2:4.1.101.Final'
+    compile 'io.netty:netty-transport-native-epoll:4.1.101.Final'
     compile 'com.typesafe.netty:netty-reactive-streams-http:2.0.9'
 
     compile ("org.apache.jclouds:jclouds-allcompute:${jcloudsVersion}"){
