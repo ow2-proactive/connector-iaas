@@ -118,6 +118,8 @@ configurations {
     all*.exclude module: 'spring-boot-starter-logging'
     all*.exclude module: 'logback-core'
     all*.exclude module: 'logback-classic'
+    all*.exclude group: 'org.bouncycastle', module: 'bcprov-ext-jdk15on'
+    all*.exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
 }
 
 compileJava {
@@ -128,8 +130,8 @@ compileJava {
 dependencies {
 
     // Jackson dependencies
-    def jacksonVersion = "2.13.4"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}.2"
+    def jacksonVersion = "2.16.1"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
@@ -139,6 +141,9 @@ dependencies {
     compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"
     compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
+
+    compile "jakarta.activation:jakarta.activation-api:2.1.2"
+
 
     // route all log4j 2 and jul to slf4j
     compile 'org.slf4j:log4j-over-slf4j:1.7.36'
@@ -209,7 +214,10 @@ dependencies {
 
     def jcloudsVersion = "2.5.0"
 
-    // Jcloud dependencies
+    // Jcloud
+    compile ("org.apache.jclouds:jclouds-allcompute:${jcloudsVersion}"){
+        exclude module : 'jsr311-api'
+    }
     compile ("org.apache.jclouds:jclouds-compute:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
@@ -222,28 +230,24 @@ dependencies {
     compile ("org.apache.jclouds.provider:aws-ec2:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
-    compile 'org.bouncycastle:bcprov-ext-jdk15on:1.70'
     compile ("org.apache.jclouds.provider:google-compute-engine:${jcloudsVersion}"){
         exclude module : 'jsr311-api'
     }
+    // Prevent the usage of an old version of SSHJ
+    compile "org.apache.jclouds.driver:jclouds-sshj:${jcloudsVersion}"
+
+    // Prevent the usage of an old version of bouncycastle dependencies
+    compile 'org.bouncycastle:bcprov-ext-jdk18on:1.77'
+    compile 'org.bouncycastle:bcpkix-jdk18on:1.77'
 
     compile 'io.netty:netty-codec-http:4.1.101.Final'
     compile 'io.netty:netty-codec-http2:4.1.101.Final'
     compile 'io.netty:netty-transport-native-epoll:4.1.101.Final'
     compile 'com.typesafe.netty:netty-reactive-streams-http:2.0.9'
 
-    compile ("org.apache.jclouds:jclouds-allcompute:${jcloudsVersion}"){
-        exclude module : 'jsr311-api'
-    }
-
     // libraries used by multiple providers that must be upgraded
     compile 'commons-codec:commons-codec:1.13'
-    compile 'org.apache.httpcomponents:httpclient:4.5.13'
-
-    compile 'org.bouncycastle:bcpkix-jdk15on:1.70'
-
-    // Prevent the usage of an old version of SSHJ
-    compile "org.apache.jclouds.driver:jclouds-sshj:${jcloudsVersion}"
+    compile 'org.apache.httpcomponents:httpclient:4.5.14'
 
     // VMware dependency
 
@@ -314,7 +318,7 @@ dependencies {
     testCompile ('junit:junit:4.12') {
             exclude module : 'hamcrest'
             exclude module : 'hamcrest-core'
-        }
+    }
     testCompile 'org.mockito:mockito-core:2.7.17'
 
     testCompile "org.springframework:spring-test:${springVersion}"
