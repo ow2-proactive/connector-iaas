@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.rest;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.service.HardwareService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,9 +53,27 @@ public class HardwareRest {
     @Path("{infrastructureId}/hardwares")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        log.debug("Received get all hardwares request for infrastructure " + infrastructureId);
-        return Response.ok(hardwareService.getAllHardwares(infrastructureId)).build();
-
+        try {
+            log.debug("Received get all hardware request for infrastructureID " + infrastructureId);
+            return Response.ok(hardwareService.getAllHardwares(infrastructureId)).build();
+        } catch (IllegalArgumentException e) {
+            // Handle invalid arguments
+            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            String errorMessage = "An unexpected error occurred while retrieving all hardware for infrastructureID " +
+                                  infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(new ErrorResponse("500", errorMessage))
+                           .build();
+        }
     }
-
 }

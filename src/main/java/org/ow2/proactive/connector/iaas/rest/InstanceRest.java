@@ -33,6 +33,7 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,9 +65,34 @@ public class InstanceRest {
     @Produces("application/json")
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
-        return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
+        Instance instance = null;
+        try {
+            instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+            log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
+            return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
+
+        } catch (IllegalArgumentException e) {
+            // Handle invalid arguments
+            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            String errorMessage = "An unexpected error occurred while creating infrastructure with instances infrastructureID " +
+                                  infrastructureId + " with parameters " + instance + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(new ErrorResponse("500", errorMessage))
+                           .build();
+        }
+
     }
 
     @GET
@@ -75,20 +102,42 @@ public class InstanceRest {
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allInstances") Boolean allInstances) {
 
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
-                     instanceId);
-            return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
-        } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
-            log.info("Received get all request for infrastructure " + infrastructureId);
-            return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
-        } else {
-            log.info("Received get all created request for infrastructure " + infrastructureId);
-            return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
+                         instanceId);
+                return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
+                         instanceTag);
+                return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
+            } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
+                log.info("Received get all request for infrastructure " + infrastructureId);
+                return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
+            } else {
+                log.info("Received get all created request for infrastructure " + infrastructureId);
+                return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
+            }
+        } catch (IllegalArgumentException e) {
+            // Handle invalid arguments
+            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            String errorMessage = "An unexpected error occurred while retrieving instances for infrastructureID " +
+                                  infrastructureId + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(new ErrorResponse("500", errorMessage))
+                           .build();
         }
     }
 
