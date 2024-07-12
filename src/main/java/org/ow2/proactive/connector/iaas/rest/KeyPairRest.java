@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -38,8 +39,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.KeyPairService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,12 +67,38 @@ public class KeyPairRest {
     @Produces("application/json")
     @Path("{infrastructureId}/keypairs")
     public Response createKeyPair(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        log.info("Receive create request for infrastructure id " + infrastructureId + " with parameter " + instance);
-        SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
-        return Optional.ofNullable(privateKey)
-                       .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
-                       .orElse(Response.serverError().build());
+        Instance instance = null;
+        try {
+            instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+            log.info("Receive keypair create request for infrastructure id " + infrastructureId + " with parameter " +
+                     instance);
+            SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
+            return Optional.ofNullable(privateKey)
+                           .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
+                           .orElse(Response.serverError().build());
+        } catch (IllegalArgumentException e) {
+            // Handle invalid arguments
+            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " with parameter " +
+                                  instance + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " with parameter " +
+                                  instance + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            String errorMessage = "An unexpected error occurred while creating key pair for infrastructureID " +
+                                  infrastructureId + " with parameter " + instance + " :" + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(new ErrorResponse("500", errorMessage))
+                           .build();
+        }
     }
 
     @DELETE
@@ -78,17 +107,37 @@ public class KeyPairRest {
     @Path("{infrastructureId}/keypairs")
     public Response deleteKeyPair(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("keyPairName") String keyPairName, @QueryParam("region") String region) {
-        log.info("Receive delete request for key pair [{}] under infrastructure [{}] in region [{}] ",
-                 keyPairName,
-                 infrastructureId,
-                 region);
         try {
+            log.info("Receive delete request for key pair [{}] under infrastructureID [{}] in region [{}] ",
+                     keyPairName,
+                     infrastructureId,
+                     region);
             keyPairService.deleteKeyPair(infrastructureId, keyPairName, region);
+            return Response.ok().build();
+
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for for key pair key pair '" + keyPairName +
+                                  "' under infrastructureID " + infrastructureId + " in region '" + region + "': " +
+                                  e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (IllegalArgumentException e) {
+            // Handle specific exceptions with appropriate responses
+            String errorMessage = "Invalid argument for  key pair '" + keyPairName + "' under infrastructureID " +
+                                  infrastructureId + " in region '" + region + "': " + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
         } catch (Exception e) {
-            log.error("Error during delete key pair {}: {}", keyPairName, e);
-            return Response.serverError().build();
+            // Handle any other unexpected exceptions
+            String errorMessage = "Unexpected error occurred while deleting key pair '" + keyPairName +
+                                  "' under infrastructureID " + infrastructureId + " in region '" + region + "': " +
+                                  e.getMessage();
+            log.error(errorMessage, e);
+            return Response.serverError().entity(new ErrorResponse("500", errorMessage)).build();
         }
-        return Response.ok().build();
     }
 
 }
