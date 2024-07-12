@@ -31,11 +31,11 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.PagedNodeCandidates;
 import org.ow2.proactive.connector.iaas.service.NodeCandidateService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import lombok.extern.log4j.Log4j2;
-
 
 @Path("/infrastructures")
 @Component
@@ -46,26 +46,42 @@ public class NodeCandidateRest {
     public NodeCandidateService nodeCandidateService;
 
     @GET
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{infrastructureId}/nodecandidates")
     public Response getNodeCandidate(@PathParam("infrastructureId") String infrastructureId,
-            @QueryParam("region") String region, @QueryParam("imageReq") String imageReq,
-            @QueryParam("nextToken") String token) {
-        log.info("Receive getNodeCandidate request for imageReq [{}] under infrastructure [{}] in region [{}] with nextToken [{}]",
-                 imageReq,
-                 infrastructureId,
-                 region,
-                 token);
+                                     @QueryParam("region") String region,
+                                     @QueryParam("imageReq") String imageReq,
+                                     @QueryParam("nextToken") String token) {
         try {
-            PagedNodeCandidates result = nodeCandidateService.getNodeCandidate(infrastructureId,
-                                                                               region,
-                                                                               imageReq,
-                                                                               token);
+            log.info("Received getNodeCandidate request for imageReq [{}] under infrastructure [{}] in region [{}] with nextToken [{}]",
+                    imageReq, infrastructureId, region, token);
+
+            PagedNodeCandidates result = nodeCandidateService.getNodeCandidate(infrastructureId, region, imageReq, token);
 
             return Response.ok(result).build();
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for imageReq '" + imageReq +
+                    "' under infrastructureID " + infrastructureId + " in region '" + region + "' with nextToken '" + token + "': " +
+                    e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (IllegalArgumentException e) {
+            // Handle specific exceptions with appropriate responses
+            String errorMessage = "Invalid argument for imageReq '" + imageReq +
+                    "' under infrastructureID " + infrastructureId + " in region '" + region + "' with nextToken '" + token + "': " +
+                    e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
         } catch (Exception e) {
-            log.error("An error occurred while retrieving node candidate infrastructureId={}: {}", infrastructureId, e);
-            return Response.serverError().build();
+            // Handle any other unexpected exceptions
+            String errorMessage = "Unexpected error occurred while deleting imageReq '" + imageReq +
+                    "' under infrastructureID " + infrastructureId + " in region '" + region + "' with nextToken '" + token + "': " +
+                    e.getMessage();
+            log.error(errorMessage, e);
+            return Response.serverError().entity(new ErrorResponse("500", errorMessage)).build();
         }
     }
 }
