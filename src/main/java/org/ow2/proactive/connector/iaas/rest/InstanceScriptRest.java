@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -41,6 +42,7 @@ import javax.ws.rs.core.Response;
 import org.ow2.proactive.connector.iaas.model.InstanceScript;
 import org.ow2.proactive.connector.iaas.model.ScriptResult;
 import org.ow2.proactive.connector.iaas.service.InstanceScriptService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -65,18 +67,45 @@ public class InstanceScriptRest {
     public Response executeScript(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             final String instanceScriptJson) {
-        log.info("Received request to execute script on infrastructure id " + infrastructureId + " and instance id " +
-                 instanceId + " and instance tag " + instanceTag);
-        InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
-        final List<ScriptResult> scriptResults = Optional.ofNullable(instanceId)
-                                                         .map(i -> Lists.newArrayList(instanceScriptService.executeScriptOnInstance(infrastructureId,
-                                                                                                                                    instanceId,
-                                                                                                                                    instanceScript)))
-                                                         .orElseGet(() -> Lists.newArrayList(instanceScriptService.executeScriptOnInstanceTag(infrastructureId,
-                                                                                                                                              instanceTag,
-                                                                                                                                              instanceScript)));
-        log.info("Script results " + Arrays.toString(scriptResults.toArray()));
-        return Response.ok(scriptResults).build();
+        try {
+            log.info("Received request to execute script on infrastructure id " + infrastructureId +
+                     " and instance id " + instanceId + " and instance tag " + instanceTag);
+            InstanceScript instanceScript = JacksonUtil.convertFromJson(instanceScriptJson, InstanceScript.class);
+            final List<ScriptResult> scriptResults = Optional.ofNullable(instanceId)
+                                                             .map(i -> Lists.newArrayList(instanceScriptService.executeScriptOnInstance(infrastructureId,
+                                                                                                                                        instanceId,
+                                                                                                                                        instanceScript)))
+                                                             .orElseGet(() -> Lists.newArrayList(instanceScriptService.executeScriptOnInstanceTag(infrastructureId,
+                                                                                                                                                  instanceTag,
+                                                                                                                                                  instanceScript)));
+            log.info("Script results " + Arrays.toString(scriptResults.toArray()));
+            return Response.ok(scriptResults).build();
+        } catch (IllegalArgumentException e) {
+            // Handle invalid arguments
+            String errorMessage = "Invalid argument for executing script for infrastructureID " + infrastructureId +
+                                  " and instance id " + instanceId + " and instance tag " + instanceTag + ": " +
+                                  e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
+
+        } catch (NotFoundException e) {
+            // Handle not found exceptions
+            String errorMessage = "Resource not found for executing script for infrastructureID " + infrastructureId +
+                                  " and instance id " + instanceId + " and instance tag " + instanceTag + ": " +
+                                  e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
+
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            String errorMessage = "An unexpected error occurred while executing script for infrastructureID " +
+                                  infrastructureId + " and instance id " + instanceId + " and instance tag " +
+                                  instanceTag + ": " + e.getMessage();
+            log.error(errorMessage, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(new ErrorResponse("500", errorMessage))
+                           .build();
+        }
     }
 
 }
