@@ -62,37 +62,28 @@ public class InstanceRest {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        Instance instance = null;
         try {
-            instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+            Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
             log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
             return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
-
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return handleError(Response.Status.BAD_REQUEST,
+                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return handleError(Response.Status.NOT_FOUND,
+                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while creating infrastructure with instances infrastructureID " +
-                                  infrastructureId + " with parameters " + instance + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
+                               "An unexpected error occurred while creating instance for infrastructureID " +
+                                                                      infrastructureId + " with parameters " +
+                                                                      instanceJson + ": " + e.getMessage(),
+                               e);
         }
-
     }
 
     @GET
@@ -101,7 +92,6 @@ public class InstanceRest {
     public Response getInstances(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allInstances") Boolean allInstances) {
-
         try {
             if (Optional.ofNullable(instanceId).isPresent()) {
                 log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
@@ -119,25 +109,18 @@ public class InstanceRest {
                 return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
             }
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return handleError(Response.Status.BAD_REQUEST,
+                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return handleError(Response.Status.NOT_FOUND,
+                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while retrieving instances for infrastructureID " +
-                                  infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
+                               "An unexpected error occurred while retrieving instances for infrastructureID " +
+                                                                      infrastructureId + ": " + e.getMessage(),
+                               e);
         }
     }
 
@@ -147,21 +130,37 @@ public class InstanceRest {
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allCreatedInstances") Boolean allCreatedInstances) {
-
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received delete request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            instanceService.deleteInstance(infrastructureId, instanceId);
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received delete request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
-        } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
-            log.info("Received delete all request for infrastructure " + infrastructureId);
-            instanceService.deleteCreatedInstances(infrastructureId);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received delete request for infrastructure " + infrastructureId + " and instance id " +
+                         instanceId);
+                instanceService.deleteInstance(infrastructureId, instanceId);
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received delete request for infrastructure " + infrastructureId + " and instance tag " +
+                         instanceTag);
+                instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
+            } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
+                log.info("Received delete all request for infrastructure " + infrastructureId);
+                instanceService.deleteCreatedInstances(infrastructureId);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\", \"instanceTag\", or \"allCreatedInstances\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return handleError(Response.Status.BAD_REQUEST,
+                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (NotFoundException e) {
+            return handleError(Response.Status.NOT_FOUND,
+                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (Exception e) {
+            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
+                               "An unexpected error occurred while deleting instance for infrastructureID " +
+                                                                      infrastructureId + ": " + e.getMessage(),
+                               e);
         }
-
-        return Response.ok().build();
     }
 
     @POST
@@ -171,20 +170,35 @@ public class InstanceRest {
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("desiredIp") String optionalDesiredIp) {
         Map<String, String> response = new HashMap<>();
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            response.put("publicIp",
-                         instanceService.addToInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp));
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
-        } else {
-            throw new ClientErrorException("The parameter \"instanceId\" and \"instanceTag\" are  missing.",
-                                           Response.Status.BAD_REQUEST);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received create public IP request for infrastructure " + infrastructureId +
+                         " and instance id " + instanceId);
+                response.put("publicIp",
+                             instanceService.addToInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp));
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received create public IP request for infrastructure " + infrastructureId +
+                         " and instance tag " + instanceTag);
+                instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException e) {
+            return handleError(Response.Status.BAD_REQUEST,
+                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (NotFoundException e) {
+            return handleError(Response.Status.NOT_FOUND,
+                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (Exception e) {
+            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
+                               "An unexpected error occurred while creating public IP for infrastructureID " +
+                                                                      infrastructureId + ": " + e.getMessage(),
+                               e);
         }
-        return Response.ok(response).build();
     }
 
     @DELETE
@@ -193,21 +207,40 @@ public class InstanceRest {
     public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("desiredIp") String optionalDesiredIp) {
-
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            instanceService.removeInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp);
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
-        } else {
-            throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
-                                           Response.Status.BAD_REQUEST);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received delete public IP request for infrastructure " + infrastructureId +
+                         " and instance id " + instanceId);
+                instanceService.removeInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp);
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received delete public IP request for infrastructure " + infrastructureId +
+                         " and instance tag " + instanceTag);
+                instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return handleError(Response.Status.BAD_REQUEST,
+                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (NotFoundException e) {
+            return handleError(Response.Status.NOT_FOUND,
+                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
+                               e);
+        } catch (Exception e) {
+            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
+                               "An unexpected error occurred while deleting public IP for infrastructureID " +
+                                                                      infrastructureId + ": " + e.getMessage(),
+                               e);
         }
-
-        return Response.ok().build();
     }
 
+    private Response handleError(Response.Status status, String errorMessage, Exception e) {
+        log.error(errorMessage, e);
+        return Response.status(status)
+                       .entity(new ErrorResponse(String.valueOf(status.getStatusCode()), errorMessage))
+                       .build();
+    }
 }
