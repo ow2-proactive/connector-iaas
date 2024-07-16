@@ -70,19 +70,13 @@ public class InstanceRest {
             log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
             return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
         } catch (IllegalArgumentException e) {
-            return handleError(Response.Status.BAD_REQUEST,
-                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            return handleError(Response.Status.NOT_FOUND,
-                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
-                               "An unexpected error occurred while creating instance for infrastructureID " +
-                                                                      infrastructureId + " with parameters " +
-                                                                      instanceJson + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleServerError("While creating instance for infrastructureID " + infrastructureId +
+                                                   " with parameters " + instanceJson + ": " + e.getMessage(), e);
         }
     }
 
@@ -109,18 +103,13 @@ public class InstanceRest {
                 return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
             }
         } catch (IllegalArgumentException e) {
-            return handleError(Response.Status.BAD_REQUEST,
-                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            return handleError(Response.Status.NOT_FOUND,
-                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
-                               "An unexpected error occurred while retrieving instances for infrastructureID " +
-                                                                      infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleServerError("While retrieving instances for infrastructureID " +
+                                                   infrastructureId + ": " + e.getMessage(), e);
         }
     }
 
@@ -148,18 +137,13 @@ public class InstanceRest {
             }
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
-            return handleError(Response.Status.BAD_REQUEST,
-                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            return handleError(Response.Status.NOT_FOUND,
-                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
-                               "An unexpected error occurred while deleting instance for infrastructureID " +
-                                                                      infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleServerError("While deleting instance for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
     }
 
@@ -186,18 +170,13 @@ public class InstanceRest {
             }
             return Response.ok(response).build();
         } catch (IllegalArgumentException e) {
-            return handleError(Response.Status.BAD_REQUEST,
-                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            return handleError(Response.Status.NOT_FOUND,
-                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
-                               "An unexpected error occurred while creating public IP for infrastructureID " +
-                                                                      infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleServerError("While creating public IP for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
     }
 
@@ -222,25 +201,14 @@ public class InstanceRest {
             }
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
-            return handleError(Response.Status.BAD_REQUEST,
-                               "Invalid argument for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            return handleError(Response.Status.NOT_FOUND,
-                               "Resource not found for infrastructureID " + infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            return handleError(Response.Status.INTERNAL_SERVER_ERROR,
-                               "An unexpected error occurred while deleting public IP for infrastructureID " +
-                                                                      infrastructureId + ": " + e.getMessage(),
-                               e);
+            return ErrorResponse.handleServerError("While deleting public IP for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
     }
 
-    private Response handleError(Response.Status status, String errorMessage, Exception e) {
-        log.error(errorMessage, e);
-        return Response.status(status)
-                       .entity(new ErrorResponse(String.valueOf(status.getStatusCode()), errorMessage))
-                       .build();
-    }
 }

@@ -65,29 +65,18 @@ public class NodeCandidateRest {
                                                                                token);
 
             return Response.ok(result).build();
-        } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for imageReq '" + imageReq + "' under infrastructureID " +
-                                  infrastructureId + " in region '" + region + "' with nextToken '" + token + "': " +
-                                  e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
         } catch (IllegalArgumentException e) {
-            // Handle specific exceptions with appropriate responses
-            String errorMessage = "Invalid argument for imageReq '" + imageReq + "' under infrastructureID " +
-                                  infrastructureId + " in region '" + region + "' with nextToken '" + token + "': " +
-                                  e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return ErrorResponse.handleIllegalArgument("For imageReq '" + imageReq + "' under infrastructureID " +
+                                                       infrastructureId + " in region '" + region +
+                                                       "' with nextToken '" + token + "': " + e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For imageReq '" + imageReq + "' under infrastructureID " +
+                                                infrastructureId + " in region '" + region + "' with nextToken '" +
+                                                token + "': " + e.getMessage(), e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "Unexpected error occurred while deleting imageReq '" + imageReq +
-                                  "' under infrastructureID " + infrastructureId + " in region '" + region +
-                                  "' with nextToken '" + token + "': " + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.serverError().entity(new ErrorResponse("500", errorMessage)).build();
+            return ErrorResponse.handleServerError("While retrieving getNodeCandidate for imageReq '" + imageReq +
+                                                   "' under infrastructureID " + infrastructureId + " in region '" +
+                                                   region + "' with nextToken '" + token + "':" + e.getMessage(), e);
         }
     }
 }
