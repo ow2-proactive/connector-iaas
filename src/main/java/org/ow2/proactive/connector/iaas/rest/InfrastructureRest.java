@@ -46,8 +46,6 @@ import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import lombok.extern.log4j.Log4j2;
 
 
