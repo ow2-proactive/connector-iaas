@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.rest;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.service.RegionService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,8 +53,17 @@ public class RegionRest {
     @Path("{infrastructureId}/regions")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllRegions(@PathParam("infrastructureId") String infrastructureId) {
-        log.info("Received get all regions request for infrastructure " + infrastructureId);
-        return Response.ok(regionService.getAllRegions(infrastructureId)).build();
+        try {
+            log.info("Received get all regions request for infrastructureID " + infrastructureId);
+            return Response.ok(regionService.getAllRegions(infrastructureId)).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While retrieving all regions for infrastructureID " +
+                                                   infrastructureId + ": " + e.getMessage(), e);
+        }
     }
-
 }

@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,6 +41,7 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.KeyPairService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,12 +66,25 @@ public class KeyPairRest {
     @Produces("application/json")
     @Path("{infrastructureId}/keypairs")
     public Response createKeyPair(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        log.info("Receive create request for infrastructure id " + infrastructureId + " with parameter " + instance);
-        SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
-        return Optional.ofNullable(privateKey)
-                       .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
-                       .orElse(Response.serverError().build());
+        Instance instance = null;
+        try {
+            instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+            log.info("Receive keypair create request for infrastructure id " + infrastructureId + " with parameter " +
+                     instance);
+            SimpleImmutableEntry<String, String> privateKey = keyPairService.createKeyPair(infrastructureId, instance);
+            return Optional.ofNullable(privateKey)
+                           .map(privateKeyResponse -> Response.ok(privateKeyResponse).build())
+                           .orElse(Response.serverError().build());
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + " with parameter " +
+                                                       instance + ": " + e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + " with parameter " +
+                                                instance + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While creating key pair for infrastructureID " + infrastructureId +
+                                                   " with parameter " + instance + " :" + e.getMessage(), e);
+        }
     }
 
     @DELETE
@@ -78,17 +93,24 @@ public class KeyPairRest {
     @Path("{infrastructureId}/keypairs")
     public Response deleteKeyPair(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("keyPairName") String keyPairName, @QueryParam("region") String region) {
-        log.info("Receive delete request for key pair [{}] under infrastructure [{}] in region [{}] ",
-                 keyPairName,
-                 infrastructureId,
-                 region);
         try {
+            log.info("Receive delete request for key pair [{}] under infrastructureID [{}] in region [{}]",
+                     keyPairName,
+                     infrastructureId,
+                     region);
             keyPairService.deleteKeyPair(infrastructureId, keyPairName, region);
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For key pair '" + keyPairName + "' under infrastructureID " +
+                                                       infrastructureId + " in region '" + region + "': " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For key pair '" + keyPairName + "' under infrastructureID " +
+                                                infrastructureId + " in region '" + region + "': " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Error during delete key pair {}: {}", keyPairName, e);
-            return Response.serverError().build();
+            return ErrorResponse.handleServerError("While deleting key pair '" + keyPairName +
+                                                   "' under infrastructureID " + infrastructureId + " in region '" +
+                                                   region + "': " + e.getMessage(), e);
         }
-        return Response.ok().build();
     }
-
 }

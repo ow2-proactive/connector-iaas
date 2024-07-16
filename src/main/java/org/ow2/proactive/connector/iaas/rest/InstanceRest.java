@@ -33,6 +33,7 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Instance;
 import org.ow2.proactive.connector.iaas.service.InstanceService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -60,12 +62,22 @@ public class InstanceRest {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{infrastructureId}/instances")
     public Response createInstance(@PathParam("infrastructureId") String infrastructureId, final String instanceJson) {
-        Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
-        log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
-        return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
+        try {
+            Instance instance = JacksonUtil.convertFromJson(instanceJson, Instance.class);
+            log.info("Received create request for infrastructure " + infrastructureId + " with parameters " + instance);
+            return Response.ok(instanceService.createInstance(infrastructureId, instance)).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While creating instance for infrastructureID " + infrastructureId +
+                                                   " with parameters " + instanceJson + ": " + e.getMessage(), e);
+        }
     }
 
     @GET
@@ -74,21 +86,30 @@ public class InstanceRest {
     public Response getInstances(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allInstances") Boolean allInstances) {
-
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
-                     instanceId);
-            return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
-        } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
-            log.info("Received get all request for infrastructure " + infrastructureId);
-            return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
-        } else {
-            log.info("Received get all created request for infrastructure " + infrastructureId);
-            return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received get request for infrastructure id " + infrastructureId + " and instance id " +
+                         instanceId);
+                return Response.ok(instanceService.getInstanceById(infrastructureId, instanceId)).build();
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received get request for infrastructure " + infrastructureId + " and instance tag " +
+                         instanceTag);
+                return Response.ok(instanceService.getInstanceByTag(infrastructureId, instanceTag)).build();
+            } else if (Optional.ofNullable(allInstances).isPresent() && allInstances) {
+                log.info("Received get all request for infrastructure " + infrastructureId);
+                return Response.ok(instanceService.getAllInstances(infrastructureId)).build();
+            } else {
+                log.info("Received get all created request for infrastructure " + infrastructureId);
+                return Response.ok(instanceService.getCreatedInstances(infrastructureId)).build();
+            }
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While retrieving instances for infrastructureID " +
+                                                   infrastructureId + ": " + e.getMessage(), e);
         }
     }
 
@@ -98,21 +119,32 @@ public class InstanceRest {
     public Response deleteInstance(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("allCreatedInstances") Boolean allCreatedInstances) {
-
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received delete request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            instanceService.deleteInstance(infrastructureId, instanceId);
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received delete request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
-        } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
-            log.info("Received delete all request for infrastructure " + infrastructureId);
-            instanceService.deleteCreatedInstances(infrastructureId);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received delete request for infrastructure " + infrastructureId + " and instance id " +
+                         instanceId);
+                instanceService.deleteInstance(infrastructureId, instanceId);
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received delete request for infrastructure " + infrastructureId + " and instance tag " +
+                         instanceTag);
+                instanceService.deleteInstanceByTag(infrastructureId, instanceTag);
+            } else if (Optional.ofNullable(allCreatedInstances).isPresent() && allCreatedInstances) {
+                log.info("Received delete all request for infrastructure " + infrastructureId);
+                instanceService.deleteCreatedInstances(infrastructureId);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\", \"instanceTag\", or \"allCreatedInstances\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While deleting instance for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
-
-        return Response.ok().build();
     }
 
     @POST
@@ -122,20 +154,30 @@ public class InstanceRest {
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("desiredIp") String optionalDesiredIp) {
         Map<String, String> response = new HashMap<>();
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            response.put("publicIp",
-                         instanceService.addToInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp));
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received create public IP request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
-        } else {
-            throw new ClientErrorException("The parameter \"instanceId\" and \"instanceTag\" are  missing.",
-                                           Response.Status.BAD_REQUEST);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received create public IP request for infrastructure " + infrastructureId +
+                         " and instance id " + instanceId);
+                response.put("publicIp",
+                             instanceService.addToInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp));
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received create public IP request for infrastructure " + infrastructureId +
+                         " and instance tag " + instanceTag);
+                instanceService.addInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While creating public IP for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
-        return Response.ok(response).build();
     }
 
     @DELETE
@@ -144,21 +186,29 @@ public class InstanceRest {
     public Response removePublicIp(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("instanceId") String instanceId, @QueryParam("instanceTag") String instanceTag,
             @QueryParam("desiredIp") String optionalDesiredIp) {
-
-        if (Optional.ofNullable(instanceId).isPresent()) {
-            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance id " +
-                     instanceId);
-            instanceService.removeInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp);
-        } else if (Optional.ofNullable(instanceTag).isPresent()) {
-            log.info("Received delete public IP request for infrastructure " + infrastructureId + " and instance tag " +
-                     instanceTag);
-            instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
-        } else {
-            throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
-                                           Response.Status.BAD_REQUEST);
+        try {
+            if (Optional.ofNullable(instanceId).isPresent()) {
+                log.info("Received delete public IP request for infrastructure " + infrastructureId +
+                         " and instance id " + instanceId);
+                instanceService.removeInstancePublicIp(infrastructureId, instanceId, optionalDesiredIp);
+            } else if (Optional.ofNullable(instanceTag).isPresent()) {
+                log.info("Received delete public IP request for infrastructure " + infrastructureId +
+                         " and instance tag " + instanceTag);
+                instanceService.removeInstancePublicIpByTag(infrastructureId, instanceTag, optionalDesiredIp);
+            } else {
+                throw new ClientErrorException("The parameters \"instanceId\" and \"instanceTag\" are missing.",
+                                               Response.Status.BAD_REQUEST);
+            }
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While deleting public IP for infrastructureID " + infrastructureId +
+                                                   ": " + e.getMessage(), e);
         }
-
-        return Response.ok().build();
     }
 
 }

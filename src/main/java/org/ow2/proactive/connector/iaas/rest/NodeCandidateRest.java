@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.PagedNodeCandidates;
 import org.ow2.proactive.connector.iaas.service.NodeCandidateService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -46,26 +47,36 @@ public class NodeCandidateRest {
     public NodeCandidateService nodeCandidateService;
 
     @GET
-    @Produces("application/json")
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{infrastructureId}/nodecandidates")
     public Response getNodeCandidate(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("region") String region, @QueryParam("imageReq") String imageReq,
             @QueryParam("nextToken") String token) {
-        log.info("Receive getNodeCandidate request for imageReq [{}] under infrastructure [{}] in region [{}] with nextToken [{}]",
-                 imageReq,
-                 infrastructureId,
-                 region,
-                 token);
         try {
+            log.info("Received getNodeCandidate request for imageReq [{}] under infrastructure [{}] in region [{}] with nextToken [{}]",
+                     imageReq,
+                     infrastructureId,
+                     region,
+                     token);
+
             PagedNodeCandidates result = nodeCandidateService.getNodeCandidate(infrastructureId,
                                                                                region,
                                                                                imageReq,
                                                                                token);
 
             return Response.ok(result).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For imageReq '" + imageReq + "' under infrastructureID " +
+                                                       infrastructureId + " in region '" + region +
+                                                       "' with nextToken '" + token + "': " + e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For imageReq '" + imageReq + "' under infrastructureID " +
+                                                infrastructureId + " in region '" + region + "' with nextToken '" +
+                                                token + "': " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("An error occurred while retrieving node candidate infrastructureId={}: {}", infrastructureId, e);
-            return Response.serverError().build();
+            return ErrorResponse.handleServerError("While retrieving getNodeCandidate for imageReq '" + imageReq +
+                                                   "' under infrastructureID " + infrastructureId + " in region '" +
+                                                   region + "' with nextToken '" + token + "':" + e.getMessage(), e);
         }
     }
 }

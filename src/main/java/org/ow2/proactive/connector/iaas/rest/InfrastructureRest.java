@@ -30,6 +30,7 @@ import java.util.Optional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -40,6 +41,7 @@ import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.model.Infrastructure;
 import org.ow2.proactive.connector.iaas.service.InfrastructureService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.ow2.proactive.connector.iaas.util.JacksonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,16 +60,32 @@ public class InfrastructureRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllSupportedInfrastructure() {
-        log.info("Received get all request");
-        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+        try {
+            log.info("Received get all request");
+            return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While executing get all request for infrastructures: " +
+                                                   e.getMessage(), e);
+        }
     }
 
     @GET
     @Path("/{infrastructureId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInfrastructure(@PathParam("infrastructureId") String infrastructureId) {
-        log.info("Received get request for infrastructure " + infrastructureId);
-        return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
+        try {
+            log.info("Received get request for infrastructureID: " + infrastructureId);
+            return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While retrieving infrastructureID " + infrastructureId + ": " +
+                                                   e.getMessage(), e);
+        }
+
     }
 
     @DELETE
@@ -75,25 +93,61 @@ public class InfrastructureRest {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteInfrastructureById(@PathParam("infrastructureId") String infrastructureId,
             @QueryParam("deleteInstances") Boolean deleteInstances) {
-        log.info("Received delete request for infrastructure " + infrastructureId + " with delete instances = " +
-                 deleteInstances);
-        Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
-            if (Optional.ofNullable(deleteInstances).orElse(false)) {
-                infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
-            } else {
-                infrastructureService.deleteInfrastructure(infrastructure);
-            }
-        });
-        return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+        try {
+            log.info("Received delete request for infrastructureID: " + infrastructureId + " with delete instances = " +
+                     deleteInstances);
+            Optional.ofNullable(infrastructureService.getInfrastructure(infrastructureId)).ifPresent(infrastructure -> {
+                if (Optional.ofNullable(deleteInstances).orElse(false)) {
+                    infrastructureService.deleteInfrastructureWithCreatedInstances(infrastructure);
+                } else {
+                    infrastructureService.deleteInfrastructure(infrastructure);
+                }
+            });
+            return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While deleting infrastructureID " + infrastructureId + ": " +
+                                                   e.getMessage(), e);
+        }
+
     }
 
     @POST
     @Consumes("application/json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response registerInfrastructure(final String infrastructureJson) {
-        Infrastructure infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
-        log.info("Received create request with parameters " + infrastructure);
-        return Response.ok(infrastructureService.registerInfrastructure(infrastructure)).build();
-    }
+        Infrastructure infrastructure = null;
+        try {
+            // Validate input
+            if (infrastructureJson == null || infrastructureJson.isEmpty()) {
+                String errorMessage = "Input JSON is null or empty";
+                log.error(errorMessage);
+                return Response.status(Response.Status.BAD_REQUEST)
+                               .entity(new ErrorResponse("400", errorMessage))
+                               .build();
+            }
 
+            // Convert JSON to Infrastructure object
+            infrastructure = JacksonUtil.convertFromJson(infrastructureJson, Infrastructure.class);
+            log.info("Received create infrastructure request with parameters " + infrastructure);
+
+            // Call the service layer
+            Infrastructure result = infrastructureService.registerInfrastructure(infrastructure);
+
+            // Return success response
+            return Response.ok(result).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructure " + infrastructure + ": " + e.getMessage(),
+                                                       e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructure " + infrastructure + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While creating infrastructure " + infrastructure + ": " +
+                                                   e.getMessage(), e);
+        }
+    }
 }

@@ -26,6 +26,7 @@
 package org.ow2.proactive.connector.iaas.rest;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ow2.proactive.connector.iaas.service.ImageService;
+import org.ow2.proactive.connector.iaas.util.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,8 +53,18 @@ public class ImageRest {
     @Path("{infrastructureId}/images")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAllImage(@PathParam("infrastructureId") String infrastructureId) {
-        log.info("Received get all images request for infrastructure " + infrastructureId);
-        return Response.ok(imageService.getAllImages(infrastructureId)).build();
+        try {
+            log.info("Received get all images request for infrastructureID " + infrastructureId);
+            return Response.ok(imageService.getAllImages(infrastructureId)).build();
+        } catch (IllegalArgumentException e) {
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
+        } catch (NotFoundException e) {
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            return ErrorResponse.handleServerError("While retrieving images for infrastructureID " + infrastructureId +
+                                                   " :" + e.getMessage(), e);
+        }
 
     }
 
