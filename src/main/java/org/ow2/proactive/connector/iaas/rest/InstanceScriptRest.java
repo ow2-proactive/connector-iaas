@@ -81,31 +81,17 @@ public class InstanceScriptRest {
             log.info("Script results " + Arrays.toString(scriptResults.toArray()));
             return Response.ok(scriptResults).build();
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for executing script for infrastructureID " + infrastructureId +
-                                  " and instance id " + instanceId + " and instance tag " + instanceTag + ": " +
-                                  e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return ErrorResponse.handleIllegalArgument("For executing script for infrastructureID " + infrastructureId +
+                                                       " and instance id " + instanceId + " and instance tag " +
+                                                       instanceTag + ": " + e.getMessage(), e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for executing script for infrastructureID " + infrastructureId +
-                                  " and instance id " + instanceId + " and instance tag " + instanceTag + ": " +
-                                  e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return ErrorResponse.handleNotFound("For executing script for infrastructureID " + infrastructureId +
+                                                " and instance id " + instanceId + " and instance tag " + instanceTag +
+                                                ": " + e.getMessage(), e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while executing script for infrastructureID " +
-                                  infrastructureId + " and instance id " + instanceId + " and instance tag " +
-                                  instanceTag + ": " + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return ErrorResponse.handleServerError("While executing script for infrastructureID " + infrastructureId +
+                                                   " and instance id " + instanceId + " and instance tag " +
+                                                   instanceTag + " :" + e.getMessage(), e);
         }
     }
-
 }

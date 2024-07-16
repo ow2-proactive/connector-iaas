@@ -65,15 +65,9 @@ public class InfrastructureRest {
         try {
             log.info("Received get all request");
             return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
-
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while executing get all request for infrastructure: " +
-                                  e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return ErrorResponse.handleServerError("While executing get all request for infrastructures: " +
+                                                   e.getMessage(), e);
         }
     }
 
@@ -84,27 +78,14 @@ public class InfrastructureRest {
         try {
             log.info("Received get request for infrastructureID: " + infrastructureId);
             return Response.ok(infrastructureService.getInfrastructure(infrastructureId)).build();
-
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for infrastructureID  " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while getting infrastructureID: " + infrastructureId +
-                                  " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return ErrorResponse.handleServerError("While retrieving infrastructureID " + infrastructureId + ": " +
+                                                   e.getMessage(), e);
         }
 
     }
@@ -125,28 +106,16 @@ public class InfrastructureRest {
                 }
             });
             return Response.ok(infrastructureService.getAllSupportedInfrastructure()).build();
-
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return ErrorResponse.handleIllegalArgument("For infrastructureID " + infrastructureId + ": " +
+                                                       e.getMessage(), e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for infrastructureID " + infrastructureId + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return ErrorResponse.handleNotFound("For infrastructureID " + infrastructureId + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while deleting infrastructureID " + infrastructureId +
-                                  " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return ErrorResponse.handleServerError("While deleting infrastructureID " + infrastructureId + ": " +
+                                                   e.getMessage(), e);
         }
+
     }
 
     @POST
@@ -173,29 +142,14 @@ public class InfrastructureRest {
 
             // Return success response
             return Response.ok(result).build();
-
         } catch (IllegalArgumentException e) {
-            // Handle invalid arguments
-            String errorMessage = "Invalid argument for infrastructure " + infrastructure + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.BAD_REQUEST).entity(new ErrorResponse("400", errorMessage)).build();
-
+            return ErrorResponse.handleIllegalArgument("For infrastructure " + infrastructure + ": " + e.getMessage(),
+                                                       e);
         } catch (NotFoundException e) {
-            // Handle not found exceptions
-            String errorMessage = "Resource not found for infrastructure " + infrastructure + " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.NOT_FOUND).entity(new ErrorResponse("404", errorMessage)).build();
-
+            return ErrorResponse.handleNotFound("For infrastructure " + infrastructure + ": " + e.getMessage(), e);
         } catch (Exception e) {
-            // Handle any other unexpected exceptions
-            String errorMessage = "An unexpected error occurred while creating infrastructure " + infrastructure +
-                                  " :" + e.getMessage();
-            log.error(errorMessage, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity(new ErrorResponse("500", errorMessage))
-                           .build();
+            return ErrorResponse.handleServerError("While creating infrastructure " + infrastructure + ": " +
+                                                   e.getMessage(), e);
         }
-
     }
-
 }
