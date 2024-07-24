@@ -116,10 +116,10 @@ public class JCloudsComputeServiceBuilder {
     }
 
     public Properties getDefinedProperties(Infrastructure infrastructure) {
-       // if (properties == null) {
-            properties = loadDefinedProperties(infrastructure);
-       // } TODO: checking behavior when we assign properties each time
-        log.info("Loaded properties for infrastructure: " + properties);
+        // if (properties == null) {
+        properties = loadDefinedProperties(infrastructure);
+        // } TODO: checking behavior when we assign properties each time
+        log.info("Loaded properties for infrastructure: {}", properties);
         return properties;
     }
 
