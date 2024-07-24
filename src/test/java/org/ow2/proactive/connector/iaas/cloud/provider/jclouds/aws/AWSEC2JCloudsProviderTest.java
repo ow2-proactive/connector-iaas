@@ -640,13 +640,13 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testGetAllImagesEmptySet() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

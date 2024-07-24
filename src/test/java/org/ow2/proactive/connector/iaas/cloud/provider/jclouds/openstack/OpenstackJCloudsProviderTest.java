@@ -131,14 +131,14 @@ public class OpenstackJCloudsProviderTest {
     public void testCreateInstance() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               new InfrastructureScope("project",
-                                                                                                       "admin"),
-                                                                               "RegionOne",
-                                                                               "3");
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                new InfrastructureScope("project",
+                                                                                                        "admin"),
+                                                                                "RegionOne",
+                                                                                "3");
 
         Instance instance = InstanceFixture.getInstanceWithKeyName("instance-id",
                                                                    "instance-name",
