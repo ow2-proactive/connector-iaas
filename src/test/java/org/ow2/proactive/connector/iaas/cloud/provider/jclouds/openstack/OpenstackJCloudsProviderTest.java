@@ -219,13 +219,13 @@ public class OpenstackJCloudsProviderTest {
     public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
@@ -266,13 +266,13 @@ public class OpenstackJCloudsProviderTest {
     public void testDeleteInfrastructure() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -298,13 +298,13 @@ public class OpenstackJCloudsProviderTest {
     public void testDeleteInstance() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -318,13 +318,13 @@ public class OpenstackJCloudsProviderTest {
     public void testGetAllInfrastructureInstances() throws RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -382,13 +382,13 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testGetAllImagesEmptySet() {
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 

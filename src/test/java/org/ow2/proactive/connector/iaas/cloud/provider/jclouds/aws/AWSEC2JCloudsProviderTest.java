@@ -133,13 +133,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -208,13 +208,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testCreateInstanceWithSpotPrice() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -292,13 +292,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -342,13 +342,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -374,13 +374,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testCreateInstanceWithSecurityGroup() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -449,13 +449,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testCreateInstanceWithSubnetId() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -525,13 +525,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -545,13 +545,13 @@ public class AWSEC2JCloudsProviderTest {
     public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
@@ -576,13 +576,13 @@ public class AWSEC2JCloudsProviderTest {
             throws NumberFormatException, RunNodesException {
 
         Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
