@@ -92,6 +92,9 @@ public class JCloudsComputeServiceBuilder {
 
         String identityPrefix = StringUtils.isNotBlank(domain) ? (domain + ":") : "";
 
+        log.info("Building ComputeService for infrastructureID: " + infrastructure.getId());
+        log.info("Using credentials: " + identityPrefix + infrastructure.getCredentials().getUsername());
+
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
                                                       .credentials(identityPrefix +
                                                                    infrastructure.getCredentials().getUsername(),
@@ -103,14 +106,20 @@ public class JCloudsComputeServiceBuilder {
                 .filter(endPoint -> !endPoint.isEmpty())
                 .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
 
+        log.info("ContextBuilder configuration complete, building ComputeServiceContext...");
+
         ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+
+        log.info("ComputeServiceContext built successfully: " + context.toString());
+
         return context.getComputeService();
     }
 
     public Properties getDefinedProperties(Infrastructure infrastructure) {
-        if (properties == null) {
+       // if (properties == null) {
             properties = loadDefinedProperties(infrastructure);
-        }
+       // } TODO: checking behavior when we assign properties each time
+        log.info("Loaded properties for infrastructure: " + properties);
         return properties;
     }
 
