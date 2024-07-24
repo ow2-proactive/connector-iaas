@@ -132,7 +132,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testCreateInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -141,7 +141,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
@@ -192,7 +192,7 @@ public class AWSEC2JCloudsProviderTest {
         when(tagManager.retrieveAllTags(anyString(),
                                         any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infrastructure, instance);
 
         assertThat(created.size(), is(1));
 
@@ -207,7 +207,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testCreateInstanceWithSpotPrice() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -216,11 +216,11 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
-        when(computeServiceBuilder.getDefinedProperties(infratructure)).thenReturn(properties);
+        when(computeServiceBuilder.getDefinedProperties(infrastructure)).thenReturn(properties);
 
         when(properties.getProperty(anyString())).thenReturn("1000");
 
@@ -274,7 +274,7 @@ public class AWSEC2JCloudsProviderTest {
         when(tagManager.retrieveAllTags(anyString(),
                                         any(Options.class))).thenReturn(Lists.newArrayList(connectorIaasTag));
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infrastructure, instance);
 
         assertThat(created.size(), is(1));
 
@@ -291,7 +291,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test(expected = RuntimeException.class)
     public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -300,7 +300,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
@@ -334,14 +334,14 @@ public class AWSEC2JCloudsProviderTest {
                                                Integer.parseInt(instance.getNumber()),
                                                template)).thenThrow(new RuntimeException());
 
-        jcloudsProvider.createInstance(infratructure, instance);
+        jcloudsProvider.createInstance(infrastructure, instance);
 
     }
 
     @Test
     public void testDeleteInfrastructure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -350,7 +350,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
@@ -364,16 +364,16 @@ public class AWSEC2JCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        jcloudsProvider.deleteInfrastructure(infratructure);
+        jcloudsProvider.deleteInfrastructure(infrastructure);
 
-        verify(computeServiceCache, times(1)).removeComputeService(infratructure);
+        verify(computeServiceCache, times(1)).removeComputeService(infrastructure);
 
     }
 
     @Test
     public void testCreateInstanceWithSecurityGroup() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -382,7 +382,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
@@ -431,7 +431,7 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infrastructure, instance);
 
         assertThat(created.size(), is(1));
 
@@ -448,7 +448,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testCreateInstanceWithSubnetId() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -457,7 +457,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.templateBuilder()).thenReturn(templateBuilder);
 
@@ -507,7 +507,7 @@ public class AWSEC2JCloudsProviderTest {
 
         when(templateOptions.as(AWSEC2TemplateOptions.class)).thenReturn(awsEC2TemplateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infrastructure, instance);
 
         assertThat(created.size(), is(1));
 
@@ -524,7 +524,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testDeleteInstance() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -533,9 +533,9 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-        jcloudsProvider.deleteInstance(infratructure, "instanceID");
+        jcloudsProvider.deleteInstance(infrastructure, "instanceID");
 
         verify(computeService, times(1)).destroyNode("instanceID");
 
@@ -544,7 +544,7 @@ public class AWSEC2JCloudsProviderTest {
     @Test
     public void testGetAllInfrastructureInstances() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -553,7 +553,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
@@ -564,7 +564,7 @@ public class AWSEC2JCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
+        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infrastructure);
 
         assertThat(allNodes.iterator().next().getId(), is("someId"));
         assertThat(allNodes.iterator().next().getTag(), is(""));
@@ -575,7 +575,7 @@ public class AWSEC2JCloudsProviderTest {
     public void testGetAllInfrastructureInstancesMissingHardwareAndTag()
             throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -584,7 +584,7 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
@@ -598,7 +598,7 @@ public class AWSEC2JCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
+        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infrastructure);
 
         assertThat(allNodes.iterator().next().getId(), is("someId"));
 
@@ -639,7 +639,7 @@ public class AWSEC2JCloudsProviderTest {
 
     @Test
     public void testGetAllImagesEmptySet() {
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
                                                                                "aws",
                                                                                "endPoint",
                                                                                "userName",
@@ -648,12 +648,12 @@ public class AWSEC2JCloudsProviderTest {
                                                                                null,
                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set images = Sets.newHashSet();
         when(computeService.listImages()).thenReturn(images);
 
-        Set<Image> allImages = jcloudsProvider.getAllImages(infratructure);
+        Set<Image> allImages = jcloudsProvider.getAllImages(infrastructure);
 
         assertThat(allImages.isEmpty(), is(true));
 

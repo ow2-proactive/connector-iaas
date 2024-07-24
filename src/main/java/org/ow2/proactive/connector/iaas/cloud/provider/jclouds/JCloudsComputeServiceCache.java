@@ -47,12 +47,12 @@ public class JCloudsComputeServiceCache {
         computeServiceCache = new ConcurrentHashMap<Infrastructure, ComputeService>();
     }
 
-    public ComputeService getComputeService(Infrastructure infratructure) {
-        return buildComputeService.apply(infratructure);
+    public ComputeService getComputeService(Infrastructure infrastructure) {
+        return buildComputeService.apply(infrastructure);
     }
 
-    public void removeComputeService(Infrastructure infratructure) {
-        computeServiceCache.remove(infratructure);
+    public void removeComputeService(Infrastructure infrastructure) {
+        computeServiceCache.remove(infrastructure);
     }
 
     private Function<Infrastructure, ComputeService> buildComputeService = memoise(infrastructure -> {
