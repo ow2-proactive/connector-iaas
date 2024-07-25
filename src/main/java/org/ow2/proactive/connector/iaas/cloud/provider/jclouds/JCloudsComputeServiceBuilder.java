@@ -129,11 +129,6 @@ public class JCloudsComputeServiceBuilder {
     private Properties loadDefinedProperties(Infrastructure infrastructure) {
         Properties properties = new Properties();
 
-        // Add custom properties for Openstack with identity version 3
-        if (infrastructure.getType().equals(OpenstackUtil.OPENSTACK_TYPE)) {
-            openstackUtil.addCustomProperties(infrastructure, properties);
-        }
-
         properties.setProperty(Constants.PROPERTY_REQUEST_TIMEOUT, requestTimeout);
         properties.setProperty(Constants.PROPERTY_CONNECTION_TIMEOUT, connectionTimeout);
 
@@ -144,12 +139,20 @@ public class JCloudsComputeServiceBuilder {
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
 
+        // Add custom properties for Openstack with identity version 3
+        if (infrastructure.getType().equals(OpenstackUtil.OPENSTACK_TYPE)) {
+            openstackUtil.addCustomProperties(infrastructure, properties);
+        }
+
+        // Add custom properties for AWS (infrastructure type "aws-ec2")
         // set AMI queries to filter private AMI (self), API from Amazon (137112412989) & Canonical (099720109477). Doc: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
         //properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,"owner-id=137112412989,099720109477,self;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm" );
-        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
-                               "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label=" +
-                                                                       awsImagesListTag);
-        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
+        if (infrastructure.getType().equals("aws-ec2")) {
+            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
+                                   "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label=" +
+                                                                           awsImagesListTag);
+            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
+        }
 
         log.info("Infrastructure properties: " + properties.toString());
 
