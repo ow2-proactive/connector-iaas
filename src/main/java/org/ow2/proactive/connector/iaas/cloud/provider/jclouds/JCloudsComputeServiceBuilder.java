@@ -25,8 +25,10 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
@@ -83,7 +85,7 @@ public class JCloudsComputeServiceBuilder {
     @Autowired
     private OpenstackUtil openstackUtil;
 
-    private Properties properties;
+    private Map<Infrastructure, Properties> infrastructurePropertiesMap = new ConcurrentHashMap<>();
 
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
@@ -104,7 +106,7 @@ public class JCloudsComputeServiceBuilder {
 
         Optional.ofNullable(infrastructure.getEndpoint())
                 .filter(endPoint -> !endPoint.isEmpty())
-                .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
+                .ifPresent(contextBuilder::endpoint);
 
         log.info("ContextBuilder configuration complete, building ComputeServiceContext...");
 
@@ -116,11 +118,7 @@ public class JCloudsComputeServiceBuilder {
     }
 
     public Properties getDefinedProperties(Infrastructure infrastructure) {
-        // if (properties == null) {
-        properties = loadDefinedProperties(infrastructure);
-        // } TODO: checking behavior when we assign properties each time
-        log.info("Loaded properties for infrastructure: {}", properties);
-        return properties;
+        return infrastructurePropertiesMap.computeIfAbsent(infrastructure, this::loadDefinedProperties);
     }
 
     /**
