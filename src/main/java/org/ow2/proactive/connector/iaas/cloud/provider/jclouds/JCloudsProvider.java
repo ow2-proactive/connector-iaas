@@ -88,17 +88,17 @@ public abstract class JCloudsProvider implements CloudProvider {
     protected abstract RunScriptOptions getRunScriptOptionsWithCredentials(InstanceCredentials credentials);
 
     public Set<String> listAvailableRegions(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listAssignableLocations()
-                                                                 .parallelStream()
-                                                                 .filter(location -> location.getScope()
-                                                                                             .equals(LocationScope.REGION))
-                                                                 .map(loc -> loc.getId())
-                                                                 .collect(Collectors.toSet());
+        return getComputeServiceFromInfrastructure(infrastructure).listAssignableLocations()
+                                                                  .parallelStream()
+                                                                  .filter(location -> location.getScope()
+                                                                                              .equals(LocationScope.REGION))
+                                                                  .map(loc -> loc.getId())
+                                                                  .collect(Collectors.toSet());
     }
 
     @Override
     public void deleteInstance(Infrastructure infrastructure, String instanceId) {
-        getComputeServiceFromInfastructure(infrastructure).destroyNode(instanceId);
+        getComputeServiceFromInfrastructure(infrastructure).destroyNode(instanceId);
         log.info("Instance deleted successfully: " + instanceId);
     }
 
@@ -138,7 +138,7 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     private Set<? extends ComputeMetadata> getAllNodes(Infrastructure infrastructure) {
-        return getComputeServiceFromInfastructure(infrastructure).listNodes();
+        return getComputeServiceFromInfrastructure(infrastructure).listNodes();
     }
 
     @Override
@@ -149,9 +149,9 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             String scriptToExecuteString = buildScriptToExecuteString(instanceScript);
             runScriptOptions = buildScriptOptionsWithInstanceId(instanceScript, instanceId, infrastructure);
-            execResponse = getComputeServiceFromInfastructure(infrastructure).runScriptOnNode(instanceId,
-                                                                                              scriptToExecuteString,
-                                                                                              runScriptOptions);
+            execResponse = getComputeServiceFromInfrastructure(infrastructure).runScriptOnNode(instanceId,
+                                                                                               scriptToExecuteString,
+                                                                                               runScriptOptions);
         } catch (Exception e) {
             log.error("Script cannot be run on instance with id: " + instanceId + ". RunScriptOptions=" +
                       runScriptOptions, e);
@@ -170,9 +170,9 @@ public abstract class JCloudsProvider implements CloudProvider {
         try {
             String scriptToExecuteString = buildScriptToExecuteString(instanceScript);
             runScriptOptions = buildScriptOptionsWithInstanceTag(instanceScript, instanceTag, infrastructure);
-            execResponses = getComputeServiceFromInfastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
-                                                                                                        scriptToExecuteString,
-                                                                                                        runScriptOptions);
+            execResponses = getComputeServiceFromInfrastructure(infrastructure).runScriptOnNodesMatching(runningInGroup(instanceTag),
+                                                                                                         scriptToExecuteString,
+                                                                                                         runScriptOptions);
         } catch (Exception e) {
             log.error("Script cannot be run on instance with tag: " + instanceTag + ". RunScriptOptions=" +
                       runScriptOptions, e);
@@ -190,7 +190,7 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     @Override
     public Set<Image> getAllImages(Infrastructure infrastructure) {
-        Set<? extends org.jclouds.compute.domain.Image> images = getComputeServiceFromInfastructure(infrastructure).listImages();
+        Set<? extends org.jclouds.compute.domain.Image> images = getComputeServiceFromInfrastructure(infrastructure).listImages();
         log.info(String.format("Found %d images", images.stream().count()));
         return images.stream()
                      .map(it -> Image.builder()
@@ -219,26 +219,26 @@ public abstract class JCloudsProvider implements CloudProvider {
     }
 
     public Set<Hardware> getHardware(Infrastructure infrastructure, Optional<String> region) {
-        return getComputeServiceFromInfastructure(infrastructure).listHardwareProfiles()
-                                                                 .parallelStream()
-                                                                 .filter(hw -> !region.isPresent() ||
-                                                                               hw.getLocation()
-                                                                                 .getId()
-                                                                                 .contains(region.get()))
-                                                                 .map(hw -> Hardware.builder()
-                                                                                    .minCores("" + hw.getProcessors()
+        return getComputeServiceFromInfrastructure(infrastructure).listHardwareProfiles()
+                                                                  .parallelStream()
+                                                                  .filter(hw -> !region.isPresent() ||
+                                                                                hw.getLocation()
+                                                                                  .getId()
+                                                                                  .contains(region.get()))
+                                                                  .map(hw -> Hardware.builder()
+                                                                                     .minCores("" + hw.getProcessors()
+                                                                                                      .stream()
+                                                                                                      .mapToDouble(Processor::getCores)
+                                                                                                      .sum())
+                                                                                     .minRam("" + hw.getRam())
+                                                                                     .type(hw.getId())
+                                                                                     .minFreq("" + hw.getProcessors()
                                                                                                      .stream()
-                                                                                                     .mapToDouble(Processor::getCores)
-                                                                                                     .sum())
-                                                                                    .minRam("" + hw.getRam())
-                                                                                    .type(hw.getId())
-                                                                                    .minFreq("" + hw.getProcessors()
-                                                                                                    .stream()
-                                                                                                    .mapToDouble(Processor::getSpeed)
-                                                                                                    .sum() *
-                                                                                                  1024)
-                                                                                    .build())
-                                                                 .collect(Collectors.toSet());
+                                                                                                     .mapToDouble(Processor::getSpeed)
+                                                                                                     .sum() *
+                                                                                                   1024)
+                                                                                     .build())
+                                                                  .collect(Collectors.toSet());
     }
 
     @Override
@@ -273,7 +273,7 @@ public abstract class JCloudsProvider implements CloudProvider {
                        .build();
     }
 
-    protected ComputeService getComputeServiceFromInfastructure(Infrastructure infrastructure) {
+    protected ComputeService getComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         return jCloudsComputeServiceCache.getComputeService(infrastructure);
     }
 

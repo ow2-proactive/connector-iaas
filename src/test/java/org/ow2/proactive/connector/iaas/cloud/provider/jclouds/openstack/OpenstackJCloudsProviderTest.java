@@ -130,15 +130,15 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testCreateInstance() throws RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               new InfrastructureScope("project",
-                                                                                                       "admin"),
-                                                                               "RegionOne",
-                                                                               "3");
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                new InfrastructureScope("project",
+                                                                                                        "admin"),
+                                                                                "RegionOne",
+                                                                                "3");
 
         Instance instance = InstanceFixture.getInstanceWithKeyName("instance-id",
                                                                    "instance-name",
@@ -151,13 +151,13 @@ public class OpenstackJCloudsProviderTest {
                                                                    "1.0.0.2",
                                                                    "running");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.getContext()).thenReturn(contextMock);
 
         when(contextMock.unwrapApi(NovaApi.class)).thenReturn(novaApi);
 
-        when(openstackUtil.getInfrastructureRegion(infratructure)).thenReturn("RegionOne");
+        when(openstackUtil.getInfrastructureRegion(infrastructure)).thenReturn("RegionOne");
 
         when(novaApi.getServerApi("RegionOne")).thenReturn(serverApi);
 
@@ -207,7 +207,7 @@ public class OpenstackJCloudsProviderTest {
 
         when(templateOptions.runAsRoot(true)).thenReturn(templateOptions);
 
-        Set<Instance> created = jcloudsProvider.createInstance(infratructure, instance);
+        Set<Instance> created = jcloudsProvider.createInstance(infrastructure, instance);
 
         assertThat(created.size(), is(1));
 
@@ -218,14 +218,14 @@ public class OpenstackJCloudsProviderTest {
     @Test(expected = RuntimeException.class)
     public void testCreateInstanceWithFailure() throws NumberFormatException, RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
         Instance instance = InstanceFixture.getInstance("instance-id",
                                                         "instance-name",
@@ -237,7 +237,7 @@ public class OpenstackJCloudsProviderTest {
                                                         "1.0.0.2",
                                                         "running");
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         when(computeService.getContext()).thenReturn(contextMock);
 
@@ -258,23 +258,23 @@ public class OpenstackJCloudsProviderTest {
 
         when(serverApi.create(anyString(), anyString(), anyString(), anyObject())).thenThrow(new RuntimeException());
 
-        jcloudsProvider.createInstance(infratructure, instance);
+        jcloudsProvider.createInstance(infrastructure, instance);
 
     }
 
     @Test
     public void testDeleteInfrastructure() throws RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
@@ -288,27 +288,27 @@ public class OpenstackJCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        jcloudsProvider.deleteInfrastructure(infratructure);
+        jcloudsProvider.deleteInfrastructure(infrastructure);
 
-        verify(computeServiceCache, times(1)).removeComputeService(infratructure);
+        verify(computeServiceCache, times(1)).removeComputeService(infrastructure);
 
     }
 
     @Test
     public void testDeleteInstance() throws RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
-        jcloudsProvider.deleteInstance(infratructure, "instanceID");
+        jcloudsProvider.deleteInstance(infrastructure, "instanceID");
 
         verify(computeService, times(1)).destroyNode("instanceID");
 
@@ -317,16 +317,16 @@ public class OpenstackJCloudsProviderTest {
     @Test
     public void testGetAllInfrastructureInstances() throws RunNodesException {
 
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set nodes = Sets.newHashSet();
         NodeMetadataImpl node = mock(NodeMetadataImpl.class);
@@ -340,7 +340,7 @@ public class OpenstackJCloudsProviderTest {
         nodes.add(node);
         when(computeService.listNodes()).thenReturn(nodes);
 
-        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infratructure);
+        Set<Instance> allNodes = jcloudsProvider.getAllInfrastructureInstances(infrastructure);
 
         assertThat(allNodes.iterator().next().getId(), is("someId"));
 
@@ -381,21 +381,21 @@ public class OpenstackJCloudsProviderTest {
 
     @Test
     public void testGetAllImagesEmptySet() {
-        Infrastructure infratructure = InfrastructureFixture.getInfrastructure("id-aws",
-                                                                               "aws",
-                                                                               "endPoint",
-                                                                               "userName",
-                                                                               "password",
-                                                                               null,
-                                                                               null,
-                                                                               null);
+        Infrastructure infrastructure = InfrastructureFixture.getInfrastructure("id-aws",
+                                                                                "aws",
+                                                                                "endPoint",
+                                                                                "userName",
+                                                                                "password",
+                                                                                null,
+                                                                                null,
+                                                                                null);
 
-        when(computeServiceCache.getComputeService(infratructure)).thenReturn(computeService);
+        when(computeServiceCache.getComputeService(infrastructure)).thenReturn(computeService);
 
         Set images = Sets.newHashSet();
         when(computeService.listImages()).thenReturn(images);
 
-        Set<Image> allImages = jcloudsProvider.getAllImages(infratructure);
+        Set<Image> allImages = jcloudsProvider.getAllImages(infrastructure);
 
         assertThat(allImages.isEmpty(), is(true));
 

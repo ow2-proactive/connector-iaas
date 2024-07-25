@@ -25,8 +25,10 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jclouds.Constants;
@@ -83,7 +85,7 @@ public class JCloudsComputeServiceBuilder {
     @Autowired
     private OpenstackUtil openstackUtil;
 
-    private Properties properties;
+    private Map<Infrastructure, Properties> infrastructurePropertiesMap = new ConcurrentHashMap<>();
 
     public ComputeService buildComputeServiceFromInfrastructure(Infrastructure infrastructure) {
         Iterable<Module> modules = ImmutableSet.of(new SshjSshClientModule());
@@ -91,6 +93,9 @@ public class JCloudsComputeServiceBuilder {
         String domain = infrastructure.getCredentials().getDomain();
 
         String identityPrefix = StringUtils.isNotBlank(domain) ? (domain + ":") : "";
+
+        log.info("Building ComputeService for infrastructureID: " + infrastructure.getId());
+        log.info("Using credentials: " + identityPrefix + infrastructure.getCredentials().getUsername());
 
         ContextBuilder contextBuilder = ContextBuilder.newBuilder(infrastructure.getType())
                                                       .credentials(identityPrefix +
@@ -101,17 +106,19 @@ public class JCloudsComputeServiceBuilder {
 
         Optional.ofNullable(infrastructure.getEndpoint())
                 .filter(endPoint -> !endPoint.isEmpty())
-                .ifPresent(endPoint -> contextBuilder.endpoint(endPoint));
+                .ifPresent(contextBuilder::endpoint);
+
+        log.info("ContextBuilder configuration complete, building ComputeServiceContext...");
 
         ComputeServiceContext context = contextBuilder.buildView(ComputeServiceContext.class);
+
+        log.info("ComputeServiceContext built successfully: " + context.toString());
+
         return context.getComputeService();
     }
 
     public Properties getDefinedProperties(Infrastructure infrastructure) {
-        if (properties == null) {
-            properties = loadDefinedProperties(infrastructure);
-        }
-        return properties;
+        return infrastructurePropertiesMap.computeIfAbsent(infrastructure, this::loadDefinedProperties);
     }
 
     /**
@@ -121,11 +128,6 @@ public class JCloudsComputeServiceBuilder {
      */
     private Properties loadDefinedProperties(Infrastructure infrastructure) {
         Properties properties = new Properties();
-
-        // Add custom properties for Openstack with identity version 3
-        if (infrastructure.getType().equals(OpenstackUtil.OPENSTACK_TYPE)) {
-            openstackUtil.addCustomProperties(infrastructure, properties);
-        }
 
         properties.setProperty(Constants.PROPERTY_REQUEST_TIMEOUT, requestTimeout);
         properties.setProperty(Constants.PROPERTY_CONNECTION_TIMEOUT, connectionTimeout);
@@ -137,12 +139,20 @@ public class JCloudsComputeServiceBuilder {
         properties.setProperty(SSH_MAX_RETRIES, sshMaxRetries);
         properties.setProperty(MAX_RETRIES, maxRetries);
 
+        // Add custom properties for Openstack with identity version 3
+        if (infrastructure.getType().equals(OpenstackUtil.OPENSTACK_TYPE)) {
+            openstackUtil.addCustomProperties(infrastructure, properties);
+        }
+
+        // Add custom properties for AWS (infrastructure type "aws-ec2")
         // set AMI queries to filter private AMI (self), API from Amazon (137112412989) & Canonical (099720109477). Doc: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
         //properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,"owner-id=137112412989,099720109477,self;state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm" );
-        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
-                               "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label=" +
-                                                                       awsImagesListTag);
-        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
+        if (infrastructure.getType().equals("aws-ec2")) {
+            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY,
+                                   "state=available;image-type=machine;hypervisor=xen;virtualization-type=hvm;tag:proactive-list-label=" +
+                                                                           awsImagesListTag);
+            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
+        }
 
         log.info("Infrastructure properties: " + properties.toString());
 

@@ -110,7 +110,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
 
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
 
         String region = getRegionFromImage(instance);
         TemplateBuilder templateBuilder = computeService.templateBuilder()
@@ -355,7 +355,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     @Override
     public String addToInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
 
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         NodeMetadata node = computeService.getNodeMetadata(instanceId);
         ElasticIPAddressApi elasticIPAddressApi = computeService.getContext()
                                                                 .unwrapApi(AWSEC2Api.class)
@@ -413,7 +413,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     @Override
     public void removeInstancePublicIp(Infrastructure infrastructure, String instanceId, String optionalDesiredIp) {
 
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         NodeMetadata node = computeService.getNodeMetadata(instanceId);
         String region = node.getLocation().getId();
         ElasticIPAddressApi elasticIPAddressApi = computeService.getContext()
@@ -661,7 +661,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private KeyPairApi getKeyPairApi(Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         EC2Api ec2Api = computeService.getContext().unwrapApi(EC2Api.class);
         if (ec2Api.getKeyPairApi().isPresent()) {
             return ec2Api.getKeyPairApi().get();
@@ -671,7 +671,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private SecurityGroupApi getSecurityGroupApi(Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         EC2Api ec2Api = computeService.getContext().unwrapApi(EC2Api.class);
         if (ec2Api.getSecurityGroupApi().isPresent()) {
             return ec2Api.getSecurityGroupApi().get();
@@ -681,7 +681,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private AWSSecurityGroupApi getAWSSecurityGroupApi(Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         AWSEC2Api awsEc2Api = computeService.getContext().unwrapApi(AWSEC2Api.class);
         if (awsEc2Api.getSecurityGroupApi().isPresent()) {
             return awsEc2Api.getSecurityGroupApi().get();
@@ -691,7 +691,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     }
 
     private AWSSubnetApi getAWSSubnetApi(Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         AWSEC2Api awsEc2Api = computeService.getContext().unwrapApi(AWSEC2Api.class);
         if (awsEc2Api.getAWSSubnetApi().isPresent()) {
             return awsEc2Api.getAWSSubnetApi().get();
@@ -724,7 +724,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
     @Override
     protected RunScriptOptions getDefaultRunScriptOptionsUsingInstanceId(String instanceId,
             Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         NodeMetadata node = computeService.getNodeMetadata(instanceId);
 
         String subdividedRegion = getRegionFromNode(computeService, node);
