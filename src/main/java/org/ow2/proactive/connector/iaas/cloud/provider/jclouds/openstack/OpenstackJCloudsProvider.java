@@ -378,7 +378,7 @@ public class OpenstackJCloudsProvider extends JCloudsProvider {
     }
 
     protected NovaApi buildNovaApi(Infrastructure infrastructure) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
         return computeService.getContext().unwrapApi(NovaApi.class);
     }
 
