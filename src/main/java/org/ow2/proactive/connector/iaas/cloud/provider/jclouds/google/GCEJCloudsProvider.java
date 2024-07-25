@@ -68,7 +68,7 @@ public class GCEJCloudsProvider extends JCloudsProvider {
 
     @Override
     public Set<Instance> createInstance(Infrastructure infrastructure, Instance instance) {
-        ComputeService computeService = getComputeServiceFromInfastructure(infrastructure);
+        ComputeService computeService = getComputeServiceFromInfrastructure(infrastructure);
 
         TemplateBuilder templateBuilder = computeService.templateBuilder();
 
