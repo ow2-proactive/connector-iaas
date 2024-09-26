@@ -183,8 +183,8 @@ public class AzureProvider implements CloudProvider {
         // Try to retrieve the resource group from provided name, otherwise get it from image ID
         final ResourceGroup resourceGroup;
 
-        KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage = getKnownLinuxImage(imageNameOrId);
-        KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage = getKnownWindowsImage(imageNameOrId);
+        KnownLinuxVirtualMachineImageCustom knownLinuxVirtualMachineImage = getKnownLinuxImage(imageNameOrId);
+        KnownWindowsVirtualMachineImageCustom knownWindowsVirtualMachineImage = getKnownWindowsImage(imageNameOrId);
         final VirtualMachineCustomImage image;
         final Region region;
         if (knownLinuxVirtualMachineImage == null && knownWindowsVirtualMachineImage == null) {
@@ -338,17 +338,17 @@ public class AzureProvider implements CloudProvider {
                                                                                         : null);
     }
 
-    protected KnownLinuxVirtualMachineImage getKnownLinuxImage(String name) {
+    protected KnownLinuxVirtualMachineImageCustom getKnownLinuxImage(String name) {
         try {
-            return KnownLinuxVirtualMachineImage.valueOf(name);
+            return KnownLinuxVirtualMachineImageCustom.valueOf(name);
         } catch (Exception e) {
             return null;
         }
     }
 
-    protected KnownWindowsVirtualMachineImage getKnownWindowsImage(String name) {
+    protected KnownWindowsVirtualMachineImageCustom getKnownWindowsImage(String name) {
         try {
-            return KnownWindowsVirtualMachineImage.valueOf(name);
+            return KnownWindowsVirtualMachineImageCustom.valueOf(name);
         } catch (Exception e) {
             return null;
         }
@@ -365,8 +365,8 @@ public class AzureProvider implements CloudProvider {
 
     protected Creatable<VirtualMachine> prepareVirtualMachine(String infrastructureId, Instance instance,
             Azure azureService, ResourceGroup resourceGroup, Region region, String instanceTag,
-            VirtualMachineCustomImage image, KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage,
-            KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage,
+            VirtualMachineCustomImage image, KnownLinuxVirtualMachineImageCustom knownLinuxVirtualMachineImage,
+            KnownWindowsVirtualMachineImageCustom knownWindowsVirtualMachineImage,
             Creatable<NetworkInterface> creatableNetworkInterface) {
 
         VirtualMachine.DefinitionStages.WithCreate creatableVMWithSize;
@@ -492,7 +492,7 @@ public class AzureProvider implements CloudProvider {
 
     protected VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged configureLinuxVirtualMachine(
             Azure azureService, String instanceTag, Region region, ResourceGroup resourceGroup,
-            InstanceCredentials instanceCredentials, KnownLinuxVirtualMachineImage knownLinuxVirtualMachineImage,
+            InstanceCredentials instanceCredentials, KnownLinuxVirtualMachineImageCustom knownLinuxVirtualMachineImage,
             Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
         Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
@@ -508,7 +508,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                        .withRegion(region)
                                                                                                                                        .withExistingResourceGroup(resourceGroup)
                                                                                                                                        .withNewPrimaryNetworkInterface(creatableNetworkInterface)
-                                                                                                                                       .withPopularLinuxImage(knownLinuxVirtualMachineImage)
+                                                                                                                                       .withSpecificLinuxImageVersion(knownLinuxVirtualMachineImage.imageReference())
                                                                                                                                        .withRootUsername(optionalUsername.orElse(defaultUsername));
         // Set the credentials (whether password or SSH key)
         return optionalPublicKey.map(creatableVMWithoutCredentials::withSsh)
@@ -539,7 +539,8 @@ public class AzureProvider implements CloudProvider {
 
     protected VirtualMachine.DefinitionStages.WithWindowsCreateManaged configureWindowsVirtualMachine(
             Azure azureService, String instanceTag, Region region, ResourceGroup resourceGroup,
-            InstanceCredentials instanceCredentials, KnownWindowsVirtualMachineImage knownWindowsVirtualMachineImage,
+            InstanceCredentials instanceCredentials,
+            KnownWindowsVirtualMachineImageCustom knownWindowsVirtualMachineImage,
             Creatable<NetworkInterface> creatableNetworkInterface) {
         // Retrieve optional credentials
         Optional<String> optionalUsername = Optional.ofNullable(instanceCredentials)
@@ -553,7 +554,7 @@ public class AzureProvider implements CloudProvider {
                            .withRegion(region)
                            .withExistingResourceGroup(resourceGroup)
                            .withNewPrimaryNetworkInterface(creatableNetworkInterface)
-                           .withPopularWindowsImage(knownWindowsVirtualMachineImage)
+                           .withSpecificWindowsImageVersion(knownWindowsVirtualMachineImage.imageReference())
                            .withAdminUsername(optionalUsername.orElse(defaultUsername))
                            .withAdminPassword(optionalPassword.orElse(defaultPassword));
     }
