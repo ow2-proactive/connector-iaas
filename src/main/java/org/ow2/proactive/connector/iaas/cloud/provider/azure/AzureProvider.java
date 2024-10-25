@@ -138,6 +138,8 @@ public class AzureProvider implements CloudProvider {
 
     private static Map<String, Map<String, AzureKnownCost>> knownCostPerMeterIdPerApiKey = new HashMap<>();
 
+    private static Map<String, Map<String, String>> knownMeterIdPerArmSkuNamePerApiKey = new HashMap<>();
+
     @Autowired
     protected AzureServiceCache azureServiceCache;
 
@@ -880,6 +882,7 @@ public class AzureProvider implements CloudProvider {
                                 .map(azureImage -> Image.builder()
                                                         .id(azureImage.id())
                                                         .name(azureImage.name())
+                                                        .location(azureImage.regionName())
                                                         .operatingSystem(OperatingSystem.builder()
                                                                                         .arch("AMD64")
                                                                                         .description(azureImage.osDiskImage()
@@ -1084,45 +1087,75 @@ public class AzureProvider implements CloudProvider {
                 String rateCard = getRateCard(infra);
                 knownCostPerMeterIdPerApiKey.put(id, parseVmRateCard(rateCard));
             }
+            if (!knownMeterIdPerArmSkuNamePerApiKey.containsKey(id)) {
+                // We need to initiate the cost structure if none is already present.
+                // We try to do this once since the resource prices structure is heavy
+                String resourcePrices = getResourcePrices(infra);
+                knownMeterIdPerArmSkuNamePerApiKey.put(id, parseResourcePrices(resourcePrices));
+            }
+
             Set<NodeCandidate> result = new HashSet<>();
             for (ComputeSku csku : sku) {
-                for (ResourceSkuCosts cost : csku.costs()) {
-                    // Retreving info for node candidate
-                    String memoryGB = csku.capabilities()
-                                          .stream()
-                                          .filter(cap -> cap.name().equals("MemoryGB"))
-                                          .map(res -> res.value())
-                                          .findAny()
-                                          .orElse("0 GB");
-                    String memoryMB = Double.parseDouble(memoryGB.split(" ")[0]) * 1024 + "";
-                    String vCpu = csku.capabilities()
-                                      .stream()
-                                      .filter(cap -> cap.name().equals("vCPUsAvailable"))
-                                      .map(res -> res.value())
-                                      .findAny()
-                                      .orElse("0");
-                    String type = csku.name().toString();
-                    // The Azure API doesn't provide any mean to access the freq of VMs
-
-                    // We build up the resulting structure.
-                    result.add(NodeCandidate.builder()
-                                            .img(Image.builder().name("Unspecified").build())
-                                            .region(region)
-                                            .cloud(this.getType())
-                                            .price(knownCostPerMeterIdPerApiKey.get(id)
-                                                                               .get(cost.meterID()).meterRatesZero)
-                                            .hw(Hardware.builder()
-                                                        .minRam(memoryMB)
-                                                        .minCores(vCpu)
-                                                        .type(type)
-                                                        .minFreq("0")
-                                                        .build())
-                                            .build());
+                if (csku.costs() != null && !csku.costs().isEmpty()) {
+                    for (ResourceSkuCosts cost : csku.costs()) {
+                        retrieveInfoAndAddNodeCandidate(csku, infra, region, id, cost, result);
+                    }
+                } else {
+                    retrieveInfoAndAddNodeCandidate(csku, infra, region, id, null, result);
                 }
             }
             return PagedNodeCandidates.builder().nextToken("").nodeCandidates(result).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void retrieveInfoAndAddNodeCandidate(ComputeSku csku, Infrastructure infra, String region, String id,
+            ResourceSkuCosts cost, Set<NodeCandidate> result) throws IOException {
+        // Retreving info for node candidate
+        String memoryGB = csku.capabilities()
+                              .stream()
+                              .filter(cap -> cap.name().equals("MemoryGB"))
+                              .map(res -> res.value())
+                              .findAny()
+                              .orElse("0 GB");
+        String memoryMB = Double.parseDouble(memoryGB.split(" ")[0]) * 1024 + "";
+        String vCpu = csku.capabilities()
+                          .stream()
+                          .filter(cap -> cap.name().equals("vCPUsAvailable"))
+                          .map(res -> res.value())
+                          .findAny()
+                          .orElse("0");
+        String type = csku.name().toString();
+        // The Azure API doesn't provide any mean to access the freq of VMs
+
+        double price = -1;
+        if (cost != null) {
+            price = knownCostPerMeterIdPerApiKey.get(id).get(cost.meterID()).meterRatesZero;
+            // If the cost is not provided, retrieve it using the Aure prices API
+        } else {
+            String meterId = knownMeterIdPerArmSkuNamePerApiKey.get(id).get(type);
+            if (meterId != null && knownCostPerMeterIdPerApiKey.containsKey(id) &&
+                knownCostPerMeterIdPerApiKey.get(id).containsKey(meterId) &&
+                knownCostPerMeterIdPerApiKey.get(id).get(meterId) != null) {
+                price = knownCostPerMeterIdPerApiKey.get(id).get(meterId).meterRatesZero;
+            }
+        }
+
+        // We build up the resulting structure
+        if (price != -1) {
+            result.add(NodeCandidate.builder()
+                                    .img(Image.builder().name("Unspecified").build())
+                                    .region(region)
+                                    .cloud(this.getType())
+                                    .price(price)
+                                    .hw(Hardware.builder()
+                                                .minRam(memoryMB)
+                                                .minCores(vCpu)
+                                                .type(type)
+                                                .minFreq("0")
+                                                .build())
+                                    .build());
         }
     }
 
@@ -1157,9 +1190,35 @@ public class AzureProvider implements CloudProvider {
         return builder.toString();
     }
 
+    // This method is used to retrieve the resource prices from Azure API.
+    private String queryResourcePrices(String accessToken) throws IOException {
+
+        String endpoint = String.format("https://prices.azure.com/api/retail/prices?api-version=%s",
+                                        "2023-01-01-preview")
+                                .replaceAll(" ", "%20");
+        HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
+        conn.setRequestMethod("GET");
+        conn.addRequestProperty("Authorization", "Bearer " + accessToken);
+        conn.addRequestProperty("Content-Type", "application/json");
+        conn.connect();
+
+        // getInputStream() works only if Http returns a code between 200 and 299
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getResponseCode() / 100 == 2
+                                                                                                           ? conn.getInputStream()
+                                                                                                           : conn.getErrorStream(),
+                                                                         "UTF-8"));
+
+        StringBuilder builder = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
+        }
+        reader.close();
+        return builder.toString();
+    }
+
     // This method download the rateCard of the Azure subscription.
     private String getRateCard(Infrastructure infrastructure) throws IOException {
-        Azure azureService = azureServiceCache.getService(infrastructure);
         String token = azureServiceCache.getInfrastructureToken(infrastructure);
         // Get a new rate card
         String queryResult = queryRateCard(infrastructure, token);
@@ -1168,6 +1227,19 @@ public class AzureProvider implements CloudProvider {
             return queryResult;
         } else {
             throw new RuntimeException("Unable to parse ratecard: " + queryResult);
+        }
+    }
+
+    // This method download the rateCard of the Azure subscription.
+    private String getResourcePrices(Infrastructure infrastructure) throws IOException {
+        String token = azureServiceCache.getInfrastructureToken(infrastructure);
+        // Get a new rate card
+        String resourcePrices = queryResourcePrices(token);
+        JSONObject parsedResourcePrices = new JSONObject(resourcePrices);
+        if (parsedResourcePrices.keySet().contains("Items")) {
+            return resourcePrices;
+        } else {
+            throw new RuntimeException("Unable to parse resource prices: " + resourcePrices);
         }
     }
 
@@ -1192,6 +1264,26 @@ public class AzureProvider implements CloudProvider {
             }
         } else {
             throw new RuntimeException("Unable to find VmRateCard from Azure API");
+        }
+        return result;
+    }
+
+    private Map<String, String> parseResourcePrices(String queryResult) {
+        Map<String, String> result = new HashMap<>();
+        JSONObject parsedQueryResult = new JSONObject(queryResult);
+        Optional<JSONArray> items = Optional.ofNullable(parsedQueryResult.optJSONArray("Items"));
+        String serviceName = "Virtual Machines";
+        if (items.isPresent()) {
+            for (Object itemObj : items.get()) {
+                JSONObject item = (JSONObject) itemObj;
+                if (!serviceName.equals(item.optString("serviceName"))) {
+                    // If we are analyzing the price for a resource that is not a VM, we skip it.
+                    continue;
+                }
+                result.put(item.getString("armSkuName"), item.getString("meterId"));
+            }
+        } else {
+            throw new RuntimeException("Unable to find resource prices from Azure API");
         }
         return result;
     }
