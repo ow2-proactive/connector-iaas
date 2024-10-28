@@ -1159,43 +1159,7 @@ public class AzureProvider implements CloudProvider {
         }
     }
 
-    // This method is used to retrieve the rateCard info from Azure API.
-    private String queryRateCard(Infrastructure infra, String accessToken) throws IOException {
-        String endpoint = String.format("https://management.azure.com/subscriptions/%s/providers/Microsoft.Commerce/RateCard?api-version=%s&$filter=OfferDurableId eq '%s' and Currency eq '%s' and Locale eq '%s' and RegionInfo eq '%s'",
-                                        infra.getCredentials().getSubscriptionId(),
-                                        "2016-08-31-preview",
-                                        this.CLOUD_OFFERS_PAYASYOUGO,
-                                        this.CLOUD_OFFERS_CURRENCY,
-                                        this.CLOUD_OFFERS_LOCAL,
-                                        this.CLOUD_OFFERS_REGION_INFO)
-                                .replaceAll(" ", "%20");
-        HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
-        conn.setRequestMethod("GET");
-        conn.addRequestProperty("Authorization", "Bearer " + accessToken);
-        conn.addRequestProperty("Content-Type", "application/json");
-        conn.connect();
-
-        // getInputStream() works only if Http returns a code between 200 and 299
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getResponseCode() / 100 == 2
-                                                                                                           ? conn.getInputStream()
-                                                                                                           : conn.getErrorStream(),
-                                                                         "UTF-8"));
-
-        StringBuilder builder = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            builder.append(line);
-        }
-        reader.close();
-        return builder.toString();
-    }
-
-    // This method is used to retrieve the resource prices from Azure API.
-    private String queryResourcePrices(String accessToken) throws IOException {
-
-        String endpoint = String.format("https://prices.azure.com/api/retail/prices?api-version=%s",
-                                        "2023-01-01-preview")
-                                .replaceAll(" ", "%20");
+    private String queryAzureAPI(String accessToken, String endpoint) throws IOException {
         HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
         conn.setRequestMethod("GET");
         conn.addRequestProperty("Authorization", "Bearer " + accessToken);
@@ -1221,7 +1185,15 @@ public class AzureProvider implements CloudProvider {
     private String getRateCard(Infrastructure infrastructure) throws IOException {
         String token = azureServiceCache.getInfrastructureToken(infrastructure);
         // Get a new rate card
-        String queryResult = queryRateCard(infrastructure, token);
+        String endpoint = String.format("https://management.azure.com/subscriptions/%s/providers/Microsoft.Commerce/RateCard?api-version=%s&$filter=OfferDurableId eq '%s' and Currency eq '%s' and Locale eq '%s' and RegionInfo eq '%s'",
+                                        infrastructure.getCredentials().getSubscriptionId(),
+                                        "2016-08-31-preview",
+                                        this.CLOUD_OFFERS_PAYASYOUGO,
+                                        this.CLOUD_OFFERS_CURRENCY,
+                                        this.CLOUD_OFFERS_LOCAL,
+                                        this.CLOUD_OFFERS_REGION_INFO)
+                                .replaceAll(" ", "%20");
+        String queryResult = queryAzureAPI(token, endpoint);
         JSONObject parsedQueryResult = new JSONObject(queryResult);
         if (parsedQueryResult.keySet().contains("Meters")) {
             return queryResult;
@@ -1234,7 +1206,10 @@ public class AzureProvider implements CloudProvider {
     private String getResourcePrices(Infrastructure infrastructure) throws IOException {
         String token = azureServiceCache.getInfrastructureToken(infrastructure);
         // Get a new rate card
-        String resourcePrices = queryResourcePrices(token);
+        String endpoint = String.format("https://prices.azure.com/api/retail/prices?api-version=%s",
+                                        "2023-01-01-preview")
+                                .replaceAll(" ", "%20");
+        String resourcePrices = queryAzureAPI(token, endpoint);
         JSONObject parsedResourcePrices = new JSONObject(resourcePrices);
         if (parsedResourcePrices.keySet().contains("Items")) {
             return resourcePrices;
