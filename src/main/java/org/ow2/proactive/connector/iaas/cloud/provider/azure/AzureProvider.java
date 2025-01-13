@@ -174,6 +174,8 @@ public class AzureProvider implements CloudProvider {
                                      .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
                                                                              instance + "'"));
 
+        String uniqueInstanceTag = createUniqueInstanceTag(instanceTag);
+
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
 
@@ -278,7 +280,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                  .orElse(SINGLE_INSTANCE_NUMBER)))
                                                                             .mapToObj(instanceNumber -> {
                                                                                 Creatable<NetworkInterface> creatableNetworkInterface = createPublicAddressAndNetworkInterface(azureService,
-                                                                                                                                                                               instanceTag,
+                                                                                                                                                                               uniqueInstanceTag,
                                                                                                                                                                                resourceGroup,
                                                                                                                                                                                region,
                                                                                                                                                                                networkOptions,
@@ -288,8 +290,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                              azureService,
                                                                                                              resourceGroup,
                                                                                                              region,
-                                                                                                             createUniqueInstanceTag(instanceTag,
-                                                                                                                                     instanceNumber),
+                                                                                                             uniqueInstanceTag,
                                                                                                              image,
                                                                                                              knownLinuxVirtualMachineImage,
                                                                                                              knownWindowsVirtualMachineImage,
@@ -310,10 +311,11 @@ public class AzureProvider implements CloudProvider {
                            .collect(Collectors.toSet());
     }
 
-    protected Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService, String instanceTag,
-            ResourceGroup resourceGroup, Region region, AzureNetworkOptions networkOptions, int instanceNumber) {
+    protected Creatable<NetworkInterface> createPublicAddressAndNetworkInterface(Azure azureService,
+            String uniqueInstanceTag, ResourceGroup resourceGroup, Region region, AzureNetworkOptions networkOptions,
+            int instanceNumber) {
         // Create a new public IP address (one per VM)
-        String publicIPAddressName = createUniquePublicIPName(createUniqueInstanceTag(instanceTag, instanceNumber));
+        String publicIPAddressName = createUniquePublicIPName(uniqueInstanceTag);
         Creatable<PublicIPAddress> creatablePublicIPAddress = azureProviderNetworkingUtils.preparePublicIPAddress(azureService,
                                                                                                                   region,
                                                                                                                   resourceGroup,
@@ -322,8 +324,7 @@ public class AzureProvider implements CloudProvider {
                                                                                                                                 .orElse(DEFAULT_STATIC_PUBLIC_IP));
 
         // Prepare a new network interface (one per VM)
-        String networkInterfaceName = createUniqueNetworkInterfaceName(createUniqueInstanceTag(instanceTag,
-                                                                                               instanceNumber));
+        String networkInterfaceName = createUniqueNetworkInterfaceName(uniqueInstanceTag);
         return azureProviderNetworkingUtils.prepareNetworkInterface(azureService,
                                                                     region,
                                                                     resourceGroup,
@@ -561,18 +562,8 @@ public class AzureProvider implements CloudProvider {
                            .withAdminPassword(optionalPassword.orElse(defaultPassword));
     }
 
-    /**
-     * Create a unique tag for a VM based on the original tag provided and the instance index
-     *
-     * @param tagBase       the tag base
-     * @param instanceIndex the instance index
-     * @return a unique VM tag
-     */
-    protected static String createUniqueInstanceTag(String tagBase, int instanceIndex) {
-        if (instanceIndex > 1) {
-            return tagBase + String.valueOf(instanceIndex);
-        }
-        return tagBase;
+    protected static String createUniqueInstanceTag(String tagBase) {
+        return tagBase + "-" + UUID.randomUUID();
     }
 
     protected static String createUniqueSecurityGroupName(String instanceTag) {
