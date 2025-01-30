@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
@@ -563,7 +564,12 @@ public class AzureProvider implements CloudProvider {
     }
 
     protected static String createUniqueInstanceTag(String tagBase) {
-        return tagBase + "-" + UUID.randomUUID();
+        // The instance tag is part of the Azure resource name which must not exceed 80 characters
+        int existingLength = Math.min(tagBase.length() + 1, 40);
+        // Let's keep 20 chars more for: network security groups, ip,..
+        int uidLength = 60 - existingLength;
+        return tagBase.substring(0, Math.min(tagBase.length(), 39)) + "-" +
+               RandomStringUtils.randomAlphanumeric(uidLength).toLowerCase();
     }
 
     protected static String createUniqueSecurityGroupName(String instanceTag) {
@@ -591,8 +597,10 @@ public class AzureProvider implements CloudProvider {
     }
 
     protected static String createUniqueName(String customPart, String basePart) {
+        // The Azure resource name must not exceed 80 characters
         return SdkContext.randomResourceName(customPart + '-' + basePart,
-                                             customPart.length() + basePart.length() + 1 + RESOURCES_NAME_EXTRA_CHARS);
+                                             Math.min(customPart.length() + basePart.length() + 1 +
+                                                      RESOURCES_NAME_EXTRA_CHARS, 80));
     }
 
     @Override
