@@ -175,7 +175,12 @@ public class AzureProvider implements CloudProvider {
                                      .orElseThrow(() -> new RuntimeException("ERROR missing instance tag/name from instance: '" +
                                                                              instance + "'"));
 
-        String uniqueInstanceTag = createUniqueInstanceTag(instanceTag);
+        int nbInstance = Integer.valueOf(Optional.ofNullable(instance.getNumber()).orElse(SINGLE_INSTANCE_NUMBER));
+
+        String[] uniqueInstanceTagArray = new String[nbInstance];
+        for (int i = 0; i < nbInstance; i++) {
+            uniqueInstanceTagArray[i] = createUniqueInstanceTag(instanceTag);
+        }
 
         // Get the options (Optional by design)
         Optional<Options> options = Optional.ofNullable(instance.getOptions());
@@ -281,7 +286,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                                  .orElse(SINGLE_INSTANCE_NUMBER)))
                                                                             .mapToObj(instanceNumber -> {
                                                                                 Creatable<NetworkInterface> creatableNetworkInterface = createPublicAddressAndNetworkInterface(azureService,
-                                                                                                                                                                               uniqueInstanceTag,
+                                                                                                                                                                               uniqueInstanceTagArray[instanceNumber -
+                                                                                                                                                                                                      1],
                                                                                                                                                                                resourceGroup,
                                                                                                                                                                                region,
                                                                                                                                                                                networkOptions,
@@ -291,7 +297,8 @@ public class AzureProvider implements CloudProvider {
                                                                                                              azureService,
                                                                                                              resourceGroup,
                                                                                                              region,
-                                                                                                             uniqueInstanceTag,
+                                                                                                             uniqueInstanceTagArray[instanceNumber -
+                                                                                                                                    1],
                                                                                                              image,
                                                                                                              knownLinuxVirtualMachineImage,
                                                                                                              knownWindowsVirtualMachineImage,
