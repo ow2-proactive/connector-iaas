@@ -34,14 +34,6 @@ install {
 
 repositories {
     if (project.hasProperty('local')) mavenLocal()
-
-    // Needed by Microsoft Azure Java SDK
-    maven {
-        url "http://repository.springsource.com/maven/bundles/release"
-    }
-    maven {
-        url "http://repository.springsource.com/maven/bundles/external"
-    }
     mavenCentral()
 }
 
@@ -264,12 +256,13 @@ dependencies {
     }
 
     // Microsoft Azure
-    compile 'net.minidev:json-smart:2.4.9'
+    compile 'net.minidev:json-smart:2.4.11'
     compile 'com.github.stephenc.jcip:jcip-annotations:1.0-1'
     compile files('lib/nimbus-jose-jwt-9.8.1.jar')
     compile ('com.microsoft.azure:azure:1.41.3') {
         exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
         exclude group: 'com.nimbusds', module: 'nimbus-jose-jwt'
+        exclude group: 'net.minidev', module: 'json-smart'
     }
     compile 'com.microsoft.azure:azure-mgmt-network:1.41.3'
 
