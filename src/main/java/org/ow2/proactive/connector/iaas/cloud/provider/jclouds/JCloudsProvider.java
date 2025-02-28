@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -188,25 +190,60 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     }
 
+    private Date getDateFromVersion(String version) {
+        DateFormat format = new SimpleDateFormat("yyyyMMdd");
+        try {
+            if (version.charAt(0) == 'v') {
+                return format.parse(version.substring(1));
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Override
     public Set<Image> getAllImages(Infrastructure infrastructure) {
-        Set<? extends org.jclouds.compute.domain.Image> images = getComputeServiceFromInfrastructure(infrastructure).listImages();
-        log.info(String.format("Found %d images", images.stream().count()));
-        return images.stream()
-                     .map(it -> Image.builder()
-                                     .id(it.getId())
-                                     .name(it.getName())
-                                     .location(it.getLocation().getId())
-                                     .operatingSystem(OperatingSystem.builder()
-                                                                     .arch(it.getOperatingSystem().getArch())
-                                                                     .description(it.getOperatingSystem()
-                                                                                    .getDescription())
-                                                                     .family(getOperatingSystemFamily(it,
-                                                                                                      infrastructure.getType()))
-                                                                     .is64Bit(it.getOperatingSystem().is64Bit())
-                                                                     .build())
-                                     .build())
-                     .collect(Collectors.toSet());
+        Set<? extends org.jclouds.compute.domain.Image> allImages = getComputeServiceFromInfrastructure(infrastructure).listImages();
+        log.info(String.format("Found %d images", allImages.stream().count()));
+
+        return allImages.stream()
+                        // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/compute/domain/Image.Status.html
+                        .filter(it -> it.getStatus() == org.jclouds.compute.domain.Image.Status.AVAILABLE)
+                        // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/googlecomputeengine/domain/Deprecated.State.html
+                        .filter(it -> it.getUserMetadata()
+                                        .get("deprecatedState") == org.jclouds.googlecomputeengine.domain.Deprecated.State.DEPRECATED.name())
+                        // GroupBy "OS family - Os version" and ...
+                        .collect(Collectors.groupingBy(it -> it.getOperatingSystem().getFamily() + "-" +
+                                                             it.getOperatingSystem().getVersion()))
+                        .values()
+                        .parallelStream()
+                        // ... sort each image list by the date extracted from the version and ...
+                        .map(images -> {
+                            images.sort((image1, image2) -> {
+                                return getDateFromVersion(image2.getVersion()).compareTo(getDateFromVersion(image1.getVersion()));
+                            });
+                            return images;
+                        })
+                        // ... keep only the first image (newest) of each list
+                        .map(a -> a.get(0))
+                        // Create a ProActive Image for each jclouds Image
+                        .map(it -> Image.builder()
+                                        .id(it.getId())
+                                        .name(it.getName())
+                                        .location(it.getLocation() != null ? it.getLocation().getId() : "")
+                                        .operatingSystem(OperatingSystem.builder()
+                                                                        .arch(it.getOperatingSystem().getArch())
+                                                                        .description(it.getOperatingSystem()
+                                                                                       .getDescription())
+                                                                        .family(getOperatingSystemFamily(it,
+                                                                                                         infrastructure.getType()))
+                                                                        .version(it.getOperatingSystem().getVersion())
+                                                                        .is64Bit(it.getOperatingSystem().is64Bit())
+                                                                        .build())
+                                        .version(it.getVersion())
+                                        .build())
+                        .collect(Collectors.toSet());
     }
 
     @Override
@@ -330,13 +367,26 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                    .digest((type + infra.getRegion() +
                                                                             infra.getAuthenticationEndpoint()).getBytes()));
             File pricingFile = new File(this.pricingRepo + File.pathSeparator + fileTag + ".json");
-            // We will use the getAllImage() API to identify which VM image are relevant.
+
+            // Retrieve all images + filter by region and imageReq
+            String imageReqLowerCase = imageReq.toLowerCase();
             Set<Image> resultImages = this.getAllImages(infra)
                                           .parallelStream()
-                                          .filter(image -> image.getLocation().equals(region))
-                                          .filter(img -> img.getName().contains(imageReq))
+                                          .filter(image -> image.getLocation().isEmpty() ||
+                                                           image.getLocation().equals(region))
+                                          .filter(img -> img.getName().toLowerCase().contains(imageReqLowerCase))
                                           .collect(Collectors.toSet());
-            Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region);
+
+            // Only keep a hw per "minRam-minCores-MinFreq"
+            Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region)
+                                               .parallelStream()
+                                               .collect(Collectors.groupingBy(it -> it.getMinRam() + "-" +
+                                                                                    it.getMinCores() + "-" +
+                                                                                    it.getMinFreq()))
+                                               .values()
+                                               .parallelStream()
+                                               .map(a -> a.get(0))
+                                               .collect(Collectors.toSet());
             if (pricingFile.exists()) {
                 // If the file exist, we are in the case of a paid cloud
                 return PagedNodeCandidates.builder()
