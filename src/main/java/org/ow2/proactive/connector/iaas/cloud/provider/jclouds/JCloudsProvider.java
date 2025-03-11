@@ -38,10 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.ComputeMetadata;
-import org.jclouds.compute.domain.ExecResponse;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Processor;
+import org.jclouds.compute.domain.*;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LocationScope;
@@ -53,6 +50,9 @@ import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.model.*;
+import org.ow2.proactive.connector.iaas.model.Hardware;
+import org.ow2.proactive.connector.iaas.model.Image;
+import org.ow2.proactive.connector.iaas.model.OperatingSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -404,7 +404,6 @@ public abstract class JCloudsProvider implements CloudProvider {
                                           .nextToken("")
                                           .nodeCandidates(getFreeNodeCandidate(infra,
                                                                                region,
-                                                                               imageReq,
                                                                                resultImages,
                                                                                resultHardware))
                                           .build();
@@ -416,9 +415,9 @@ public abstract class JCloudsProvider implements CloudProvider {
         }
     }
 
-    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, String imageReq,
-            Set<Image> resultImages, Set<Hardware> resultHardware) {
-        return resultHardware.stream()
+    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, Set<Image> resultImages,
+            Set<Hardware> resultHardware) {
+        return resultHardware.parallelStream()
                              .map(hw -> resultImages.parallelStream()
                                                     .map(image -> NodeCandidate.builder()
                                                                                .region(region)
