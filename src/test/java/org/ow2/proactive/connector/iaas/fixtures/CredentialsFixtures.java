@@ -53,11 +53,11 @@ public class CredentialsFixtures {
     }
 
     public static InfrastructureCredentials getInfrastructureCredentials(String username, String password) {
-        return new InfrastructureCredentials(username, password, null, null);
+        return new InfrastructureCredentials(username, null, password, null, null);
     }
 
-    public static InfrastructureCredentials getInfrastructureCredentials(String clientId, String secret, String domain,
-            String subscriptionId) {
-        return new InfrastructureCredentials(clientId, secret, domain, subscriptionId);
+    public static InfrastructureCredentials getInfrastructureCredentials(String clientId, String projectId,
+            String secret, String domain, String subscriptionId) {
+        return new InfrastructureCredentials(clientId, projectId, secret, domain, subscriptionId);
     }
 }
