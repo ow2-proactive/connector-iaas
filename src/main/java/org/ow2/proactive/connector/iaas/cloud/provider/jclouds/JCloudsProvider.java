@@ -190,60 +190,25 @@ public abstract class JCloudsProvider implements CloudProvider {
 
     }
 
-    private Date getDateFromVersion(String version) {
-        DateFormat format = new SimpleDateFormat("yyyyMMdd");
-        try {
-            if (version.charAt(0) == 'v') {
-                return format.parse(version.substring(1));
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     @Override
     public Set<Image> getAllImages(Infrastructure infrastructure) {
-        Set<? extends org.jclouds.compute.domain.Image> allImages = getComputeServiceFromInfrastructure(infrastructure).listImages();
-        log.info(String.format("Found %d images", allImages.stream().count()));
-
-        return allImages.stream()
-                        // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/compute/domain/Image.Status.html
-                        .filter(it -> it.getStatus() == org.jclouds.compute.domain.Image.Status.AVAILABLE)
-                        // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/googlecomputeengine/domain/Deprecated.State.html
-                        .filter(it -> it.getUserMetadata()
-                                        .get("deprecatedState") == org.jclouds.googlecomputeengine.domain.Deprecated.State.DEPRECATED.name())
-                        // GroupBy "OS family - Os version" and ...
-                        .collect(Collectors.groupingBy(it -> it.getOperatingSystem().getFamily() + "-" +
-                                                             it.getOperatingSystem().getVersion()))
-                        .values()
-                        .parallelStream()
-                        // ... sort each image list by the date extracted from the version and ...
-                        .map(images -> {
-                            images.sort((image1, image2) -> {
-                                return getDateFromVersion(image2.getVersion()).compareTo(getDateFromVersion(image1.getVersion()));
-                            });
-                            return images;
-                        })
-                        // ... keep only the first image (newest) of each list
-                        .map(a -> a.get(0))
-                        // Create a ProActive Image for each jclouds Image
-                        .map(it -> Image.builder()
-                                        .id(it.getId())
-                                        .name(it.getName())
-                                        .location(it.getLocation() != null ? it.getLocation().getId() : "")
-                                        .operatingSystem(OperatingSystem.builder()
-                                                                        .arch(it.getOperatingSystem().getArch())
-                                                                        .description(it.getOperatingSystem()
-                                                                                       .getDescription())
-                                                                        .family(getOperatingSystemFamily(it,
-                                                                                                         infrastructure.getType()))
-                                                                        .version(it.getOperatingSystem().getVersion())
-                                                                        .is64Bit(it.getOperatingSystem().is64Bit())
-                                                                        .build())
-                                        .version(it.getVersion())
-                                        .build())
-                        .collect(Collectors.toSet());
+        Set<? extends org.jclouds.compute.domain.Image> images = getComputeServiceFromInfrastructure(infrastructure).listImages();
+        log.info(String.format("Found %d images", images.stream().count()));
+        return images.stream()
+                     .map(it -> Image.builder()
+                                     .id(it.getId())
+                                     .name(it.getName())
+                                     .location(it.getLocation().getId())
+                                     .operatingSystem(OperatingSystem.builder()
+                                                                     .arch(it.getOperatingSystem().getArch())
+                                                                     .description(it.getOperatingSystem()
+                                                                                    .getDescription())
+                                                                     .family(getOperatingSystemFamily(it,
+                                                                                                      infrastructure.getType()))
+                                                                     .is64Bit(it.getOperatingSystem().is64Bit())
+                                                                     .build())
+                                     .build())
+                     .collect(Collectors.toSet());
     }
 
     @Override
@@ -502,7 +467,7 @@ public abstract class JCloudsProvider implements CloudProvider {
      * getOpenStackOSFamily method will be called, otherwise retrieve it from the metadata collected by Jclouds.
      * This allows us to utilise the distro_family parameter for OpenStack images.
      */
-    private String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
+    protected String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
         if (!infrastructureType.equals("openstack-nova")) {
             return Optional.ofNullable(image.getOperatingSystem().getFamily())
                            .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)

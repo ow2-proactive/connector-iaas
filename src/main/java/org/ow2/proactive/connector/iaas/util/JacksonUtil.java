@@ -27,6 +27,7 @@ package org.ow2.proactive.connector.iaas.util;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
@@ -38,6 +39,7 @@ public class JacksonUtil {
 
     public static <T> T convertFromJson(String json, Class<T> clazz) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature(), true);
         try {
             return mapper.readValue(json, clazz);
         } catch (IOException e) {
