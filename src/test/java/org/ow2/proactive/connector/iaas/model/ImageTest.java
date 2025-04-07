@@ -49,7 +49,8 @@ public class ImageTest {
         Image image = new Image("image-id",
                                 "image-name",
                                 OperatingSystem.builder().family("image-os").build(),
-                                "image-location");
+                                "image-location",
+                                "image-version");
         assertThat(image.getName(), is("image-name"));
     }
 
@@ -58,11 +59,13 @@ public class ImageTest {
         Image image1 = new Image("image-id",
                                  "image-name",
                                  OperatingSystem.builder().family("image-os").build(),
-                                 "image-location");
+                                 "image-location",
+                                 "image-version");
         Image image2 = new Image("image-id",
                                  "image-name",
                                  OperatingSystem.builder().family("image-os").build(),
-                                 "image-location");
+                                 "image-location",
+                                 "image-version");
 
         Set<Image> images = Sets.newHashSet(image1, image2);
 
