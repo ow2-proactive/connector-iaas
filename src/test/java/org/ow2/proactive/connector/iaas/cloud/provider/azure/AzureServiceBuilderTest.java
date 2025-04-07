@@ -48,6 +48,7 @@ public class AzureServiceBuilderTest {
         azureServiceBuilder.buildServiceFromInfrastructure(InfrastructureFixture.getAzureInfrastructureWithEnvironment("id-azure",
                                                                                                                        "azure",
                                                                                                                        "clientId",
+                                                                                                                       "projectId",
                                                                                                                        "secret",
                                                                                                                        "domain",
                                                                                                                        "subscriptionId",
