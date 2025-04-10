@@ -377,6 +377,7 @@ public class AzureProviderTest {
         infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                       "azure",
                                                                       "clientId",
+                                                                      "projectId",
                                                                       "secret",
                                                                       "domain",
                                                                       "subscriptionId");
@@ -533,6 +534,7 @@ public class AzureProviderTest {
         infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                       "azure",
                                                                       "clientId",
+                                                                      "projectId",
                                                                       "secret",
                                                                       "domain",
                                                                       "subscriptionId");
@@ -549,6 +551,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -621,6 +624,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -697,6 +701,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -736,6 +741,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -775,6 +781,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -814,6 +821,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -865,6 +873,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -927,6 +936,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");
@@ -965,6 +975,7 @@ public class AzureProviderTest {
         Infrastructure infrastructure = InfrastructureFixture.getAzureInfrastructure("id-azure",
                                                                                      "azure",
                                                                                      "clientId",
+                                                                                     "projectId",
                                                                                      "secret",
                                                                                      "domain",
                                                                                      "subscriptionId");

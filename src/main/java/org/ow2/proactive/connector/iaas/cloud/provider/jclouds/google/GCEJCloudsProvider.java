@@ -25,7 +25,10 @@
  */
 package org.ow2.proactive.connector.iaas.cloud.provider.jclouds.google;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -43,12 +46,7 @@ import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.JCloudsProvider;
-import org.ow2.proactive.connector.iaas.model.Hardware;
-import org.ow2.proactive.connector.iaas.model.Infrastructure;
-import org.ow2.proactive.connector.iaas.model.Instance;
-import org.ow2.proactive.connector.iaas.model.InstanceCredentials;
-import org.ow2.proactive.connector.iaas.model.Options;
-import org.ow2.proactive.connector.iaas.model.Tag;
+import org.ow2.proactive.connector.iaas.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -188,6 +186,81 @@ public class GCEJCloudsProvider extends JCloudsProvider {
         return RunScriptOptions.Builder.runAsRoot(false)
                                        .overrideLoginUser(username)
                                        .overrideLoginPrivateKey(credentials.getPrivateKey());
+    }
+
+    private Date getDateFromVersion(String version) {
+        DateFormat format = new SimpleDateFormat("yyyyMMdd");
+        try {
+            if (version.charAt(0) == 'v') {
+                return format.parse(version.substring(1));
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Set<Image> getAllImages(Infrastructure infrastructure) {
+        Set<? extends org.jclouds.compute.domain.Image> allImages = getComputeServiceFromInfrastructure(infrastructure).listImages();
+
+        // Since there too many returned images, let's consider only the relevant ones
+        Set<org.jclouds.compute.domain.Image> allRelevantImages = allImages.stream()
+                                                                           // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/compute/domain/Image.Status.html
+                                                                           .filter(it -> it.getStatus() == null ||
+                                                                                         it.getStatus() == org.jclouds.compute.domain.Image.Status.AVAILABLE)
+                                                                           // Keep usable images: https://jclouds.incubator.apache.org/reference/javadoc/2.3.x/org/jclouds/googlecomputeengine/domain/Deprecated.State.html
+                                                                           .filter(it -> it.getUserMetadata() == null ||
+                                                                                         it.getUserMetadata()
+                                                                                           .get("deprecatedState") == null ||
+                                                                                         it.getUserMetadata()
+                                                                                           .get("deprecatedState") == org.jclouds.googlecomputeengine.domain.Deprecated.State.DEPRECATED.name())
+                                                                           // GroupBy "OS family - Os version" and ...
+                                                                           .collect(Collectors.groupingBy(it -> it.getOperatingSystem()
+                                                                                                                  .getFamily() +
+                                                                                                                "-" +
+                                                                                                                it.getOperatingSystem()
+                                                                                                                  .getVersion()))
+                                                                           .values()
+                                                                           .parallelStream()
+                                                                           // ... sort each image list by the date extracted from the version and ...
+                                                                           .map(images -> {
+                                                                               images.sort((image1, image2) -> {
+                                                                                   return getDateFromVersion(image2.getVersion()).compareTo(getDateFromVersion(image1.getVersion()));
+                                                                               });
+                                                                               return images;
+                                                                           })
+                                                                           // ... keep only the first image (newest) of each list
+                                                                           .map(a -> a.get(0))
+                                                                           .collect(Collectors.toSet());
+
+        // Create a ProActive Image for each jclouds Image
+        Set<Image> allRelevantPAImages = allRelevantImages.parallelStream()
+                                                          .map(it -> Image.builder()
+                                                                          .id(it.getId())
+                                                                          .name(it.getName())
+                                                                          .location(it.getLocation() != null ? it.getLocation()
+                                                                                                                 .getId()
+                                                                                                             : "")
+                                                                          .operatingSystem(OperatingSystem.builder()
+                                                                                                          .arch(it.getOperatingSystem()
+                                                                                                                  .getArch())
+                                                                                                          .description(it.getOperatingSystem()
+                                                                                                                         .getDescription())
+                                                                                                          .family(getOperatingSystemFamily(it,
+                                                                                                                                           infrastructure.getType()))
+                                                                                                          .version(it.getOperatingSystem()
+                                                                                                                     .getVersion())
+                                                                                                          .is64Bit(it.getOperatingSystem()
+                                                                                                                     .is64Bit())
+                                                                                                          .build())
+                                                                          .version(it.getVersion())
+                                                                          .build())
+                                                          .collect(Collectors.toSet());
+
+        log.info(String.format("Found %d relevant images", allRelevantPAImages.stream().count()));
+
+        return allRelevantPAImages;
     }
 
 }

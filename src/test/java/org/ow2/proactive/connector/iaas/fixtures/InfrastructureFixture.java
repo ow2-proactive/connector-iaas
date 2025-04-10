@@ -74,12 +74,13 @@ public class InfrastructureFixture {
     }
 
     public static Infrastructure getAzureInfrastructureWithEnvironment(String name, String type, String clientId,
-            String secret, String domain, String subscriptionId, String authenticationEndpoint,
+            String projectId, String secret, String domain, String subscriptionId, String authenticationEndpoint,
             String managementEndpoint, String resourceManagerEndpoint, String graphEndpoint) {
         return new Infrastructure(name,
                                   type,
                                   null,
                                   CredentialsFixtures.getInfrastructureCredentials(clientId,
+                                                                                   projectId,
                                                                                    secret,
                                                                                    domain,
                                                                                    subscriptionId),
@@ -93,12 +94,13 @@ public class InfrastructureFixture {
                                   null);
     }
 
-    public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String secret,
-            String domain, String subscriptionId) {
+    public static Infrastructure getAzureInfrastructure(String name, String type, String clientId, String projectId,
+            String secret, String domain, String subscriptionId) {
         return new Infrastructure(name,
                                   type,
                                   null,
                                   CredentialsFixtures.getInfrastructureCredentials(clientId,
+                                                                                   projectId,
                                                                                    secret,
                                                                                    domain,
                                                                                    subscriptionId),

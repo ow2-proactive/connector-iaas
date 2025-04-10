@@ -49,4 +49,5 @@ public class Image {
 
     private String location;
 
+    private String version;
 }

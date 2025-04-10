@@ -41,6 +41,8 @@ public class InfrastructureCredentials {
 
     private String username;
 
+    private String projectId;
+
     private String password;
 
     private String domain;

@@ -32,14 +32,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.ComputeMetadata;
-import org.jclouds.compute.domain.ExecResponse;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Processor;
+import org.jclouds.compute.domain.*;
 import org.jclouds.compute.domain.internal.NodeMetadataImpl;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LocationScope;
@@ -51,6 +50,9 @@ import org.ow2.proactive.connector.iaas.cloud.TagManager;
 import org.ow2.proactive.connector.iaas.cloud.provider.CloudProvider;
 import org.ow2.proactive.connector.iaas.cloud.provider.jclouds.openstack.OpenstackUtil;
 import org.ow2.proactive.connector.iaas.model.*;
+import org.ow2.proactive.connector.iaas.model.Hardware;
+import org.ow2.proactive.connector.iaas.model.Image;
+import org.ow2.proactive.connector.iaas.model.OperatingSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -330,13 +332,26 @@ public abstract class JCloudsProvider implements CloudProvider {
                                                                    .digest((type + infra.getRegion() +
                                                                             infra.getAuthenticationEndpoint()).getBytes()));
             File pricingFile = new File(this.pricingRepo + File.pathSeparator + fileTag + ".json");
-            // We will use the getAllImage() API to identify which VM image are relevant.
+
+            // Retrieve all images + filter by region and imageReq
+            String imageReqLowerCase = imageReq.toLowerCase();
             Set<Image> resultImages = this.getAllImages(infra)
                                           .parallelStream()
-                                          .filter(image -> image.getLocation().equals(region))
-                                          .filter(img -> img.getName().contains(imageReq))
+                                          .filter(image -> image.getLocation().isEmpty() ||
+                                                           image.getLocation().equals(region))
+                                          .filter(img -> img.getName().toLowerCase().contains(imageReqLowerCase))
                                           .collect(Collectors.toSet());
-            Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region);
+
+            // Only keep a hw per "minRam-minCores-MinFreq"
+            Set<Hardware> resultHardware = this.getRegionSpecificHardware(infra, region)
+                                               .parallelStream()
+                                               .collect(Collectors.groupingBy(it -> it.getMinRam() + "-" +
+                                                                                    it.getMinCores() + "-" +
+                                                                                    it.getMinFreq()))
+                                               .values()
+                                               .parallelStream()
+                                               .map(a -> a.get(0))
+                                               .collect(Collectors.toSet());
             if (pricingFile.exists()) {
                 // If the file exist, we are in the case of a paid cloud
                 return PagedNodeCandidates.builder()
@@ -354,7 +369,6 @@ public abstract class JCloudsProvider implements CloudProvider {
                                           .nextToken("")
                                           .nodeCandidates(getFreeNodeCandidate(infra,
                                                                                region,
-                                                                               imageReq,
                                                                                resultImages,
                                                                                resultHardware))
                                           .build();
@@ -366,9 +380,9 @@ public abstract class JCloudsProvider implements CloudProvider {
         }
     }
 
-    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, String imageReq,
-            Set<Image> resultImages, Set<Hardware> resultHardware) {
-        return resultHardware.stream()
+    private Set<NodeCandidate> getFreeNodeCandidate(Infrastructure infra, String region, Set<Image> resultImages,
+            Set<Hardware> resultHardware) {
+        return resultHardware.parallelStream()
                              .map(hw -> resultImages.parallelStream()
                                                     .map(image -> NodeCandidate.builder()
                                                                                .region(region)
@@ -453,7 +467,7 @@ public abstract class JCloudsProvider implements CloudProvider {
      * getOpenStackOSFamily method will be called, otherwise retrieve it from the metadata collected by Jclouds.
      * This allows us to utilise the distro_family parameter for OpenStack images.
      */
-    private String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
+    protected String getOperatingSystemFamily(org.jclouds.compute.domain.Image image, String infrastructureType) {
         if (!infrastructureType.equals("openstack-nova")) {
             return Optional.ofNullable(image.getOperatingSystem().getFamily())
                            .orElse(org.jclouds.compute.domain.OsFamily.UNRECOGNIZED)
