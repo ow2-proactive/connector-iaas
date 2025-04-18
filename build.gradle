@@ -226,6 +226,7 @@ dependencies {
         exclude module : 'jsr311-api'
     }
     // Prevent the usage of an old version of SSHJ
+    compile "com.hierynomus:sshj:0.38.0"
     compile "org.apache.jclouds.driver:jclouds-sshj:${jcloudsVersion}"
 
     // Prevent the usage of an old version of bouncycastle dependencies
