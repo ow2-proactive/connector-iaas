@@ -1159,7 +1159,7 @@ public class AzureProvider implements CloudProvider {
                                                 .minRam(memoryMB)
                                                 .minCores(vCpu)
                                                 .type(type)
-                                                .minFreq("0")
+                                                .minFreq("-1")
                                                 .build())
                                     .build());
         }

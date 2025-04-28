@@ -507,7 +507,7 @@ public class AWSEC2JCloudsProvider extends JCloudsProvider {
             if (productAttributes.has("clockSpeed")) {
                 hwb.minFreq(fromAwsGioToparseableMB(productAttributes.getString("clockSpeed")) + "");
             } else {
-                hwb.minFreq("0");
+                hwb.minFreq("-1");
             }
 
             Hardware hw = hwb.build();
